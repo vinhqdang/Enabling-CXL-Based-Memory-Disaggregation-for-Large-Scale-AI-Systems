@@ -6,7 +6,11 @@ for large-scale AI model inference and training.
 """
 
 import time
+import os
 import numpy as np
+import matplotlib
+if os.environ.get("DISPLAY", "") == "":
+    matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import json
 from typing import Dict, List, Tuple, Any
@@ -534,7 +538,10 @@ class BenchmarkSuite:
         
         plt.tight_layout()
         plt.savefig(f"{output_dir}/xlshare_performance_analysis.png", dpi=300, bbox_inches='tight')
-        plt.show()
+        if os.environ.get("XL_PLOTS_SHOW") == "1":
+            plt.show()
+        else:
+            plt.close()
         
         print(f"Performance plots saved to {output_dir}/xlshare_performance_analysis.png")
     
