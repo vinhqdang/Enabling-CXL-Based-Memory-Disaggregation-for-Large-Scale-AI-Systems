@@ -256,8 +256,7 @@ class BenchmarkSuite:
             cxl_pool_size_gb=pool_size_gb,
             gpu_cache_size_mb=cache_size_mb,
             emulate_cxl=True,
-            latency_profile=self.latency_profile,
-            use_torch=self.use_torch
+            latency_profile=self.latency_profile
         )
         
         # Create and register model
@@ -317,7 +316,7 @@ class BenchmarkSuite:
         
         # Estimate GPU utilization and memory bandwidth
         gpu_utilization = 0.85  # Simulated value
-        memory_bandwidth = system_stats['cxl_emulator']['avg_bandwidth_gbps'] if system_stats['cxl_emulator'] else 0
+        memory_bandwidth = system_stats.get('cxl_emulator', {}).get('avg_bandwidth_gbps', 0)
         
         return BenchmarkResult(
             config_name=f"xlshare_{cache_size_mb}mb_{pool_size_gb}gb",

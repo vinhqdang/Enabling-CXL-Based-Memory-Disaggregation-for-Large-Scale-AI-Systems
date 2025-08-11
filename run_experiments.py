@@ -282,10 +282,11 @@ def main():
     """
     print("XL-SHARE EXPERIMENTAL EVALUATION")
     print("="*60)
-    print(f"Start time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    start_time = datetime.now()
+    print(f"Start time: {start_time.strftime('%Y-%m-%d %H:%M:%S')}")
     
     # Create output directory
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    timestamp = start_time.strftime('%Y%m%d_%H%M%S')
     output_dir = f"results_{timestamp}"
     os.makedirs(output_dir, exist_ok=True)
     
@@ -353,11 +354,12 @@ def main():
         all_results['bandwidth_benchmark'] = {'error': str(e)}
     
     # Save comprehensive results
+    duration_min = (datetime.now() - start_time).total_seconds() / 60.0
     final_results = {
         'metadata': {
             'timestamp': timestamp,
             'python_version': sys.version,
-            'experiment_duration_min': 0  # Will be updated
+            'experiment_duration_min': duration_min
         },
         'experiments': all_results,
         'summary': generate_experiment_summary(all_results)
