@@ -185,49 +185,57 @@ def run_fault_tolerance_experiment():
     for fault_type, description, duration_ms in fault_scenarios:
         print(f"\nTesting: {description}")
         
-        # Allocate test memory
-        pool_id = 0
-        test_size = 1024 * 1024  # 1MB
-        addr = emulator.allocate_memory(pool_id, test_size)
-        
-        # Write test data
-        test_data = np.random.bytes(test_size)
-        emulator.write_memory(pool_id, addr, np.frombuffer(test_data, dtype=np.uint8))
-        
-        # Inject fault and test recovery
-        recovery_time_start = time.time()
-        fault_injected = emulator.inject_fault(fault_type, duration_ms)
-        
-        # Attempt to read after fault
-        try:
-            recovered_data = emulator.read_memory(pool_id, addr, test_size)
-            recovery_success = np.array_equal(
-                test_data, 
-                recovered_data.tobytes()
-            )
-            recovery_time_ms = (time.time() - recovery_time_start) * 1000
+        def fault_proc():
+            # Allocate test memory
+            pool_id = 0
+            test_size = 1024 * 1024  # 1MB
+            addr = emulator.allocate_memory(pool_id, test_size)
             
-            fault_results.append({
-                'fault_type': fault_type,
-                'description': description,
-                'recovery_success': recovery_success,
-                'recovery_time_ms': recovery_time_ms,
-                'data_integrity': recovery_success
-            })
+            # Write test data
+            test_data = np.random.bytes(test_size)
+            yield emulator.env.process(emulator.write_memory(pool_id, addr, np.frombuffer(test_data, dtype=np.uint8)))
             
-            print(f"  Recovery: {'SUCCESS' if recovery_success else 'FAILED'}")
-            print(f"  Recovery time: {recovery_time_ms:.1f}ms")
+            # Inject fault and test recovery
+            recovery_time_start = emulator.env.now
+            fault_injected = emulator.inject_fault(fault_type, duration_ms)
             
-        except Exception as e:
-            print(f"  Recovery failed: {e}")
-            fault_results.append({
-                'fault_type': fault_type,
-                'recovery_success': False,
-                'recovery_time_ms': float('inf'),
-                'error': str(e)
-            })
-    
+            # Attempt to read after fault
+            try:
+                recovered_data = yield emulator.env.process(emulator.read_memory(pool_id, addr, test_size))
+                recovery_success = np.array_equal(
+                    test_data, 
+                    recovered_data.tobytes()
+                )
+                recovery_time_ms = (emulator.env.now - recovery_time_start) / 1e6
+                
+                return {
+                    'fault_type': fault_type,
+                    'description': description,
+                    'recovery_success': recovery_success,
+                    'recovery_time_ms': recovery_time_ms,
+                    'data_integrity': recovery_success
+                }
+                
+            except Exception as e:
+                return {
+                    'fault_type': fault_type,
+                    'recovery_success': False,
+                    'recovery_time_ms': float('inf'),
+                    'error': str(e)
+                }
+
+        proc = emulator.env.process(fault_proc())
+        emulator.env.run(until=proc)
+        results = proc.value
+        fault_results.append(results)
+        print(f"  Recovery: {'SUCCESS' if results['recovery_success'] else 'FAILED'}")
+        if results['recovery_success']:
+            print(f"  Recovery time: {results['recovery_time_ms']:.1f}ms")
+        else:
+            print(f"  Error: {results.get('error')}")
+
     return fault_results
+
 
 
 def run_bandwidth_benchmark():
@@ -256,10 +264,16 @@ def run_bandwidth_benchmark():
         emulator = CXLEmulator(latency_profile=profile)
         
         # Run bandwidth benchmark
-        results = emulator.benchmark_bandwidth(
-            data_size_mb=100,
-            iterations=5
-        )
+        def benchmark_proc():
+            results = yield emulator.env.process(emulator.benchmark_bandwidth(
+                data_size_mb=100,
+                iterations=5
+            ))
+            return results
+
+        proc = emulator.env.process(benchmark_proc())
+        emulator.env.run(until=proc)
+        results = proc.value
         
         bandwidth_results.append({
             'profile': profile_name,
@@ -270,10 +284,11 @@ def run_bandwidth_benchmark():
         
         print(f"  Latency: {profile.cxl_near_ns}ns")
         print(f"  Theoretical BW: {profile.cxl_bandwidth:.1f} GB/s")
-        if 'local_read_gbps' in results:
+        if results and 'local_read_gbps' in results:
             print(f"  Measured BW: {results['local_read_gbps']:.1f} GB/s")
     
     return bandwidth_results
+
 
 
 def main():

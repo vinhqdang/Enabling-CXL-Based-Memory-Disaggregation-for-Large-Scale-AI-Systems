@@ -64,7 +64,7 @@ def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="XL-Share experiment runner")
     p.add_argument(
         "--mode",
-        choices=["simple", "full"],
+        choices=["simple", "full", "calibrate"],
         default="simple",
         help="Which experiment suite to run",
     )
@@ -72,6 +72,11 @@ def parse_args() -> argparse.Namespace:
         "--out",
         default=None,
         help="Output directory (default: results_<timestamp>)",
+    )
+    p.add_argument(
+        "--use-torch",
+        action="store_true",
+        help="Use PyTorch CUDA path for layer compute when available",
     )
     return p.parse_args()
 
@@ -81,13 +86,23 @@ def main():
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     base_out = args.out or f"results_{timestamp}"
 
-    if args.mode == "simple":
+    if args.mode == "calibrate":
+        from xlshare.hardware_calibration import run_calibration
+        out_dir = base_out
+        os.makedirs(out_dir, exist_ok=True)
+        out = os.path.join(out_dir, "calibration.json")
+        res = run_calibration(out)
+        print(f"Calibration written to {out}")
+    elif args.mode == "simple":
         out_dir = base_out
         path = run_simple(out_dir)
         print(f"Simple results saved: {path}")
         print(f"Artifacts directory: {out_dir}")
     else:
         # Full suite manages its own results_<timestamp> directory
+        # Set env hint for torch usage (picked up inside benchmarks/engine)
+        if args.use_torch:
+            os.environ["XL_USE_TORCH"] = "1"
         res_dir = run_full()
         if res_dir:
             print(f"Full results directory: {res_dir}")
@@ -97,4 +112,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

@@ -8,6 +8,7 @@ to overlap communication and computation.
 import time
 import threading
 import queue
+import simpy
 from typing import Dict, List, Optional, Tuple, Any, Callable
 from dataclasses import dataclass
 from enum import Enum
@@ -61,7 +62,7 @@ class ModelAwarePrefetcher:
     to optimize weight transfers from CXL memory to local GPU cache.
     """
     
-    def __init__(self, memory_manager, local_cache, prefetch_threads: int = 2):
+    def __init__(self, memory_manager, local_cache, prefetch_threads: int = 2, env=None):
         """
         Initialize model-aware prefetcher
         
@@ -72,6 +73,7 @@ class ModelAwarePrefetcher:
         """
         self.memory_manager = memory_manager
         self.local_cache = local_cache
+        self.env = env
         
         # Model topology and scheduling
         self.layers: Dict[str, LayerInfo] = {}
@@ -79,11 +81,21 @@ class ModelAwarePrefetcher:
         self.execution_order: List[str] = []
         
         # Prefetch queue and workers
-        self.prefetch_queue = queue.PriorityQueue()
-        self.active_prefetches: Dict[str, PrefetchTask] = {}
-        self.prefetch_workers = []
-        self.shutdown_flag = threading.Event()
-        
+        if self.env:
+            self.prefetch_queue = simpy.Store(self.env)
+            self.active_prefetches: Dict[str, simpy.Event] = {}
+            for i in range(prefetch_threads):
+                self.env.process(self._prefetch_worker())
+        else:
+            self.prefetch_queue = queue.PriorityQueue()
+            self.active_prefetches: Dict[str, PrefetchTask] = {}
+            self.prefetch_workers = []
+            self.shutdown_flag = threading.Event()
+            for i in range(prefetch_threads):
+                worker = threading.Thread(target=self._prefetch_worker_thread, daemon=True)
+                worker.start()
+                self.prefetch_workers.append(worker)
+
         # Performance tracking
         self.stats = {
             'prefetch_requests': 0,
@@ -94,12 +106,6 @@ class ModelAwarePrefetcher:
             'bandwidth_utilization': 0.0
         }
         
-        # Start prefetch workers
-        for i in range(prefetch_threads):
-            worker = threading.Thread(target=self._prefetch_worker, daemon=True)
-            worker.start()
-            self.prefetch_workers.append(worker)
-            
         print(f"Model-aware prefetcher initialized with {prefetch_threads} workers")
     
     def register_model(self, layers: List[LayerInfo], weight_addresses: Dict[str, int]):
@@ -187,11 +193,15 @@ class ModelAwarePrefetcher:
             weight_address=weight_address,
             weight_size=layer.weight_size_bytes,
             priority=priority,
-            issue_time=time.time()
+            issue_time=self.env.now if self.env else time.time()
         )
         
-        self.prefetch_queue.put(task)
-        self.active_prefetches[layer_name] = task
+        if self.env:
+            self.active_prefetches[layer_name] = self.env.event()
+            self.prefetch_queue.put(task)
+        else:
+            self.prefetch_queue.put(task)
+            self.active_prefetches[layer_name] = task
         self.stats['prefetch_requests'] += 1
         
         return True
@@ -221,7 +231,7 @@ class ModelAwarePrefetcher:
             
             self.schedule_prefetch(next_layer_name, priority)
     
-    def wait_for_weights(self, layer_name: str, timeout: float = 5.0) -> np.ndarray:
+    def wait_for_weights(self, layer_name: str, timeout: float = 5.0):
         """
         Wait for layer weights to be available in cache
         
@@ -232,33 +242,41 @@ class ModelAwarePrefetcher:
         Returns:
             Layer weights as numpy array
         """
-        start_time = time.time()
-        
         # First check if already in cache
         weights = self.local_cache.get(layer_name)
         if weights is not None:
             self.stats['prefetch_hits'] += 1
             return self._deserialize_weights(weights, self.layers[layer_name].weight_shape)
-        
-        # Wait for prefetch to complete
-        while time.time() - start_time < timeout:
+
+        if self.env:
             if layer_name in self.active_prefetches:
-                task = self.active_prefetches[layer_name]
-                if task.completion_time is not None:
-                    weights = self.local_cache.get(layer_name)
-                    if weights is not None:
-                        self.stats['prefetch_hits'] += 1
-                        return self._deserialize_weights(weights, self.layers[layer_name].weight_shape)
-            
-            time.sleep(0.001)  # 1ms polling
+                yield self.active_prefetches[layer_name]
+                weights = self.local_cache.get(layer_name)
+                if weights is not None:
+                    self.stats['prefetch_hits'] += 1
+                    return self._deserialize_weights(weights, self.layers[layer_name].weight_shape)
+        else:
+            start_time = time.time()
+            # Wait for prefetch to complete
+            while time.time() - start_time < timeout:
+                if layer_name in self.active_prefetches:
+                    task = self.active_prefetches[layer_name]
+                    if task.completion_time is not None:
+                        weights = self.local_cache.get(layer_name)
+                        if weights is not None:
+                            self.stats['prefetch_hits'] += 1
+                            return self._deserialize_weights(weights, self.layers[layer_name].weight_shape)
+                
+                time.sleep(0.001)  # 1ms polling
         
         # Prefetch failed or timed out - fetch directly from CXL memory
         self.stats['prefetch_misses'] += 1
         self.stats['cache_stalls'] += 1
         
-        return self._fetch_weights_direct(layer_name)
+        weights = yield from self._fetch_weights_direct(layer_name)
+        return weights
     
-    def _fetch_weights_direct(self, layer_name: str) -> np.ndarray:
+    def _fetch_weights_direct(self, layer_name: str):
         """
         Directly fetch weights from CXL memory (cache miss)
         
@@ -272,7 +290,10 @@ class ModelAwarePrefetcher:
         address = self.weight_addresses[layer_name]
         
         # Read from CXL memory
-        weight_bytes = self.memory_manager.read(address, layer.weight_size_bytes)
+        if self.env:
+            weight_bytes = yield self.env.process(self.memory_manager.read(address, layer.weight_size_bytes))
+        else:
+            weight_bytes = self.memory_manager.read(address, layer.weight_size_bytes)
         
         # Store in cache for future use
         self.local_cache.put(layer_name, weight_bytes)
@@ -294,6 +315,35 @@ class ModelAwarePrefetcher:
         return flat_weights.reshape(shape)
     
     def _prefetch_worker(self):
+        """Worker process for handling prefetch requests"""
+        while True:
+            task = yield self.prefetch_queue.get()
+            
+            # Fetch weights from CXL memory
+            weight_bytes = yield self.env.process(
+                self.memory_manager.read(task.weight_address, task.weight_size)
+            )
+            
+            # Store in local cache
+            layer = self.layers[task.layer_name]
+            pin_in_cache = layer.reuse_frequency > 1
+            
+            self.local_cache.put(
+                task.layer_name, 
+                weight_bytes, 
+                pin=pin_in_cache
+            )
+            
+            # Mark task as completed
+            task.completion_time = self.env.now
+            self.active_prefetches[task.layer_name].succeed()
+            
+            # Update statistics
+            transfer_time = task.completion_time - task.issue_time
+            bandwidth_gbps = (task.weight_size / (1024**3)) / (transfer_time / 1e9)
+            self.stats['bandwidth_utilization'] = bandwidth_gbps
+
+    def _prefetch_worker_thread(self):
         """Worker thread for handling prefetch requests"""
         while not self.shutdown_flag.is_set():
             try:
@@ -350,7 +400,10 @@ class ModelAwarePrefetcher:
         stats = self.stats.copy()
         stats['efficiency'] = self.get_prefetch_efficiency()
         stats['active_prefetches'] = len(self.active_prefetches)
-        stats['queue_depth'] = self.prefetch_queue.qsize()
+        if self.env:
+            stats['queue_depth'] = len(self.prefetch_queue.items)
+        else:
+            stats['queue_depth'] = self.prefetch_queue.qsize()
         
         return stats
     

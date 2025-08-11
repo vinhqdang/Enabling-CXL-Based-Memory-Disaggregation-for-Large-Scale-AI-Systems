@@ -35,7 +35,7 @@ class CXLMemoryManager:
     for AI model weights and parameters.
     """
     
-    def __init__(self, pool_size_gb: float = 64.0, latency_ns: int = 300):
+    def __init__(self, pool_size_gb: float = 64.0, latency_ns: int = 300, env=None):
         """
         Initialize CXL memory manager
         
@@ -45,6 +45,7 @@ class CXLMemoryManager:
         """
         self.pool_size = int(pool_size_gb * 1024**3)  # Convert to bytes
         self.latency_ns = latency_ns
+        self.env = env
         
         # Memory pool storage (simulated as dict)
         self.memory_pool: Dict[int, MemoryRegion] = {}
@@ -126,7 +127,7 @@ class CXLMemoryManager:
                 
             return True
     
-    def read(self, address: int, size: int) -> np.ndarray:
+    def read(self, address: int, size: int):
         """
         Read data from CXL memory with simulated latency
         
@@ -138,7 +139,10 @@ class CXLMemoryManager:
             Data as numpy array
         """
         # Simulate CXL access latency
-        time.sleep(self.latency_ns / 1e9)
+        if self.env:
+            yield self.env.timeout(self.latency_ns)
+        else:
+            time.sleep(self.latency_ns / 1e9)
         
         with self.coherence_lock:
             if address not in self.memory_pool:
@@ -153,7 +157,7 @@ class CXLMemoryManager:
             
             return region.data[:size].copy()
     
-    def write(self, address: int, data: np.ndarray) -> bool:
+    def write(self, address: int, data: np.ndarray):
         """
         Write data to CXL memory with coherence
         
@@ -165,7 +169,10 @@ class CXLMemoryManager:
             True if write successful
         """
         # Simulate CXL access latency
-        time.sleep(self.latency_ns / 1e9)
+        if self.env:
+            yield self.env.timeout(self.latency_ns)
+        else:
+            time.sleep(self.latency_ns / 1e9)
         
         with self.coherence_lock:
             if address not in self.memory_pool:
@@ -186,7 +193,7 @@ class CXLMemoryManager:
             
             return True
     
-    def store_model_weights(self, weights: Dict[str, np.ndarray]) -> Dict[str, int]:
+    def store_model_weights(self, weights: Dict[str, np.ndarray]):
         """
         Store model weights in CXL memory pool
         
@@ -206,8 +213,11 @@ class CXLMemoryManager:
             # Allocate memory and store
             address = self.allocate(len(weight_bytes))
             weight_data = np.frombuffer(weight_bytes, dtype=np.uint8)
-            self.write(address, weight_data)
-            
+            if self.env:
+                yield self.env.process(self.write(address, weight_data))
+            else:
+                self.write(address, weight_data)
+
             weight_addresses[layer_name] = address
             
             print(f"Stored {layer_name}: {weight_array.shape} -> 0x{address:x} ({len(weight_bytes)} bytes)")

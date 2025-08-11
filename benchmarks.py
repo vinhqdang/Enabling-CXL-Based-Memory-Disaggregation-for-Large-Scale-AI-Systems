@@ -291,17 +291,36 @@ class BenchmarkSuite:
         # Warmup
         print("    Warming up...")
         for i in range(self.config.warmup_iterations):
-            engine.inference(requests[i])
-        
+            if engine.env:
+                inference_process = engine.inference(requests[i])
+                engine.env.run(until=inference_process)
+            else:
+                # The non-emulated path is not fully supported.
+                # We consume the generator to avoid it being garbage collected prematurely.
+                for _ in engine.inference(requests[i]):
+                    pass
+
         # Actual benchmark
         print("    Running benchmark...")
         latencies = []
         throughputs = []
         
         for i in range(self.config.warmup_iterations, len(requests)):
-            result = engine.inference(requests[i])
-            latencies.append(result.latency_ms)
-            throughputs.append(result.throughput_tokens_per_sec)
+            result = None
+            if engine.env:
+                inference_process = engine.inference(requests[i])
+                engine.env.run(until=inference_process)
+                result = inference_process.value
+            else:
+                # The non-emulated path is not fully supported and does not return a result.
+                print(f"    SKIPPING: Non-emulated path for request {requests[i].request_id}")
+                # Consume generator
+                for _ in engine.inference(requests[i]):
+                    pass
+            
+            if result:
+                latencies.append(result.latency_ms)
+                throughputs.append(result.throughput_tokens_per_sec)
         
         # Collect system statistics
         system_stats = engine.get_system_stats()

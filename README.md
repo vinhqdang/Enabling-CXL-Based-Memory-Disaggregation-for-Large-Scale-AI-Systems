@@ -75,9 +75,18 @@ python main.py --mode simple
 
 # Full benchmark suite (longer)
 python main.py --mode full
+
+# Optional: run calibration first (uses PyTorch CUDA if available)
+python main.py --mode calibrate
+
+# Optional: enable GPU-backed compute path in full suite
+python main.py --mode full --use-torch
 ```
 
 All artifacts are stored under a timestamped directory like `results_YYYYMMDD_HHMMSS/`.
+When present, `calibration.json` is used to set emulator latency/bandwidth to measured values.
+
+Note: By default, experiments are synthetic. Calibration improves realism by measuring HBM and host<->device transfer characteristics on your machine. The `--use-torch` flag activates a CUDA-backed compute path for select layers when PyTorch with CUDA is available.
 
 #### Custom Model Testing
 ```python
