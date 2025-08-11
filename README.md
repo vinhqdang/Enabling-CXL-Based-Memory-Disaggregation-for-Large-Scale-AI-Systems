@@ -57,8 +57,8 @@ cd xl-share
 
 2. **Create conda environment**
 ```bash
-conda create -n xl-share python=3.10
-conda activate xl-share
+conda create -n py310 python=3.10 -y
+conda activate py310
 ```
 
 3. **Install dependencies**
@@ -68,15 +68,16 @@ pip install -r requirements.txt
 
 ### Running Experiments
 
-#### Quick Demo
+#### Single-Command Runner
 ```bash
-python run_experiments_simple.py
+# Simple demo (fast)
+python main.py --mode simple
+
+# Full benchmark suite (longer)
+python main.py --mode full
 ```
 
-#### Full Benchmark Suite
-```bash
-python run_experiments.py
-```
+All artifacts are stored under a timestamped directory like `results_YYYYMMDD_HHMMSS/`.
 
 #### Custom Model Testing
 ```python

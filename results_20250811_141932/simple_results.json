@@ -1,0 +1,137 @@
+{
+  "metadata": {
+    "timestamp": "20250811_141932",
+    "duration_seconds": 5.372539
+  },
+  "xlshare_results": [
+    {
+      "batch_size": 1,
+      "avg_latency_ms": 1696.3598728179932,
+      "avg_throughput": 7165.292584055326,
+      "latencies": [
+        5041.328907012939,
+        23.977279663085938,
+        23.7734317779541
+      ]
+    },
+    {
+      "batch_size": 4,
+      "avg_latency_ms": 23.911794026692707,
+      "avg_throughput": 10707.565019009766,
+      "latencies": [
+        23.769140243530273,
+        23.651599884033203,
+        24.31464195251465
+      ]
+    },
+    {
+      "batch_size": 8,
+      "avg_latency_ms": 24.767557779947918,
+      "avg_throughput": 10345.458629556235,
+      "latencies": [
+        24.112224578857422,
+        25.82073211669922,
+        24.36971664428711
+      ]
+    }
+  ],
+  "baseline_results": {
+    "local_replication": {
+      "latencies": [
+        60.0,
+        90.0,
+        130.0
+      ],
+      "memory_usage_mb": 734.4,
+      "description": "Full model replication on each GPU"
+    },
+    "cpu_offloading": {
+      "latencies": [
+        135.0,
+        180.0,
+        240.0
+      ],
+      "memory_usage_mb": 55.08,
+      "description": "Model weights offloaded to CPU memory"
+    }
+  },
+  "memory_analysis": {
+    "XL-Share (Proposed)": {
+      "shared_pool_mb": 183.6,
+      "local_cache_mb": 512,
+      "total_per_gpu_mb": 512,
+      "max_gpus_supported": 8,
+      "memory_efficiency": 1.0
+    },
+    "Traditional Replication": {
+      "shared_pool_mb": 0,
+      "local_cache_mb": 0,
+      "total_per_gpu_mb": 183.6,
+      "max_gpus_supported": 4,
+      "memory_efficiency": 0.25
+    },
+    "CPU Offloading": {
+      "shared_pool_mb": 0,
+      "local_cache_mb": 55.08,
+      "total_per_gpu_mb": 55.08,
+      "max_gpus_supported": 1,
+      "memory_efficiency": 0.1
+    }
+  },
+  "system_stats": {
+    "engine": {
+      "total_requests": 9,
+      "total_latency_ms": 5235.117673873901,
+      "total_throughput": 84654.94869786399,
+      "gpu_utilization": 0.0,
+      "memory_efficiency": 0.0
+    },
+    "memory_manager": {
+      "total_allocations": 22,
+      "total_deallocations": 0,
+      "total_reads": 22,
+      "total_writes": 22,
+      "bytes_allocated": 32022528,
+      "bytes_read": "32022528",
+      "bytes_written": 32022528,
+      "active_regions": 22,
+      "total_pool_usage": 32022528,
+      "pool_utilization": 0.0018639564514160156
+    },
+    "local_cache": {
+      "hits": 538,
+      "misses": 33,
+      "evictions": 0,
+      "bytes_cached": 32022528,
+      "current_size": 32022528,
+      "utilization": 0.0596466064453125,
+      "hit_rate": 0.9422066549912435,
+      "items_cached": 22
+    },
+    "prefetcher": {
+      "prefetch_requests": 21,
+      "prefetch_hits": 197,
+      "prefetch_misses": 1,
+      "cache_stalls": 1,
+      "overlap_efficiency": 0.0,
+      "bandwidth_utilization": 1.2114237257336684,
+      "efficiency": 0.9949494949494949,
+      "active_prefetches": 21,
+      "queue_depth": 0
+    },
+    "cxl_emulator": {
+      "local_accesses": 0,
+      "remote_accesses": 0,
+      "coherence_misses": 0,
+      "bandwidth_samples": [],
+      "latency_samples": []
+    }
+  },
+  "summary": {
+    "xlshare_latency": 581.6797415415446,
+    "performance_overhead_pct": 523.2282945087978,
+    "memory_improvement_factor": 4.0,
+    "cache_hit_rate": 0.9422066549912435,
+    "prefetch_efficiency": 0.9949494949494949
+  }
+}
