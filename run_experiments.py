@@ -16,6 +16,7 @@ from datetime import datetime
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'xlshare'))
 
 from benchmarks import BenchmarkSuite, BenchmarkConfig
+from xlshare.hardware_calibration import run_calibration
 
 
 def create_experiment_config() -> BenchmarkConfig:
@@ -290,10 +291,24 @@ def main():
     
     all_results = {}
     
+    # 0. Calibration (hardware-backed if CUDA available)
+    print("\nRunning hardware calibration...")
+    calib_path = f"{output_dir}/calibration.json"
+    calib = run_calibration(calib_path)
+    print(f"Calibration saved to: {calib_path}")
+
     # 1. Main benchmark suite
     print("\nRunning main benchmark suite...")
     config = create_experiment_config()
-    benchmark_suite = BenchmarkSuite(config)
+    # Pass calibration latency profile to suite if file exists
+    try:
+        with open(calib_path) as f:
+            calib_data = json.load(f)
+            lp = calib_data.get('cxllatency_profile')
+    except Exception:
+        lp = None
+    use_torch = os.environ.get('XL_USE_TORCH') == '1'
+    benchmark_suite = BenchmarkSuite(config, latency_profile=lp, use_torch=use_torch)
     
     try:
         main_results = benchmark_suite.run_full_benchmark()

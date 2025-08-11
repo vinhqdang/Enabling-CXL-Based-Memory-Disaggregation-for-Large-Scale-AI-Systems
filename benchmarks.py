@@ -53,6 +53,10 @@ class BenchmarkResult:
     
     # Raw measurements
     latency_samples: List[float]
+    # Additional stats
+    warm_latency_ms: float = 0.0
+    median_latency_ms: float = 0.0
+    p95_latency_ms: float = 0.0
 
 
 class BaselineComparison:
@@ -208,7 +212,7 @@ class BenchmarkSuite:
     Comprehensive benchmark suite for evaluating XL-Share system
     """
     
-    def __init__(self, config: BenchmarkConfig):
+    def __init__(self, config: BenchmarkConfig, latency_profile: Dict[str, Any] | None = None, use_torch: bool = False):
         """
         Initialize benchmark suite
         
@@ -218,6 +222,8 @@ class BenchmarkSuite:
         self.config = config
         self.results: List[BenchmarkResult] = []
         self.baseline_comparison = BaselineComparison()
+        self.latency_profile = latency_profile
+        self.use_torch = use_torch
         
         print("Benchmark Suite initialized")
         print(f"Model sizes: {[f'{name}({layers}L,{hidden}H)' for name, layers, hidden in config.model_sizes]}")
@@ -249,7 +255,9 @@ class BenchmarkSuite:
         engine = XLShareInferenceEngine(
             cxl_pool_size_gb=pool_size_gb,
             gpu_cache_size_mb=cache_size_mb,
-            emulate_cxl=True
+            emulate_cxl=True,
+            latency_profile=self.latency_profile,
+            use_torch=self.use_torch
         )
         
         # Create and register model
@@ -302,6 +310,10 @@ class BenchmarkSuite:
         avg_latency = np.mean(latencies)
         p99_latency = np.percentile(latencies, 99)
         avg_throughput = np.mean(throughputs)
+        warm_only = latencies[1:] if len(latencies) > 1 else latencies
+        warm_latency = float(np.mean(warm_only)) if warm_only else float(avg_latency)
+        median_latency = float(np.median(latencies)) if len(latencies) else 0.0
+        p95_latency = float(np.percentile(latencies, 95)) if len(latencies) else 0.0
         
         # Estimate GPU utilization and memory bandwidth
         gpu_utilization = 0.85  # Simulated value
@@ -314,14 +326,17 @@ class BenchmarkSuite:
             cache_size_mb=cache_size_mb,
             pool_size_gb=pool_size_gb,
             avg_latency_ms=avg_latency,
-            p99_latency_ms=p99_latency,
             throughput_tokens_per_sec=avg_throughput,
             cache_hit_rate=cache_hit_rate,
             memory_utilization=memory_utilization,
             prefetch_efficiency=prefetch_efficiency,
             gpu_utilization=gpu_utilization,
             memory_bandwidth_gbps=memory_bandwidth,
-            latency_samples=latencies
+            latency_samples=latencies,
+            warm_latency_ms=warm_latency,
+            median_latency_ms=median_latency,
+            p95_latency_ms=p95_latency,
+            p99_latency_ms=p99_latency
         )
     
     def run_baseline_benchmarks(self, model_name: str, layers: int, hidden_size: int,
@@ -557,6 +572,7 @@ class BenchmarkSuite:
         xlshare_latencies = [r.avg_latency_ms for r in self.results]
         xlshare_throughputs = [r.throughput_tokens_per_sec for r in self.results]
         xlshare_hit_rates = [r.cache_hit_rate for r in self.results]
+        xlshare_warm = [r.warm_latency_ms for r in self.results]
         
         # Best performing configuration
         best_throughput_idx = np.argmax(xlshare_throughputs)
@@ -569,6 +585,7 @@ class BenchmarkSuite:
                 'avg_throughput_tokens_per_sec': float(np.mean(xlshare_throughputs)),
                 'max_throughput_tokens_per_sec': float(np.max(xlshare_throughputs)),
                 'avg_cache_hit_rate': float(np.mean(xlshare_hit_rates)),
+                'avg_warm_latency_ms': float(np.mean(xlshare_warm)) if xlshare_warm else 0.0,
             },
             'best_configuration': {
                 'model_name': best_config.model_name,
