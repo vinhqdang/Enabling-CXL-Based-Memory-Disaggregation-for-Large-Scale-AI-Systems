@@ -1,0 +1,21 @@
+{
+  "calibration": {
+    "has_cuda": false,
+    "device_name": null,
+    "local_hbm_bandwidth_gbps": 400.0,
+    "local_hbm_latency_ns": 80,
+    "host_to_device_gbps": 16.0,
+    "device_to_host_gbps": 16.0,
+    "pcie_like_latency_ns": 300,
+    "notes": "No CUDA detected; using synthetic defaults"
+  },
+  "cxllatency_profile": {
+    "local_dram_ns": 80,
+    "cxl_near_ns": 300,
+    "cxl_far_ns": 600,
+    "cxl_network_ns": 1200,
+    "local_bandwidth": 400.0,
+    "cxl_bandwidth": 16.0,
+    "coherence_overhead_ns": 50
+  }
+}
