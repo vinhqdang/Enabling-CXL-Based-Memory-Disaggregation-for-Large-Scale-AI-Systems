@@ -107,6 +107,14 @@ class ModelAwarePrefetcher:
         }
         
         print(f"Model-aware prefetcher initialized with {prefetch_threads} workers")
+        
+        # Adaptive prefetching state
+        self.current_lookahead = 2
+        self.min_lookahead = 1
+        self.max_lookahead = 10
+        self.adaptation_interval = 5
+        self.steps_since_adaptation = 0
+        self.last_stats = self.stats.copy()
     
     def register_model(self, layers: List[LayerInfo], weight_addresses: Dict[str, int]):
         """
@@ -206,14 +214,23 @@ class ModelAwarePrefetcher:
         
         return True
     
-    def smart_prefetch_pipeline(self, current_layer_idx: int, lookahead: int = 2):
+    def smart_prefetch_pipeline(self, current_layer_idx: int, lookahead: Optional[int] = None):
         """
-        Intelligently prefetch upcoming layers based on computation pipeline
+        Intelligently prefetch upcoming layers based on computation pipeline.
+        Adapts lookahead dynamically if no explicit lookahead provided.
         
         Args:
             current_layer_idx: Index of currently executing layer
-            lookahead: Number of layers to prefetch ahead
+            lookahead: Number of layers to prefetch ahead (optional)
         """
+        # Dynamic Adaptation
+        if lookahead is None:
+            self.steps_since_adaptation += 1
+            if self.steps_since_adaptation >= self.adaptation_interval:
+                self._adapt_strategy()
+                self.steps_since_adaptation = 0
+            lookahead = self.current_lookahead
+
         # Prefetch next layers with decreasing priority
         for i in range(1, min(lookahead + 1, len(self.execution_order) - current_layer_idx)):
             next_layer_idx = current_layer_idx + i
@@ -230,6 +247,19 @@ class ModelAwarePrefetcher:
                 priority -= 3  # Higher priority for reused weights
             
             self.schedule_prefetch(next_layer_name, priority)
+            
+        # [NEW] Graph-Aware Eviction Update
+        # Update the cache with distances to next usage for ALL layers
+        # This is O(N) per step, but N is small (layers ~100)
+        future_map = {}
+        for idx in range(current_layer_idx, len(self.execution_order)):
+             layer_name = self.execution_order[idx]
+             if layer_name not in future_map:
+                 future_map[layer_name] = idx
+        
+        # Items not in this list (past) get implicit infinity if not in future_map
+        # But we only update what we know.
+        self.local_cache.update_future_accesses(future_map)
     
     def wait_for_weights(self, layer_name: str, timeout: float = 5.0):
         """
@@ -407,6 +437,31 @@ class ModelAwarePrefetcher:
         
         return stats
     
+    def _adapt_strategy(self):
+        """Adapt lookahead based on recent performance metrics"""
+        current_stalls = self.stats['cache_stalls'] - self.last_stats['cache_stalls']
+        current_bw = self.stats['bandwidth_utilization'] # Instantaneous
+        
+        # Heuristic:
+        # If we are stalling, we need to prefetch earlier (increase lookahead),
+        # UNLESS we are already saturating bandwidth.
+        
+        if current_stalls > 0:
+            if current_bw < 60.0: # Assuming 64GB/s max in default profile
+                 self.current_lookahead = min(self.current_lookahead + 1, self.max_lookahead)
+                 print(f"[Adaptive] Stalls detected ({current_stalls}), increasing lookahead to {self.current_lookahead}")
+            else:
+                 print(f"[Adaptive] Stalls detected but bandwidth saturated ({current_bw:.1f} GB/s). Keeping lookahead {self.current_lookahead}")
+        
+        # If we have NO stalls and high bandwidth usage, maybe we are too aggressive?
+        # Or if we have no stalls and low bandwidth, we are fine.
+        elif current_bw > 60.0:
+             # Reduce pressure
+             self.current_lookahead = max(self.current_lookahead - 1, self.min_lookahead)
+             print(f"[Adaptive] Bandwidth saturated, reducing lookahead to {self.current_lookahead}")
+
+        self.last_stats = self.stats.copy()
+
     def shutdown(self):
         """Shutdown prefetcher and worker threads"""
         self.shutdown_flag.set()

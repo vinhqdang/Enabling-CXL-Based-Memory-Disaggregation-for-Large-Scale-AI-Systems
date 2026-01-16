@@ -10,12 +10,17 @@ __author__ = "AI Systems Research Lab"
 
 from .memory_manager import CXLMemoryManager, LocalCache
 from .prefetcher import ModelAwarePrefetcher
-from .inference_engine import XLShareInferenceEngine, InferenceRequest, InferenceResult
+from .inference_engine import (
+    XLShareInferenceEngine,
+    ModelConfig,
+    InferenceRequest,
+    InferenceResult
+)
 from .emulator import CXLEmulator
 
 __all__ = [
     "CXLMemoryManager",
-    "LocalCache", 
+    "LocalCache",
     "ModelAwarePrefetcher",
     "XLShareInferenceEngine",
     "InferenceRequest",

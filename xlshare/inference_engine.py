@@ -58,7 +58,8 @@ class XLShareInferenceEngine:
                  gpu_cache_size_mb: int = 8192,
                  emulate_cxl: bool = True,
                  latency_profile: Optional[Dict[str, Any]] = None,
-                 use_torch: bool = False):
+                 use_torch: bool = False,
+                 real_execution: bool = False):
         """
         Initialize XL-Share inference engine
         
@@ -93,6 +94,11 @@ class XLShareInferenceEngine:
             except Exception:
                 self._torch_available = False
                 self.use_torch = False
+                
+        self.real_execution = real_execution
+        if self.real_execution and not self._torch_available:
+            print("Warning: Real execution requested but torch not available. Falling back to simulation.")
+            self.real_execution = False
         
         # Model registry
         self.models: Dict[str, ModelConfig] = {}
@@ -113,6 +119,7 @@ class XLShareInferenceEngine:
         print(f"  - CXL Pool: {cxl_pool_size_gb}GB")
         print(f"  - GPU Cache: {gpu_cache_size_mb}MB")
         print(f"  - Emulation: {emulate_cxl}")
+        print(f"  - Real Execution: {self.real_execution}")
     
     def register_model(self, model_config: ModelConfig, weights: Dict[str, np.ndarray]) -> bool:
         """
@@ -371,6 +378,62 @@ class XLShareInferenceEngine:
             compute_time = 1e-6  # 1 microsecond
             output = input_data  # Pass through
         
+        # --- REAL EXECUTION PATH ---
+        if self.real_execution and self._torch_available:
+            try:
+                import torch
+                
+                # Reconstruct weight tensor from flat bytes
+                # Note: This is an approximation. In a full implementation we'd need exact shapes for W and b
+                # separated. For Phase 1 we use the shape hint.
+                w_flat = np.frombuffer(weights.tobytes(), dtype=np.float32)
+                
+                # Create input tensor
+                if isinstance(input_data, np.ndarray):
+                   x = torch.from_numpy(input_data)
+                elif isinstance(input_data, torch.Tensor):
+                   x = input_data
+                else:
+                   x = torch.tensor(input_data)
+                   
+                # Basic Linear Layer Execution
+                if layer_info.layer_type == LayerType.LINEAR:
+                     w = torch.from_numpy(w_flat.reshape(layer_info.weight_shape))
+                     # x @ w.T
+                     output = torch.matmul(x, w.T).numpy()
+                
+                # Basic Embedding
+                elif layer_info.layer_type == LayerType.EMBEDDING:
+                     w = torch.from_numpy(w_flat.reshape(layer_info.weight_shape))
+                     # For embedding, input is indices. If we have float input (dummy), we simulate
+                     if x.dtype == torch.float32:
+                         # Dummy: just return random
+                         pass
+                     else:
+                         output = torch.nn.functional.embedding(x.long(), w).numpy()
+
+                # Basic Attention (Simplified)
+                elif layer_info.layer_type == LayerType.ATTENTION:
+                     # Just do a heavy matmul to simulate
+                     w = torch.from_numpy(w_flat.reshape(layer_info.weight_shape))
+                     # Flatten last dims for simple matmul
+                     x_flat = x.reshape(x.shape[0], -1) 
+                     w_flat_Load = w.reshape(w.shape[0], -1)
+                     # Dimension mismatch handling for prototype
+                     if x_flat.shape[1] == w_flat_Load.shape[1]:
+                         out = torch.matmul(x_flat, w_flat_Load.T)
+                         output = out.reshape(x.shape).numpy()
+                     else:
+                         output = input_data # Fallback
+
+                # Fallback
+                elif output is None: 
+                     output = input_data
+
+            except Exception as e:
+                # Fallback to dummy if shapes allow
+                pass
+
         return output, compute_time
     
     def batch_inference(self, requests: List[InferenceRequest]) -> List[InferenceResult]:

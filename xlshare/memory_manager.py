@@ -254,6 +254,11 @@ class LocalCache:
         self.current_size = 0
         self.cache_lock = threading.RLock()
         
+        # Graph-Aware Eviction State
+        # Maps layer_name -> next_access_index (lower is sooner)
+        self.future_accesses: Dict[str, float] = {} 
+        self.eviction_policy = "lru" # "lru" or "graph_aware"
+        
         # Statistics
         self.stats = {
             'hits': 0,
@@ -263,6 +268,22 @@ class LocalCache:
         }
         
         print(f"Local cache initialized: {capacity_mb}MB capacity")
+
+    def set_eviction_policy(self, policy: str):
+        """Set eviction policy: 'lru' or 'graph_aware'"""
+        self.eviction_policy = policy
+
+    def update_future_accesses(self, future_map: Dict[str, float]):
+        """
+        Update the known future access times for cached items.
+        Used by the prefetcher to inform the cache about the execution plan.
+        
+        Args:
+           future_map: Dict mapping layer_name to next usage time/index.
+                       Infinity or large number means no future use.
+        """
+        with self.cache_lock:
+            self.future_accesses.update(future_map)
     
     def get(self, key: str) -> Optional[np.ndarray]:
         """
@@ -319,11 +340,45 @@ class LocalCache:
                     self.cache[key] = pinned_data
     
     def _evict_lru(self):
-        """Evict least recently used item"""
-        if self.cache:
-            key, (data, size) = self.cache.popitem(last=False)
-            self.current_size -= size
-            self.stats['evictions'] += 1
+        """Evict item based on policy"""
+        if not self.cache:
+            return
+
+        victim_key = None
+        
+        if self.eviction_policy == "graph_aware" and self.future_accesses:
+            # Find cached item with furthest future access
+            max_dist = -1.0
+            best_victim = None
+            
+            # Check all cached items
+            # optimization: cache iter is ordered by LRU, maybe combine heuristics?
+            # For now, pure Belady's: furthest next use
+            # If item not in future_accesses, assume it is needed never (infinity)
+            
+            for key in self.cache:
+                dist = self.future_accesses.get(key, float('inf'))
+                if dist > max_dist:
+                    max_dist = dist
+                    best_victim = key
+            
+            victim_key = best_victim
+            
+        # Fallback to LRU if graph_aware didn't find specific target or policy is LRU
+        if victim_key is None:
+             # LRU is the *first* item in OrderedDict (if we didn't move accessed items to end)
+             # Wait, `get` moves to end. So LRU is at the beginning (last=False).
+             victim_key, _ = list(self.cache.items())[0] # peek
+
+        # Perform eviction
+        if victim_key:
+             data, size = self.cache.pop(victim_key)
+             self.current_size -= size
+             self.stats['evictions'] += 1
+             
+             # Cleanup future access info if present
+             if victim_key in self.future_accesses:
+                 del self.future_accesses[victim_key]
     
     def mark_for_eviction(self, key: str):
         """Mark item as candidate for eviction"""

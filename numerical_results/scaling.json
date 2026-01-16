@@ -1,0 +1,27 @@
+{
+  "metadata": {
+    "hidden_size": 2048
+  },
+  "data": [
+    {
+      "layers": 4,
+      "avg_inference_ms": 729292608000.0,
+      "params_b": 1262551040
+    },
+    {
+      "layers": 8,
+      "avg_inference_ms": 1366834816000.0002,
+      "params_b": 2000814080
+    },
+    {
+      "layers": 12,
+      "avg_inference_ms": 2004382724000.0002,
+      "params_b": 2739077120
+    },
+    {
+      "layers": 16,
+      "avg_inference_ms": 2641930932000.0005,
+      "params_b": 3477340160
+    }
+  ]
+}
