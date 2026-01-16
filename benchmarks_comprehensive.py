@@ -45,7 +45,7 @@ def create_engine(cache_size_mb=2048, emulation=True, bandwidth=None):
 
 def run_ablation_study():
     print("--- Running Exp 1: Eviction Ablation Study ---", flush=True)
-    policies = ["random", "lru", "graph_aware"]
+    policies = ["random", "fifo", "lru", "lfu", "graph_aware"] # Expanded to 5
     results = []
     
     for policy in policies:
@@ -71,7 +71,10 @@ def run_ablation_study():
             latencies.append(p.value.latency_ms)
             
         avg_lat = np.mean(latencies)
-        hit_rate = engine.local_cache.stats['hits'] / (engine.local_cache.stats['hits'] + engine.local_cache.stats['misses'] + 1e-9)
+        # Calculate hit rate (small fix to avoid div by zero if no stats yet)
+        total_acc = engine.local_cache.stats['hits'] + engine.local_cache.stats['misses']
+        hit_rate = (engine.local_cache.stats['hits'] / total_acc) if total_acc > 0 else 0.0
+        
         results.append({"policy": policy, "latency_ms": float(avg_lat), "hit_rate": float(hit_rate)})
         print(f"  -> {policy}: {avg_lat:.2f}ms, Hit Rate: {hit_rate:.2f}", flush=True)
 
@@ -80,12 +83,23 @@ def run_ablation_study():
 
     labels = [r["policy"] for r in results]
     lats = [r["latency_ms"] for r in results]
-    plt.figure(figsize=(8, 6))
-    plt.bar(labels, lats, color=['gray', 'blue', 'green'])
-    plt.ylabel("Inference Latency (ms)")
-    plt.title("Ablation Study: Eviction Policy Impact")
-    plt.savefig(f"{FIG_DIR}/ablation_eviction.png")
+    colors = ['gray', 'orange', 'blue', 'purple', 'green'] # 5 colors
+    
+    plt.figure(figsize=(10, 6))
+    plt.bar(labels, lats, color=colors)
+    plt.ylabel("Inference Latency (ms) [Lower is Better]", fontweight='bold')
+    plt.title("Ablation Study: Eviction Policy Impact (5-Way)", fontweight='bold')
+    plt.grid(axis='y', linestyle='--', alpha=0.7)
+    
+    # Annotate values
+    for i, v in enumerate(lats):
+        plt.text(i, v + 2, f"{v:.1f}", ha='center')
+        
+    plt.tight_layout()
+    plt.savefig(f"{FIG_DIR}/ablation_eviction.png", dpi=300)
     plt.close()
+    
+    print("Ablation Study Generated.", flush=True)
 
 def run_prefetch_efficacy():
     print("--- Running Exp 2: Prefetch Efficacy ---", flush=True)
@@ -501,9 +515,9 @@ def run_comprehensive_scenarios():
 
 if __name__ == "__main__":
     try:
-        # run_ablation_study()
+        run_ablation_study()
         # run_prefetch_efficacy()
-        run_comprehensive_scenarios()
+        # run_comprehensive_scenarios()
         # run_cache_sensitivity()
         # run_throughput_analysis()
         # run_latency_breakdown()

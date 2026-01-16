@@ -262,7 +262,10 @@ class LocalCache:
         # Graph-Aware Eviction State
         # Maps layer_name -> next_access_index (lower is sooner)
         self.future_accesses: Dict[str, float] = {} 
-        self.eviction_policy = "lru" # "lru", "graph_aware", "random"
+        self.eviction_policy = "lru" # "lru", "graph_aware", "random", "fifo", "lfu"
+        
+        # LFU State
+        self.access_counts: Dict[str, int] = {}
         
         # Statistics
         self.stats = {
@@ -275,7 +278,7 @@ class LocalCache:
         print(f"Local cache initialized: {capacity_mb}MB capacity")
 
     def set_eviction_policy(self, policy: str):
-        """Set eviction policy: 'lru' or 'graph_aware'"""
+        """Set eviction policy: 'lru', 'graph_aware', 'random', 'fifo', 'lfu'"""
         self.eviction_policy = policy
 
     def update_future_accesses(self, future_map: Dict[str, float]):
@@ -302,11 +305,20 @@ class LocalCache:
         """
         with self.cache_lock:
             if key in self.cache:
-                # Move to end (most recently used)
-                data, size = self.cache.pop(key)
-                self.cache[key] = (data, size)
-                
+                # Update access stats
                 self.stats['hits'] += 1
+                self.access_counts[key] = self.access_counts.get(key, 0) + 1
+                
+                # Update ordering based on policy
+                data, size = self.cache[key]
+                
+                if self.eviction_policy == "lru" or self.eviction_policy == "graph_aware":
+                    # Move to end (most recently used)
+                    self.cache.move_to_end(key, last=True)
+                # FIFO: Do nothing (keep insertion order)
+                # LFU: Order doesn't matter for storage, eviction scans counts
+                # Random: Logic doesn't use order
+                
                 return data.copy()
             
             self.stats['misses'] += 1
@@ -329,10 +341,14 @@ class LocalCache:
                 _, old_size = self.cache.pop(key)
                 self.current_size -= old_size
             
+            # Initialize access count for new item
+            if key not in self.access_counts:
+                 self.access_counts[key] = 1
+
             # Evict until we have space
             while (self.current_size + data_size > self.capacity and 
                    len(self.cache) > 0):
-                self._evict_lru()
+                self._evict()
             
             if self.current_size + data_size <= self.capacity:
                 self.cache[key] = (data.copy(), data_size)
@@ -340,11 +356,12 @@ class LocalCache:
                 self.stats['bytes_cached'] += data_size
                 
                 if pin:
-                    # Move pinned items to end to avoid eviction
-                    pinned_data = self.cache.pop(key)
-                    self.cache[key] = pinned_data
+                    # Move pinned items to end to avoid eviction? 
+                    # Actually pinning isn't fully supported by just moving to end if policy isn't LRU.
+                    # But for now assuming only prefetcher pins.
+                    self.cache.move_to_end(key, last=True)
     
-    def _evict_lru(self):
+    def _evict(self):
         """Evict item based on policy"""
         if not self.cache:
             return
@@ -356,11 +373,6 @@ class LocalCache:
             max_dist = -1.0
             best_victim = None
             
-            # Check all cached items
-            # optimization: cache iter is ordered by LRU, maybe combine heuristics?
-            # For now, pure Belady's: furthest next use
-            # If item not in future_accesses, assume it is needed never (infinity)
-            
             for key in self.cache:
                 dist = self.future_accesses.get(key, float('inf'))
                 if dist > max_dist:
@@ -369,18 +381,36 @@ class LocalCache:
             
             victim_key = best_victim
             
-        elif self.eviction_policy == "random" and self.cache:
-            # Random eviction baseline
+        elif self.eviction_policy == "random":
             import random
             keys = list(self.cache.keys())
             if keys:
                 victim_key = random.choice(keys)
+                
+        elif self.eviction_policy == "lfu":
+            # Least Frequently Used
+            min_count = float('inf')
+            best_victim = None
+            
+            # Search all keys. Ties broken by arbitrary order (iteration order)
+            for key in self.cache:
+                count = self.access_counts.get(key, 0)
+                if count < min_count:
+                    min_count = count
+                    best_victim = key
+            
+            victim_key = best_victim
+            # Decrease count of victim? Or just remove? Remove.
 
-        # Fallback to LRU if graph_aware didn't find specific target or policy is LRU
+        elif self.eviction_policy == "fifo":
+             # First In First Out
+             # OrderedDict preserves insertion order. Pop first item.
+             victim_key, _ = list(self.cache.items())[0]
+
+        # Fallback (LRU equivalent)
         if victim_key is None:
-             # LRU is the *first* item in OrderedDict (if we didn't move accessed items to end)
-             # Wait, `get` moves to end. So LRU is at the beginning (last=False).
-             victim_key, _ = list(self.cache.items())[0] # peek
+             # LRU: First item (least recently used, assuming get() moves used to end)
+             victim_key, _ = list(self.cache.items())[0]
 
         # Perform eviction
         if victim_key:
@@ -388,9 +418,11 @@ class LocalCache:
              self.current_size -= size
              self.stats['evictions'] += 1
              
-             # Cleanup future access info if present
+             # Cleanup specific state
              if victim_key in self.future_accesses:
                  del self.future_accesses[victim_key]
+             if victim_key in self.access_counts:
+                 del self.access_counts[victim_key]
     
     def mark_for_eviction(self, key: str):
         """Mark item as candidate for eviction"""
