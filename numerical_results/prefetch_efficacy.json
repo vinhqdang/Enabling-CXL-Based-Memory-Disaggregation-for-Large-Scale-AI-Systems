@@ -1,0 +1,30 @@
+[
+  {
+    "mode": "no_prefetch",
+    "latency_ms": 570.601365625
+  },
+  {
+    "mode": "static",
+    "latency_ms": 408.14281
+  },
+  {
+    "mode": "tmo",
+    "latency_ms": 359.314285
+  },
+  {
+    "mode": "melody",
+    "latency_ms": 359.314285
+  },
+  {
+    "mode": "limoncello",
+    "latency_ms": 354.071405
+  },
+  {
+    "mode": "expand",
+    "latency_ms": 354.071405
+  },
+  {
+    "mode": "camp",
+    "latency_ms": 361.935725
+  }
+]

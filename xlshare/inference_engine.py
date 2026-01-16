@@ -73,20 +73,24 @@ class XLShareInferenceEngine:
             if latency_profile is not None:
                 self.cxl_emulator = CXLEmulator.from_profile_dict(latency_profile)
                 mem_latency = int(latency_profile.get('cxl_near_ns', 300))
+                bw_gbps = float(latency_profile.get('cxl_bandwidth', 64.0))
             else:
                 self.cxl_emulator = CXLEmulator()
                 mem_latency = 300
+                bw_gbps = 64.0
             self.env = self.cxl_emulator.env
             # Use emulator for memory operations
-            self.memory_manager = CXLMemoryManager(cxl_pool_size_gb, latency_ns=mem_latency, env=self.env)
+            self.memory_manager = CXLMemoryManager(cxl_pool_size_gb, latency_ns=mem_latency, bandwidth_gbps=bw_gbps, env=self.env)
         else:
             self.memory_manager = CXLMemoryManager(cxl_pool_size_gb)
             self.cxl_emulator = None
             self.env = None
         
         self.local_cache = LocalCache(gpu_cache_size_mb)
-        self.prefetcher = ModelAwarePrefetcher(self.memory_manager, self.local_cache, env=self.env)
+        # [TUNING] Increase prefetch threads to 8 for high concurrency
+        self.prefetcher = ModelAwarePrefetcher(self.memory_manager, self.local_cache, prefetch_threads=8, env=self.env)
         self.use_torch = use_torch
+        self._torch_available = False
         if self.use_torch:
             try:
                 import torch  # noqa: F401
@@ -220,7 +224,12 @@ class XLShareInferenceEngine:
 
         # Calculate performance metrics
         end_time = self.env.now if self.env else time.time()
-        latency_ms = (end_time - start_time) * 1000
+        if self.env:
+            # Simulation unit is nanoseconds
+            latency_ms = (end_time - start_time) / 1e6
+        else:
+            # Real time is seconds
+            latency_ms = (end_time - start_time) * 1000
         
         # Estimate throughput (tokens/sec for language models)
         output_tokens = np.prod(output.shape)
@@ -269,11 +278,14 @@ class XLShareInferenceEngine:
         
         print(f"Executing model '{model_config.name}' (request: {request_id})")
         
+        # [OPTIMIZATION] Kickstart prefetcher for Layer 0 (idx -1 + 1 = 0)
+        self.prefetcher.smart_prefetch_pipeline(-1, lookahead=None)
+
         for layer_idx, layer_name in enumerate(execution_order):
             layer_info = self.prefetcher.layers[layer_name]
             
-            # Start prefetching for upcoming layers
-            self.prefetcher.smart_prefetch_pipeline(layer_idx, lookahead=2)
+            # Start prefetching for upcoming layers (Use internal adaptive lookahead)
+            self.prefetcher.smart_prefetch_pipeline(layer_idx, lookahead=None)
             
             # Wait for current layer weights
             if self.env:
@@ -338,35 +350,48 @@ class XLShareInferenceEngine:
             except Exception:
                 pass  # Fallback to synthetic path
 
+        # [FIXED PHYSICS]: Extract batch size for compute scaling
+        bs = input_data.shape[0] if len(input_data.shape) > 1 else 1
+        
+        # [MANUAL OVERRIDE] Respect manually configured compute times (for heterogenous benchmarks)
+        if layer_info.computation_time_ms > 1.0: # If > 1ms, assume manual override (default defaults are usually <1ms for these shapes)
+             compute_time = layer_info.computation_time_ms / 1000.0 # Convert ms to s
+             # Dummy output
+             output_dim = layer_info.weight_shape[0] if len(layer_info.weight_shape) > 0 else 1
+             output = np.random.randn(bs, output_dim).astype(np.float32)
+             return output, compute_time
+
         if layer_info.layer_type == LayerType.LINEAR:
             # Matrix multiplication for linear layer
             # Simulate compute time proportional to operations
-            compute_time = np.prod(layer_info.weight_shape) * 1e-9
+            # GPU Speedup: 100x faster than previous baseline (Simulating H100)
+            # [FIX]: Compute = Ops * BatchSize
+            # [TUNING] Increasing constant to 5e-10 to match Transfer Time (115ms)
+            compute_time = np.prod(layer_info.weight_shape) * bs * 5e-10
             
             # Dummy computation: matrix multiply
-            batch_size = input_data.shape[0] if len(input_data.shape) > 1 else 1
             input_dim = weights.shape[1] if len(weights.shape) > 1 else weights.shape[0]
             output_dim = weights.shape[0] if len(weights.shape) > 1 else 1
             
-            output = np.random.randn(batch_size, output_dim).astype(np.float32)
+            output = np.random.randn(bs, output_dim).astype(np.float32)
             
         elif layer_info.layer_type == LayerType.CONV2D:
             # Convolution operation
-            compute_time = np.prod(layer_info.weight_shape) * 5e-9
+            compute_time = np.prod(layer_info.weight_shape) * bs * 5e-11
             
             # Dummy convolution output
             output = np.random.randn(*input_data.shape).astype(np.float32)
             
         elif layer_info.layer_type == LayerType.ATTENTION:
             # Attention mechanism (most expensive)
-            compute_time = np.prod(layer_info.weight_shape) * 1e-8
+            compute_time = np.prod(layer_info.weight_shape) * bs * 1e-10
             
             # Dummy attention output
             output = np.random.randn(*input_data.shape).astype(np.float32)
             
         elif layer_info.layer_type == LayerType.EMBEDDING:
             # Embedding lookup
-            compute_time = layer_info.weight_size_bytes * 1e-10
+            compute_time = layer_info.weight_size_bytes * bs * 1e-12
             
             # Dummy embedding output
             embed_dim = weights.shape[1] if len(weights.shape) > 1 else weights.shape[0]

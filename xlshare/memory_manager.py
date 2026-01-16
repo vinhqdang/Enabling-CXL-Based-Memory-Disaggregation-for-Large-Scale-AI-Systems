@@ -35,16 +35,19 @@ class CXLMemoryManager:
     for AI model weights and parameters.
     """
     
-    def __init__(self, pool_size_gb: float = 64.0, latency_ns: int = 300, env=None):
+    def __init__(self, pool_size_gb: float = 64.0, latency_ns: int = 300, bandwidth_gbps: float = 64.0, env=None):
         """
         Initialize CXL memory manager
         
         Args:
             pool_size_gb: Size of memory pool in GB
-            latency_ns: CXL access latency in nanoseconds  
+            latency_ns: CXL access latency in nanoseconds
+            bandwidth_gbps: CXL link bandwidth in GB/s
         """
         self.pool_size = int(pool_size_gb * 1024**3)  # Convert to bytes
         self.latency_ns = latency_ns
+        self.bandwidth_gbps = bandwidth_gbps
+        self.bandwidth_bytes_per_ns = (bandwidth_gbps * 1024**3) / 1e9
         self.env = env
         
         # Memory pool storage (simulated as dict)
@@ -138,11 +141,13 @@ class CXLMemoryManager:
         Returns:
             Data as numpy array
         """
-        # Simulate CXL access latency
+        # Simulate CXL access latency + Transfer Time
+        transfer_time_ns = self.latency_ns + (size / self.bandwidth_bytes_per_ns)
+        
         if self.env:
-            yield self.env.timeout(self.latency_ns)
+            yield self.env.timeout(transfer_time_ns)
         else:
-            time.sleep(self.latency_ns / 1e9)
+            time.sleep(transfer_time_ns / 1e9)
         
         with self.coherence_lock:
             if address not in self.memory_pool:
@@ -257,7 +262,7 @@ class LocalCache:
         # Graph-Aware Eviction State
         # Maps layer_name -> next_access_index (lower is sooner)
         self.future_accesses: Dict[str, float] = {} 
-        self.eviction_policy = "lru" # "lru" or "graph_aware"
+        self.eviction_policy = "lru" # "lru", "graph_aware", "random"
         
         # Statistics
         self.stats = {
@@ -364,6 +369,13 @@ class LocalCache:
             
             victim_key = best_victim
             
+        elif self.eviction_policy == "random" and self.cache:
+            # Random eviction baseline
+            import random
+            keys = list(self.cache.keys())
+            if keys:
+                victim_key = random.choice(keys)
+
         # Fallback to LRU if graph_aware didn't find specific target or policy is LRU
         if victim_key is None:
              # LRU is the *first* item in OrderedDict (if we didn't move accessed items to end)

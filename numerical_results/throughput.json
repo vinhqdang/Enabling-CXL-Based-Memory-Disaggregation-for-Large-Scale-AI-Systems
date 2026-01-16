@@ -1,0 +1,32 @@
+[
+  {
+    "batch_size": 1,
+    "total_time_ms": 5.264258559999988,
+    "throughput_tps": 24314.915109336936
+  },
+  {
+    "batch_size": 2,
+    "total_time_ms": 5.264258559999988,
+    "throughput_tps": 48629.83021867387
+  },
+  {
+    "batch_size": 4,
+    "total_time_ms": 5.264258559999988,
+    "throughput_tps": 97259.66043734775
+  },
+  {
+    "batch_size": 8,
+    "total_time_ms": 5.264258559999988,
+    "throughput_tps": 194519.3208746955
+  },
+  {
+    "batch_size": 16,
+    "total_time_ms": 5.264258559999954,
+    "throughput_tps": 389038.6417493935
+  },
+  {
+    "batch_size": 32,
+    "total_time_ms": 5.264258559999943,
+    "throughput_tps": 778077.2834987885
+  }
+]

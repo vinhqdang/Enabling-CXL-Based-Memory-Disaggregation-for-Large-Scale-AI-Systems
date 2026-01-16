@@ -1,0 +1,749 @@
+STARTING BENCHMARKS (COMPREHENSIVE)...
+--- Running Exp 2: Prefetch Efficacy ---
+Testing Mode: no_prefetch
+CXL Emulator initialized:
+  - 4 hosts
+  - 4 memory pools
+  - Coherence: enabled
+  - CXL latency: 200ns (near)
+CXL Memory Manager initialized: 64.0GB pool, 200ns latency
+Local cache initialized: 200MB capacity
+Model-aware prefetcher initialized with 8 workers
+XL-Share Inference Engine initialized
+  - CXL Pool: 64.0GB
+  - GPU Cache: 200MB
+  - Emulation: True
+  - Real Execution: False
+Stored embedding: (32000, 1024) -> 0x10000000 (131072000 bytes)
+Stored layer_0_attention: (1024, 3072) -> 0x17d00000 (12582912 bytes)
+Stored layer_0_ff1: (1024, 4096) -> 0x18900000 (16777216 bytes)
+Stored layer_0_ff2: (4096, 1024) -> 0x19900000 (16777216 bytes)
+Stored layer_0_ln1: (1024,) -> 0x1a900000 (4096 bytes)
+Stored layer_0_ln2: (1024,) -> 0x1a901000 (4096 bytes)
+Stored layer_1_attention: (1024, 3072) -> 0x1a902000 (12582912 bytes)
+Stored layer_1_ff1: (1024, 4096) -> 0x1b502000 (16777216 bytes)
+Stored layer_1_ff2: (4096, 1024) -> 0x1c502000 (16777216 bytes)
+Stored layer_1_ln1: (1024,) -> 0x1d502000 (4096 bytes)
+Stored layer_1_ln2: (1024,) -> 0x1d503000 (4096 bytes)
+Stored layer_2_attention: (1024, 3072) -> 0x1d504000 (12582912 bytes)
+Stored layer_2_ff1: (1024, 4096) -> 0x1e104000 (16777216 bytes)
+Stored layer_2_ff2: (4096, 1024) -> 0x1f104000 (16777216 bytes)
+Stored layer_2_ln1: (1024,) -> 0x20104000 (4096 bytes)
+Stored layer_2_ln2: (1024,) -> 0x20105000 (4096 bytes)
+Stored layer_3_attention: (1024, 3072) -> 0x20106000 (12582912 bytes)
+Stored layer_3_ff1: (1024, 4096) -> 0x20d06000 (16777216 bytes)
+Stored layer_3_ff2: (4096, 1024) -> 0x21d06000 (16777216 bytes)
+Stored layer_3_ln1: (1024,) -> 0x22d06000 (4096 bytes)
+Stored layer_3_ln2: (1024,) -> 0x22d07000 (4096 bytes)
+Stored layer_4_attention: (1024, 3072) -> 0x22d08000 (12582912 bytes)
+Stored layer_4_ff1: (1024, 4096) -> 0x23908000 (16777216 bytes)
+Stored layer_4_ff2: (4096, 1024) -> 0x24908000 (16777216 bytes)
+Stored layer_4_ln1: (1024,) -> 0x25908000 (4096 bytes)
+Stored layer_4_ln2: (1024,) -> 0x25909000 (4096 bytes)
+Stored layer_5_attention: (1024, 3072) -> 0x2590a000 (12582912 bytes)
+Stored layer_5_ff1: (1024, 4096) -> 0x2650a000 (16777216 bytes)
+Stored layer_5_ff2: (4096, 1024) -> 0x2750a000 (16777216 bytes)
+Stored layer_5_ln1: (1024,) -> 0x2850a000 (4096 bytes)
+Stored layer_5_ln2: (1024,) -> 0x2850b000 (4096 bytes)
+Stored layer_6_attention: (1024, 3072) -> 0x2850c000 (12582912 bytes)
+Stored layer_6_ff1: (1024, 4096) -> 0x2910c000 (16777216 bytes)
+Stored layer_6_ff2: (4096, 1024) -> 0x2a10c000 (16777216 bytes)
+Stored layer_6_ln1: (1024,) -> 0x2b10c000 (4096 bytes)
+Stored layer_6_ln2: (1024,) -> 0x2b10d000 (4096 bytes)
+Stored layer_7_attention: (1024, 3072) -> 0x2b10e000 (12582912 bytes)
+Stored layer_7_ff1: (1024, 4096) -> 0x2bd0e000 (16777216 bytes)
+Stored layer_7_ff2: (4096, 1024) -> 0x2cd0e000 (16777216 bytes)
+Stored layer_7_ln1: (1024,) -> 0x2dd0e000 (4096 bytes)
+Stored layer_7_ln2: (1024,) -> 0x2dd0f000 (4096 bytes)
+Stored layer_8_attention: (1024, 3072) -> 0x2dd10000 (12582912 bytes)
+Stored layer_8_ff1: (1024, 4096) -> 0x2e910000 (16777216 bytes)
+Stored layer_8_ff2: (4096, 1024) -> 0x2f910000 (16777216 bytes)
+Stored layer_8_ln1: (1024,) -> 0x30910000 (4096 bytes)
+Stored layer_8_ln2: (1024,) -> 0x30911000 (4096 bytes)
+Stored layer_9_attention: (1024, 3072) -> 0x30912000 (12582912 bytes)
+Stored layer_9_ff1: (1024, 4096) -> 0x31512000 (16777216 bytes)
+Stored layer_9_ff2: (4096, 1024) -> 0x32512000 (16777216 bytes)
+Stored layer_9_ln1: (1024,) -> 0x33512000 (4096 bytes)
+Stored layer_9_ln2: (1024,) -> 0x33513000 (4096 bytes)
+Stored layer_10_attention: (1024, 3072) -> 0x33514000 (12582912 bytes)
+Stored layer_10_ff1: (1024, 4096) -> 0x34114000 (16777216 bytes)
+Stored layer_10_ff2: (4096, 1024) -> 0x35114000 (16777216 bytes)
+Stored layer_10_ln1: (1024,) -> 0x36114000 (4096 bytes)
+Stored layer_10_ln2: (1024,) -> 0x36115000 (4096 bytes)
+Stored layer_11_attention: (1024, 3072) -> 0x36116000 (12582912 bytes)
+Stored layer_11_ff1: (1024, 4096) -> 0x36d16000 (16777216 bytes)
+Stored layer_11_ff2: (4096, 1024) -> 0x37d16000 (16777216 bytes)
+Stored layer_11_ln1: (1024,) -> 0x38d16000 (4096 bytes)
+Stored layer_11_ln2: (1024,) -> 0x38d17000 (4096 bytes)
+Stored output_head: (1024, 32000) -> 0x38d18000 (131072000 bytes)
+Cache Capacity: 209715200 bytes
+Registered model with 62 layers
+Pinned Layers (0): []...
+Execution order: embedding -> layer_0_attention -> layer_0_ff1 -> layer_0_ff2 -> layer_0_ln1...
+Registered model 'transformer_12L_1024H':
+  - Layers: 62
+  - Parameters: 203,972,608
+  - Size: 778.1MB
+Executing model 'transformer_12L_1024H' (request: warmup)
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+Executing model 'transformer_12L_1024H' (request: req_0)
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (1), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+Executing model 'transformer_12L_1024H' (request: req_1)
+[Adaptive] Stalls detected (1), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+Executing model 'transformer_12L_1024H' (request: req_2)
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (1), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+Executing model 'transformer_12L_1024H' (request: req_3)
+[Adaptive] Stalls detected (1), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+Executing model 'transformer_12L_1024H' (request: req_4)
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (1), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (1), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 0
+  -> no_prefetch: 198.77ms
+Testing Mode: static
+CXL Emulator initialized:
+  - 4 hosts
+  - 4 memory pools
+  - Coherence: enabled
+  - CXL latency: 200ns (near)
+CXL Memory Manager initialized: 64.0GB pool, 200ns latency
+Local cache initialized: 200MB capacity
+Model-aware prefetcher initialized with 8 workers
+XL-Share Inference Engine initialized
+  - CXL Pool: 64.0GB
+  - GPU Cache: 200MB
+  - Emulation: True
+  - Real Execution: False
+Stored embedding: (32000, 1024) -> 0x10000000 (131072000 bytes)
+Stored layer_0_attention: (1024, 3072) -> 0x17d00000 (12582912 bytes)
+Stored layer_0_ff1: (1024, 4096) -> 0x18900000 (16777216 bytes)
+Stored layer_0_ff2: (4096, 1024) -> 0x19900000 (16777216 bytes)
+Stored layer_0_ln1: (1024,) -> 0x1a900000 (4096 bytes)
+Stored layer_0_ln2: (1024,) -> 0x1a901000 (4096 bytes)
+Stored layer_1_attention: (1024, 3072) -> 0x1a902000 (12582912 bytes)
+Stored layer_1_ff1: (1024, 4096) -> 0x1b502000 (16777216 bytes)
+Stored layer_1_ff2: (4096, 1024) -> 0x1c502000 (16777216 bytes)
+Stored layer_1_ln1: (1024,) -> 0x1d502000 (4096 bytes)
+Stored layer_1_ln2: (1024,) -> 0x1d503000 (4096 bytes)
+Stored layer_2_attention: (1024, 3072) -> 0x1d504000 (12582912 bytes)
+Stored layer_2_ff1: (1024, 4096) -> 0x1e104000 (16777216 bytes)
+Stored layer_2_ff2: (4096, 1024) -> 0x1f104000 (16777216 bytes)
+Stored layer_2_ln1: (1024,) -> 0x20104000 (4096 bytes)
+Stored layer_2_ln2: (1024,) -> 0x20105000 (4096 bytes)
+Stored layer_3_attention: (1024, 3072) -> 0x20106000 (12582912 bytes)
+Stored layer_3_ff1: (1024, 4096) -> 0x20d06000 (16777216 bytes)
+Stored layer_3_ff2: (4096, 1024) -> 0x21d06000 (16777216 bytes)
+Stored layer_3_ln1: (1024,) -> 0x22d06000 (4096 bytes)
+Stored layer_3_ln2: (1024,) -> 0x22d07000 (4096 bytes)
+Stored layer_4_attention: (1024, 3072) -> 0x22d08000 (12582912 bytes)
+Stored layer_4_ff1: (1024, 4096) -> 0x23908000 (16777216 bytes)
+Stored layer_4_ff2: (4096, 1024) -> 0x24908000 (16777216 bytes)
+Stored layer_4_ln1: (1024,) -> 0x25908000 (4096 bytes)
+Stored layer_4_ln2: (1024,) -> 0x25909000 (4096 bytes)
+Stored layer_5_attention: (1024, 3072) -> 0x2590a000 (12582912 bytes)
+Stored layer_5_ff1: (1024, 4096) -> 0x2650a000 (16777216 bytes)
+Stored layer_5_ff2: (4096, 1024) -> 0x2750a000 (16777216 bytes)
+Stored layer_5_ln1: (1024,) -> 0x2850a000 (4096 bytes)
+Stored layer_5_ln2: (1024,) -> 0x2850b000 (4096 bytes)
+Stored layer_6_attention: (1024, 3072) -> 0x2850c000 (12582912 bytes)
+Stored layer_6_ff1: (1024, 4096) -> 0x2910c000 (16777216 bytes)
+Stored layer_6_ff2: (4096, 1024) -> 0x2a10c000 (16777216 bytes)
+Stored layer_6_ln1: (1024,) -> 0x2b10c000 (4096 bytes)
+Stored layer_6_ln2: (1024,) -> 0x2b10d000 (4096 bytes)
+Stored layer_7_attention: (1024, 3072) -> 0x2b10e000 (12582912 bytes)
+Stored layer_7_ff1: (1024, 4096) -> 0x2bd0e000 (16777216 bytes)
+Stored layer_7_ff2: (4096, 1024) -> 0x2cd0e000 (16777216 bytes)
+Stored layer_7_ln1: (1024,) -> 0x2dd0e000 (4096 bytes)
+Stored layer_7_ln2: (1024,) -> 0x2dd0f000 (4096 bytes)
+Stored layer_8_attention: (1024, 3072) -> 0x2dd10000 (12582912 bytes)
+Stored layer_8_ff1: (1024, 4096) -> 0x2e910000 (16777216 bytes)
+Stored layer_8_ff2: (4096, 1024) -> 0x2f910000 (16777216 bytes)
+Stored layer_8_ln1: (1024,) -> 0x30910000 (4096 bytes)
+Stored layer_8_ln2: (1024,) -> 0x30911000 (4096 bytes)
+Stored layer_9_attention: (1024, 3072) -> 0x30912000 (12582912 bytes)
+Stored layer_9_ff1: (1024, 4096) -> 0x31512000 (16777216 bytes)
+Stored layer_9_ff2: (4096, 1024) -> 0x32512000 (16777216 bytes)
+Stored layer_9_ln1: (1024,) -> 0x33512000 (4096 bytes)
+Stored layer_9_ln2: (1024,) -> 0x33513000 (4096 bytes)
+Stored layer_10_attention: (1024, 3072) -> 0x33514000 (12582912 bytes)
+Stored layer_10_ff1: (1024, 4096) -> 0x34114000 (16777216 bytes)
+Stored layer_10_ff2: (4096, 1024) -> 0x35114000 (16777216 bytes)
+Stored layer_10_ln1: (1024,) -> 0x36114000 (4096 bytes)
+Stored layer_10_ln2: (1024,) -> 0x36115000 (4096 bytes)
+Stored layer_11_attention: (1024, 3072) -> 0x36116000 (12582912 bytes)
+Stored layer_11_ff1: (1024, 4096) -> 0x36d16000 (16777216 bytes)
+Stored layer_11_ff2: (4096, 1024) -> 0x37d16000 (16777216 bytes)
+Stored layer_11_ln1: (1024,) -> 0x38d16000 (4096 bytes)
+Stored layer_11_ln2: (1024,) -> 0x38d17000 (4096 bytes)
+Stored output_head: (1024, 32000) -> 0x38d18000 (131072000 bytes)
+Cache Capacity: 209715200 bytes
+Registered model with 62 layers
+Pinned Layers (0): []...
+Execution order: embedding -> layer_0_attention -> layer_0_ff1 -> layer_0_ff2 -> layer_0_ln1...
+Registered model 'transformer_12L_1024H':
+  - Layers: 62
+  - Parameters: 203,972,608
+  - Size: 778.1MB
+Executing model 'transformer_12L_1024H' (request: warmup)
+Executing model 'transformer_12L_1024H' (request: req_0)
+[Adaptive] Stalls detected (1), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (1), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (1), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (1), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (1), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (1), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (1), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+Executing model 'transformer_12L_1024H' (request: req_1)
+[Adaptive] Stalls detected (1), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (1), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (1), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (1), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+Executing model 'transformer_12L_1024H' (request: req_2)
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (1), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (1), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (1), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (1), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (1), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (1), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (1), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (1), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+Executing model 'transformer_12L_1024H' (request: req_3)
+[Adaptive] Stalls detected (1), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (1), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (1), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (1), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+Executing model 'transformer_12L_1024H' (request: req_4)
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (1), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (1), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (1), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (1), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (1), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (1), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (1), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (1), BOOSTING lookahead to 2
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 2
+  -> static: 190.56ms
+Testing Mode: adaptive
+CXL Emulator initialized:
+  - 4 hosts
+  - 4 memory pools
+  - Coherence: enabled
+  - CXL latency: 200ns (near)
+CXL Memory Manager initialized: 64.0GB pool, 200ns latency
+Local cache initialized: 200MB capacity
+Model-aware prefetcher initialized with 8 workers
+XL-Share Inference Engine initialized
+  - CXL Pool: 64.0GB
+  - GPU Cache: 200MB
+  - Emulation: True
+  - Real Execution: False
+Stored embedding: (32000, 1024) -> 0x10000000 (131072000 bytes)
+Stored layer_0_attention: (1024, 3072) -> 0x17d00000 (12582912 bytes)
+Stored layer_0_ff1: (1024, 4096) -> 0x18900000 (16777216 bytes)
+Stored layer_0_ff2: (4096, 1024) -> 0x19900000 (16777216 bytes)
+Stored layer_0_ln1: (1024,) -> 0x1a900000 (4096 bytes)
+Stored layer_0_ln2: (1024,) -> 0x1a901000 (4096 bytes)
+Stored layer_1_attention: (1024, 3072) -> 0x1a902000 (12582912 bytes)
+Stored layer_1_ff1: (1024, 4096) -> 0x1b502000 (16777216 bytes)
+Stored layer_1_ff2: (4096, 1024) -> 0x1c502000 (16777216 bytes)
+Stored layer_1_ln1: (1024,) -> 0x1d502000 (4096 bytes)
+Stored layer_1_ln2: (1024,) -> 0x1d503000 (4096 bytes)
+Stored layer_2_attention: (1024, 3072) -> 0x1d504000 (12582912 bytes)
+Stored layer_2_ff1: (1024, 4096) -> 0x1e104000 (16777216 bytes)
+Stored layer_2_ff2: (4096, 1024) -> 0x1f104000 (16777216 bytes)
+Stored layer_2_ln1: (1024,) -> 0x20104000 (4096 bytes)
+Stored layer_2_ln2: (1024,) -> 0x20105000 (4096 bytes)
+Stored layer_3_attention: (1024, 3072) -> 0x20106000 (12582912 bytes)
+Stored layer_3_ff1: (1024, 4096) -> 0x20d06000 (16777216 bytes)
+Stored layer_3_ff2: (4096, 1024) -> 0x21d06000 (16777216 bytes)
+Stored layer_3_ln1: (1024,) -> 0x22d06000 (4096 bytes)
+Stored layer_3_ln2: (1024,) -> 0x22d07000 (4096 bytes)
+Stored layer_4_attention: (1024, 3072) -> 0x22d08000 (12582912 bytes)
+Stored layer_4_ff1: (1024, 4096) -> 0x23908000 (16777216 bytes)
+Stored layer_4_ff2: (4096, 1024) -> 0x24908000 (16777216 bytes)
+Stored layer_4_ln1: (1024,) -> 0x25908000 (4096 bytes)
+Stored layer_4_ln2: (1024,) -> 0x25909000 (4096 bytes)
+Stored layer_5_attention: (1024, 3072) -> 0x2590a000 (12582912 bytes)
+Stored layer_5_ff1: (1024, 4096) -> 0x2650a000 (16777216 bytes)
+Stored layer_5_ff2: (4096, 1024) -> 0x2750a000 (16777216 bytes)
+Stored layer_5_ln1: (1024,) -> 0x2850a000 (4096 bytes)
+Stored layer_5_ln2: (1024,) -> 0x2850b000 (4096 bytes)
+Stored layer_6_attention: (1024, 3072) -> 0x2850c000 (12582912 bytes)
+Stored layer_6_ff1: (1024, 4096) -> 0x2910c000 (16777216 bytes)
+Stored layer_6_ff2: (4096, 1024) -> 0x2a10c000 (16777216 bytes)
+Stored layer_6_ln1: (1024,) -> 0x2b10c000 (4096 bytes)
+Stored layer_6_ln2: (1024,) -> 0x2b10d000 (4096 bytes)
+Stored layer_7_attention: (1024, 3072) -> 0x2b10e000 (12582912 bytes)
+Stored layer_7_ff1: (1024, 4096) -> 0x2bd0e000 (16777216 bytes)
+Stored layer_7_ff2: (4096, 1024) -> 0x2cd0e000 (16777216 bytes)
+Stored layer_7_ln1: (1024,) -> 0x2dd0e000 (4096 bytes)
+Stored layer_7_ln2: (1024,) -> 0x2dd0f000 (4096 bytes)
+Stored layer_8_attention: (1024, 3072) -> 0x2dd10000 (12582912 bytes)
+Stored layer_8_ff1: (1024, 4096) -> 0x2e910000 (16777216 bytes)
+Stored layer_8_ff2: (4096, 1024) -> 0x2f910000 (16777216 bytes)
+Stored layer_8_ln1: (1024,) -> 0x30910000 (4096 bytes)
+Stored layer_8_ln2: (1024,) -> 0x30911000 (4096 bytes)
+Stored layer_9_attention: (1024, 3072) -> 0x30912000 (12582912 bytes)
+Stored layer_9_ff1: (1024, 4096) -> 0x31512000 (16777216 bytes)
+Stored layer_9_ff2: (4096, 1024) -> 0x32512000 (16777216 bytes)
+Stored layer_9_ln1: (1024,) -> 0x33512000 (4096 bytes)
+Stored layer_9_ln2: (1024,) -> 0x33513000 (4096 bytes)
+Stored layer_10_attention: (1024, 3072) -> 0x33514000 (12582912 bytes)
+Stored layer_10_ff1: (1024, 4096) -> 0x34114000 (16777216 bytes)
+Stored layer_10_ff2: (4096, 1024) -> 0x35114000 (16777216 bytes)
+Stored layer_10_ln1: (1024,) -> 0x36114000 (4096 bytes)
+Stored layer_10_ln2: (1024,) -> 0x36115000 (4096 bytes)
+Stored layer_11_attention: (1024, 3072) -> 0x36116000 (12582912 bytes)
+Stored layer_11_ff1: (1024, 4096) -> 0x36d16000 (16777216 bytes)
+Stored layer_11_ff2: (4096, 1024) -> 0x37d16000 (16777216 bytes)
+Stored layer_11_ln1: (1024,) -> 0x38d16000 (4096 bytes)
+Stored layer_11_ln2: (1024,) -> 0x38d17000 (4096 bytes)
+Stored output_head: (1024, 32000) -> 0x38d18000 (131072000 bytes)
+Cache Capacity: 209715200 bytes
+Registered model with 62 layers
+Pinned Layers (0): []...
+Execution order: embedding -> layer_0_attention -> layer_0_ff1 -> layer_0_ff2 -> layer_0_ln1...
+Registered model 'transformer_12L_1024H':
+  - Layers: 62
+  - Parameters: 203,972,608
+  - Size: 778.1MB
+Executing model 'transformer_12L_1024H' (request: warmup)
+Executing model 'transformer_12L_1024H' (request: req_0)
+[Adaptive] Stalls detected (1), BOOSTING lookahead to 10
+[Adaptive] Stalls detected (1), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (1), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (1), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (1), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (1), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (1), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+Executing model 'transformer_12L_1024H' (request: req_1)
+[Adaptive] Stalls detected (1), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (1), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+Executing model 'transformer_12L_1024H' (request: req_2)
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (1), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+Executing model 'transformer_12L_1024H' (request: req_3)
+[Adaptive] Stalls detected (1), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+Executing model 'transformer_12L_1024H' (request: req_4)
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (1), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+[Adaptive] Stalls detected (2), BOOSTING lookahead to 20
+  -> adaptive: 195.74ms
+
+All Comprehensive Experiments Completed.
+

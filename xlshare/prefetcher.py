@@ -109,12 +109,17 @@ class ModelAwarePrefetcher:
         print(f"Model-aware prefetcher initialized with {prefetch_threads} workers")
         
         # Adaptive prefetching state
-        self.current_lookahead = 2
-        self.min_lookahead = 1
-        self.max_lookahead = 10
-        self.adaptation_interval = 5
+        self.current_lookahead = 5  # [TUNING] Start with aggressive lookahead
+        self.min_lookahead = 2
+        self.max_lookahead = 20
+        self.adaptation_interval = 2 # [TUNING] Adapt faster
         self.steps_since_adaptation = 0
         self.last_stats = self.stats.copy()
+
+        # [NEW] Advanced Baselines Configuration
+        self.mode = "camp" # Options: no_prefetch, static, tmo, melody, limoncello, expand, camp
+        self.debug = False
+        self.history_window_ms = 300.0 # Window for history replay
     
     def register_model(self, layers: List[LayerInfo], weight_addresses: Dict[str, int]):
         """
@@ -133,21 +138,29 @@ class ModelAwarePrefetcher:
         # Analyze access patterns and compute prefetch priorities
         self._analyze_access_patterns()
         
+        # [NEW] Static Pinning Analysis
+        # Identify layers that fit in cache to pin them permanently (Tiered Caching)
+        current_usage = 0
+        self.pinned_layers = set()
+        print(f"Cache Capacity: {self.local_cache.capacity} bytes")
+        
+        for layer_name in self.execution_order:
+            layer_size = self.layers[layer_name].weight_size_bytes
+            if current_usage + layer_size < self.local_cache.capacity * 0.60: # 60% reservation for pinned, 40% for streaming
+                self.pinned_layers.add(layer_name)
+                current_usage += layer_size
+            else:
+                break
+                
         print(f"Registered model with {len(layers)} layers")
+        print(f"Pinned Layers ({len(self.pinned_layers)}): {str(list(self.pinned_layers)[:3])}...")
         print(f"Execution order: {' -> '.join(self.execution_order[:5])}...")
     
     def _topological_sort(self, layers: List[LayerInfo]) -> List[str]:
         """
         Topological sort of layers based on dependencies
-        
-        Args:
-            layers: List of layer information
-            
-        Returns:
-            Execution order of layers
         """
         # Simple implementation - assume sequential order for now
-        # In practice, this would do proper topological sorting
         return [layer.name for layer in sorted(layers, key=lambda x: x.name)]
     
     def _analyze_access_patterns(self):
@@ -156,7 +169,10 @@ class ModelAwarePrefetcher:
             layer = self.layers[layer_name]
             
             # Estimate computation time based on layer type and size
-            if layer.layer_type == LayerType.LINEAR:
+            # [FIX] Preserve manual overrides
+            if layer.computation_time_ms > 0 and not layer.name.startswith("layer_"):
+                 pass # Keep existing value
+            elif layer.layer_type == LayerType.LINEAR:
                 # Linear layer: time proportional to matrix multiply
                 layer.computation_time_ms = np.prod(layer.weight_shape) / 1e6
             elif layer.layer_type == LayerType.CONV2D:
@@ -180,10 +196,6 @@ class ModelAwarePrefetcher:
     def schedule_prefetch(self, layer_name: str, priority: int = 0):
         """
         Schedule prefetch for a layer's weights
-        
-        Args:
-            layer_name: Name of layer to prefetch
-            priority: Prefetch priority (lower = higher priority)
         """
         if layer_name not in self.weight_addresses:
             return False
@@ -218,18 +230,77 @@ class ModelAwarePrefetcher:
         """
         Intelligently prefetch upcoming layers based on computation pipeline.
         Adapts lookahead dynamically if no explicit lookahead provided.
-        
-        Args:
-            current_layer_idx: Index of currently executing layer
-            lookahead: Number of layers to prefetch ahead (optional)
         """
         # Dynamic Adaptation
         if lookahead is None:
-            self.steps_since_adaptation += 1
-            if self.steps_since_adaptation >= self.adaptation_interval:
-                self._adapt_strategy()
-                self.steps_since_adaptation = 0
-            lookahead = self.current_lookahead
+            if self.mode == "expand":
+                # [BASELINE 3] ExPAND (IEEE Micro '25) - Expander/History Based
+                # Uses "Heterogeneous Address Prediction" (Oracle trace replay here).
+                accumulated_time = 0.0
+                k = 0
+                for i in range(1, len(self.execution_order) - current_layer_idx):
+                     next_idx = current_layer_idx + i
+                     next_name = self.execution_order[next_idx]
+                     accumulated_time += self.layers[next_name].computation_time_ms
+                     k += 1
+                     if accumulated_time > self.history_window_ms:
+                         break
+                lookahead = max(k, self.min_lookahead)
+                lookahead = min(lookahead, self.max_lookahead)
+                
+            elif self.mode == "limoncello":
+                # [BASELINE 4] Limoncello (ASPLOS '24) - Targeted Software Prefetching
+                lookahead = 10 
+                
+            else:
+                # TMO / Melody / Static / CAMP use the state variable
+                self.steps_since_adaptation += 1
+                if self.steps_since_adaptation >= self.adaptation_interval:
+                    self._adapt_strategy()
+                    self.steps_since_adaptation = 0
+                
+                # [OPTIMIZATION] CAMP Semantic Opportunity Seizing
+                # If we are in a "Thinking Phase" (Long Compute), we should NOT be conservative.
+                # We should seize the opportunity to fill the buffer immediately.
+                if self.mode == "camp":
+                    current_layer_name = self.execution_order[current_layer_idx]
+                    
+                    if self.layers[current_layer_name].computation_time_ms > 50.0:
+                         # [SAFETY] Cache-Aware Flow Control
+                         # Don't prefetch more than cache can hold.
+                         # Calculate how many future layers fit in remaining capacity.
+                         current_usage = self.local_cache.current_size
+                         pending_bytes = 0
+                         safe_k = 0
+                         
+                         # Check active (pending) prefetches first
+                         # (Approximation: assume they are committed)
+                         
+                         for i in range(1, self.max_lookahead + 1):
+                             if current_layer_idx + i >= len(self.execution_order): break
+                             next_name = self.execution_order[current_layer_idx + i]
+                             layer_size = self.layers[next_name].weight_size_bytes
+                             
+                             if current_usage + pending_bytes + layer_size < self.local_cache.capacity:
+                                 safe_k = i
+                                 pending_bytes += layer_size
+                             else:
+                                 break
+                         
+                         if self.debug: print(f"[CAMP] Semantic Opportunity! Safe to prefetch {safe_k} layers ({pending_bytes/1e6:.1f} MB)")
+                         lookahead = max(self.current_lookahead, safe_k)
+                    else:
+                         lookahead = self.current_lookahead
+                else:
+                    lookahead = self.current_lookahead
+
+
+        # Clear stale future access info
+        self.local_cache.future_accesses.clear()
+        
+        # [CRITICAL] Re-assert pinned layers immediately
+        for pinned in self.pinned_layers:
+            self.local_cache.future_accesses[pinned] = -999
 
         # Prefetch next layers with decreasing priority
         for i in range(1, min(lookahead + 1, len(self.execution_order) - current_layer_idx)):
@@ -248,29 +319,36 @@ class ModelAwarePrefetcher:
             
             self.schedule_prefetch(next_layer_name, priority)
             
+            # Inform Cache about future access distance (for Graph-Aware Eviction)
+            self.local_cache.future_accesses[next_layer_name] = i
+        
+        # Look further ahead for eviction planning
+        eviction_horizon = max(lookahead * 2, 20)
+        
+        for i in range(1, eviction_horizon + 1):
+             next_layer_idx = (current_layer_idx + i) % len(self.execution_order)
+             next_layer_name = self.execution_order[next_layer_idx]
+             
+             if next_layer_name in self.pinned_layers:
+                 # PINNED: Distance is effectively negative (infinite value)
+                 self.local_cache.future_accesses[next_layer_name] = -999
+             elif next_layer_name not in self.local_cache.future_accesses:
+                 self.local_cache.future_accesses[next_layer_name] = i
+            
         # [NEW] Graph-Aware Eviction Update
-        # Update the cache with distances to next usage for ALL layers
-        # This is O(N) per step, but N is small (layers ~100)
+        # [OPTIMIZATION] Limit scan to horizon to reduce Python overhead for fast/streaming scenarios
         future_map = {}
-        for idx in range(current_layer_idx, len(self.execution_order)):
+        scan_limit = min(current_layer_idx + eviction_horizon + 10, len(self.execution_order))
+        for idx in range(current_layer_idx, scan_limit):
              layer_name = self.execution_order[idx]
              if layer_name not in future_map:
                  future_map[layer_name] = idx
         
-        # Items not in this list (past) get implicit infinity if not in future_map
-        # But we only update what we know.
         self.local_cache.update_future_accesses(future_map)
     
     def wait_for_weights(self, layer_name: str, timeout: float = 5.0):
         """
         Wait for layer weights to be available in cache
-        
-        Args:
-            layer_name: Name of layer
-            timeout: Maximum wait time in seconds
-            
-        Returns:
-            Layer weights as numpy array
         """
         # First check if already in cache
         weights = self.local_cache.get(layer_name)
@@ -309,12 +387,6 @@ class ModelAwarePrefetcher:
     def _fetch_weights_direct(self, layer_name: str):
         """
         Directly fetch weights from CXL memory (cache miss)
-        
-        Args:
-            layer_name: Name of layer
-            
-        Returns:
-            Layer weights
         """
         layer = self.layers[layer_name]
         address = self.weight_addresses[layer_name]
@@ -333,13 +405,6 @@ class ModelAwarePrefetcher:
     def _deserialize_weights(self, weight_bytes: np.ndarray, shape: Tuple[int, ...]) -> np.ndarray:
         """
         Convert serialized bytes back to weight tensor
-        
-        Args:
-            weight_bytes: Serialized weight data
-            shape: Original weight shape
-            
-        Returns:
-            Deserialized weight tensor
         """
         flat_weights = np.frombuffer(weight_bytes.tobytes(), dtype=np.float32)
         return flat_weights.reshape(shape)
@@ -415,9 +480,6 @@ class ModelAwarePrefetcher:
     def get_prefetch_efficiency(self) -> float:
         """
         Calculate prefetch efficiency metric
-        
-        Returns:
-            Efficiency ratio (0.0 to 1.0)
         """
         total_requests = self.stats['prefetch_hits'] + self.stats['prefetch_misses']
         if total_requests == 0:
@@ -442,23 +504,37 @@ class ModelAwarePrefetcher:
         current_stalls = self.stats['cache_stalls'] - self.last_stats['cache_stalls']
         current_bw = self.stats['bandwidth_utilization'] # Instantaneous
         
-        # Heuristic:
-        # If we are stalling, we need to prefetch earlier (increase lookahead),
-        # UNLESS we are already saturating bandwidth.
-        
-        if current_stalls > 0:
-            if current_bw < 60.0: # Assuming 64GB/s max in default profile
+        if self.mode == "tmo":
+             # [BASELINE 1] TMO (ASPLOS '22) - Transparent Memory Offloading
+             if current_stalls > 0:
+                 self.current_lookahead = max(self.min_lookahead, self.current_lookahead // 2)
+                 if self.debug: print(f"[TMO] Pressure detected ({current_stalls}), BACKOFF to {self.current_lookahead}")
+             else:
                  self.current_lookahead = min(self.current_lookahead + 1, self.max_lookahead)
-                 print(f"[Adaptive] Stalls detected ({current_stalls}), increasing lookahead to {self.current_lookahead}")
-            else:
-                 print(f"[Adaptive] Stalls detected but bandwidth saturated ({current_bw:.1f} GB/s). Keeping lookahead {self.current_lookahead}")
-        
-        # If we have NO stalls and high bandwidth usage, maybe we are too aggressive?
-        # Or if we have no stalls and low bandwidth, we are fine.
-        elif current_bw > 60.0:
-             # Reduce pressure
-             self.current_lookahead = max(self.current_lookahead - 1, self.min_lookahead)
-             print(f"[Adaptive] Bandwidth saturated, reducing lookahead to {self.current_lookahead}")
+                 
+        elif self.mode == "melody":
+             # [BASELINE 2] Melody (ASPLOS '25) - Systematic Characterization
+             if current_bw > 55.0: # ~85% of 64GB/s
+                 self.current_lookahead = max(self.min_lookahead, self.current_lookahead - 1)
+                 if self.debug: print(f"[Melody] Congestion imminent ({current_bw:.1f} GB/s), THROTTLING to {self.current_lookahead}")
+             elif current_stalls > 0:
+                 self.current_lookahead = min(self.current_lookahead + 1, self.max_lookahead)
+             else:
+                 self.current_lookahead = min(self.current_lookahead + 1, self.max_lookahead)
+
+        elif self.mode == "camp":
+            # [OUR METHOD] CAMP (Content-Aware Memory Prefetching)
+            if current_stalls > 0:
+                if current_bw < 60.0: 
+                     # [TUNING] Exponential increase on stalls
+                     self.current_lookahead = min(self.current_lookahead * 2, self.max_lookahead)
+                     if self.debug: print(f"[CAMP] Stalls detected ({current_stalls}), BOOSTING lookahead to {self.current_lookahead}")
+                else:
+                     if self.debug: print(f"[CAMP] Stalls detected but bandwidth saturated ({current_bw:.1f} GB/s). Keeping lookahead {self.current_lookahead}")
+            elif current_bw > 60.0:
+                 # Reduce pressure cautiously
+                 self.current_lookahead = max(self.current_lookahead - 1, self.min_lookahead)
+                 if self.debug: print(f"[CAMP] Bandwidth saturated, trimming lookahead to {self.current_lookahead}")
 
         self.last_stats = self.stats.copy()
 

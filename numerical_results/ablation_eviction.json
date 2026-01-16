@@ -1,0 +1,17 @@
+[
+  {
+    "policy": "random",
+    "latency_ms": 17.002822587099626,
+    "hit_rate": 0.0757790368271418
+  },
+  {
+    "policy": "lru",
+    "latency_ms": 17.149426962099632,
+    "hit_rate": 0.06925795052998639
+  },
+  {
+    "policy": "graph_aware",
+    "latency_ms": 16.083998801546638,
+    "hit_rate": 0.23008190618002228
+  }
+]
