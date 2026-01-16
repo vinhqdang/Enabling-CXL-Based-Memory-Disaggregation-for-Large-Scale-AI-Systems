@@ -1,26 +1,26 @@
 [
   {
-    "policy": "random",
-    "latency_ms": 498.0931082311707,
-    "hit_rate": 0.07293447293447293
+    "policy": "CAMP+Random",
+    "latency_ms": 498.1540795455627,
+    "hit_rate": 0.08593208593208593
   },
   {
-    "policy": "fifo",
+    "policy": "CAMP+FIFO",
     "latency_ms": 498.1908964020996,
     "hit_rate": 0.07740152038700761
   },
   {
-    "policy": "lru",
+    "policy": "CAMP+LRU",
     "latency_ms": 498.1908964020996,
     "hit_rate": 0.07740152038700761
   },
   {
-    "policy": "lfu",
+    "policy": "CAMP+LFU",
     "latency_ms": 497.2124954835205,
     "hit_rate": 0.15810419681620838
   },
   {
-    "policy": "graph_aware",
+    "policy": "CAMP+Graph-Aware(Ours)",
     "latency_ms": 497.33386274487304,
     "hit_rate": 0.19669777458722182
   }

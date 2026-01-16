@@ -2,10 +2,10 @@
   "thinking": [
     {
       "mode": "no_prefetch",
-      "latency": 398.181338,
-      "hit_rate_pct": 100.0,
-      "prefetch_accuracy_pct": 100.0,
-      "stall_count": 0
+      "latency": 790.6267426250002,
+      "hit_rate_pct": 0.0,
+      "prefetch_accuracy_pct": 0.0,
+      "stall_count": 21
     },
     {
       "mode": "static",
@@ -30,10 +30,10 @@
     },
     {
       "mode": "limoncello",
-      "latency": 373.906558525,
-      "hit_rate_pct": 95.23809523809523,
-      "prefetch_accuracy_pct": 95.23809523809523,
-      "stall_count": 1
+      "latency": 373.6622179,
+      "hit_rate_pct": 100.0,
+      "prefetch_accuracy_pct": 100.0,
+      "stall_count": 0
     },
     {
       "mode": "camp",
@@ -53,10 +53,10 @@
   "streaming": [
     {
       "mode": "no_prefetch",
-      "latency": 564.0911140625,
-      "hit_rate_pct": 60.0,
-      "prefetch_accuracy_pct": 60.0,
-      "stall_count": 20
+      "latency": 652.597890625,
+      "hit_rate_pct": 0.0,
+      "prefetch_accuracy_pct": 0.0,
+      "stall_count": 50
     },
     {
       "mode": "static",
@@ -67,24 +67,24 @@
     },
     {
       "mode": "tmo",
-      "latency": 539.6754515625,
-      "hit_rate_pct": 76.0,
-      "prefetch_accuracy_pct": 76.0,
-      "stall_count": 12
+      "latency": 515.2597890625,
+      "hit_rate_pct": 92.0,
+      "prefetch_accuracy_pct": 92.0,
+      "stall_count": 4
     },
     {
       "mode": "melody",
-      "latency": 603.766565625,
-      "hit_rate_pct": 34.0,
-      "prefetch_accuracy_pct": 34.0,
-      "stall_count": 33
+      "latency": 582.4028609375,
+      "hit_rate_pct": 48.0,
+      "prefetch_accuracy_pct": 48.0,
+      "stall_count": 26
     },
     {
       "mode": "limoncello",
-      "latency": 600.7146078125,
-      "hit_rate_pct": 36.0,
-      "prefetch_accuracy_pct": 36.0,
-      "stall_count": 32
+      "latency": 625.1302703125,
+      "hit_rate_pct": 20.0,
+      "prefetch_accuracy_pct": 20.0,
+      "stall_count": 40
     },
     {
       "mode": "camp",
@@ -104,10 +104,10 @@
   "thrashing": [
     {
       "mode": "no_prefetch",
-      "latency": 217.21716912498474,
-      "hit_rate_pct": 55.00000000000001,
-      "prefetch_accuracy_pct": 110.00000000000001,
-      "stall_count": 18
+      "latency": 207.44907169790267,
+      "hit_rate_pct": 22.5,
+      "prefetch_accuracy_pct": 0.0,
+      "stall_count": 31
     },
     {
       "mode": "static",
@@ -118,24 +118,24 @@
     },
     {
       "mode": "tmo",
-      "latency": 217.21716912498474,
-      "hit_rate_pct": 57.49999999999999,
-      "prefetch_accuracy_pct": 114.99999999999999,
-      "stall_count": 17
+      "latency": 207.44907169790267,
+      "hit_rate_pct": 72.5,
+      "prefetch_accuracy_pct": 145.0,
+      "stall_count": 11
     },
     {
       "mode": "melody",
-      "latency": 217.21716912498474,
-      "hit_rate_pct": 52.5,
-      "prefetch_accuracy_pct": 105.0,
-      "stall_count": 19
+      "latency": 207.44907169790267,
+      "hit_rate_pct": 72.5,
+      "prefetch_accuracy_pct": 145.0,
+      "stall_count": 11
     },
     {
       "mode": "limoncello",
       "latency": 217.21716912498474,
-      "hit_rate_pct": 47.5,
-      "prefetch_accuracy_pct": 95.0,
-      "stall_count": 21
+      "hit_rate_pct": 45.0,
+      "prefetch_accuracy_pct": 90.0,
+      "stall_count": 22
     },
     {
       "mode": "camp",

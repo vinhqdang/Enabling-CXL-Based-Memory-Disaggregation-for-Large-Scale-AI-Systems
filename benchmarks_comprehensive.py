@@ -45,11 +45,20 @@ def create_engine(cache_size_mb=2048, emulation=True, bandwidth=None):
 
 def run_ablation_study():
     print("--- Running Exp 1: Eviction Ablation Study ---", flush=True)
-    policies = ["random", "fifo", "lru", "lfu", "graph_aware"] # Expanded to 5
+    # Naming consistent with CAMP context
+    policies = ["Random", "FIFO", "LRU", "LFU", "Graph-Aware(Ours)"] 
+    mapping = {
+        "Random": "random",
+        "FIFO": "fifo",
+        "LRU": "lru",
+        "LFU": "lfu",
+        "Graph-Aware(Ours)": "graph_aware"
+    }
     results = []
     
-    for policy in policies:
-        print(f"Testing Policy: {policy}", flush=True)
+    for label in policies:
+        policy = mapping[label]
+        print(f"Testing Policy: CAMP + {label}", flush=True)
         # Use 200MB cache for 400MB Model (12L, 1024H)
         engine = create_engine(cache_size_mb=200) 
         engine.local_cache.set_eviction_policy(policy)
@@ -75,8 +84,10 @@ def run_ablation_study():
         total_acc = engine.local_cache.stats['hits'] + engine.local_cache.stats['misses']
         hit_rate = (engine.local_cache.stats['hits'] / total_acc) if total_acc > 0 else 0.0
         
-        results.append({"policy": policy, "latency_ms": float(avg_lat), "hit_rate": float(hit_rate)})
-        print(f"  -> {policy}: {avg_lat:.2f}ms, Hit Rate: {hit_rate:.2f}", flush=True)
+        hit_rate = (engine.local_cache.stats['hits'] / total_acc) if total_acc > 0 else 0.0
+        
+        results.append({"policy": f"CAMP+{label}", "latency_ms": float(avg_lat), "hit_rate": float(hit_rate)})
+        print(f"  -> CAMP+{label}: {avg_lat:.2f}ms, Hit Rate: {hit_rate:.2f}", flush=True)
 
     with open(f"{NUM_DIR}/ablation_eviction.json", "w") as f:
         json.dump(results, f, indent=2)
@@ -88,7 +99,8 @@ def run_ablation_study():
     plt.figure(figsize=(10, 6))
     plt.bar(labels, lats, color=colors)
     plt.ylabel("Inference Latency (ms) [Lower is Better]", fontweight='bold')
-    plt.title("Ablation Study: Eviction Policy Impact (5-Way)", fontweight='bold')
+    plt.ylabel("Inference Latency (ms) [Lower is Better]", fontweight='bold')
+    plt.title("CAMP Sensitivity to Eviction Policy", fontweight='bold')
     plt.grid(axis='y', linestyle='--', alpha=0.7)
     
     # Annotate values
@@ -398,10 +410,26 @@ def run_comprehensive_scenarios():
                 # This exposes cache miss penalties. CAMP (Pinning) will win.
                 engine = create_engine(cache_size_mb=200, bandwidth=2.0)
             
-            # 2. Configure Mode
+            # 2. Configure Mode AND Eviction Policy
+            # [CRITICAL] Enforce standard LRU for baselines to ensure fair comparison.
+            # Only CAMP and Oracle (Expand) use Graph-Aware Eviction.
+            
             engine.prefetcher.mode = mode
-            if mode == "static":
+            
+            if mode in ["camp", "expand"]:
+                engine.local_cache.set_eviction_policy("graph_aware")
+            else:
+                engine.local_cache.set_eviction_policy("lru") # Standard OS behavior for baselines
+                
+            # Configure Prefetcher Parameters
+            if mode == "no_prefetch":
+                engine.prefetcher.current_lookahead = 0
+                engine.prefetcher.min_lookahead = 0
+                engine.prefetcher.max_lookahead = 0
+            elif mode == "static":
                 engine.prefetcher.current_lookahead = 2
+                engine.prefetcher.min_lookahead = 2
+                engine.prefetcher.max_lookahead = 2
             elif mode == "limoncello":
                 engine.prefetcher.current_lookahead = 10
                 engine.prefetcher.min_lookahead = 10
@@ -411,6 +439,7 @@ def run_comprehensive_scenarios():
                 engine.prefetcher.max_lookahead = 20
             elif mode == "melody":
                 engine.prefetcher.current_lookahead = 2
+                engine.prefetcher.max_lookahead = 20
                 engine.prefetcher.max_lookahead = 20
             elif mode == "camp":
                 engine.prefetcher.current_lookahead = 5
@@ -517,7 +546,7 @@ if __name__ == "__main__":
     try:
         run_ablation_study()
         # run_prefetch_efficacy()
-        # run_comprehensive_scenarios()
+        run_comprehensive_scenarios()
         # run_cache_sensitivity()
         # run_throughput_analysis()
         # run_latency_breakdown()
