@@ -263,41 +263,68 @@ def run_cache_sensitivity():
     print("--- Running Exp 3: Cache Sensitivity ---", flush=True)
     model_size_mb = 400
     ratios = [0.1, 0.25, 0.5, 0.75, 1.0]
-    results = []
     
-    for r in ratios:
-        cache_size = int(model_size_mb * r)
-        print(f"Testing Cache Ratio: {r*100}% ({cache_size}MB)", flush=True)
-        engine = create_engine(cache_size_mb=cache_size)
-        model_config, weights = engine.create_sample_transformer_model(num_layers=12, hidden_size=1024, vocab_size=32000)
-        engine.register_model(model_config, weights)
-        gc.collect()
-         
-        req = InferenceRequest("warmup", np.random.randn(1, 128), model_config.name, 0)
-        engine.env.run(until=engine.inference(req))
-        
-        latencies = []
-        for i in range(3):
-            req = InferenceRequest(f"req_{i}", np.random.randn(1, 128), model_config.name, engine.env.now)
-            p = engine.inference(req)
-            engine.env.run(until=p)
-            latencies.append(p.value.latency_ms)
+    modes_to_test = [
+        {"name": "CAMP (Ours)", "mode": "camp", "eviction": "graph_aware"},
+        {"name": "Static (Baseline)", "mode": "static", "eviction": "lru"}
+    ]
+    
+    all_results = []
+    
+    for mode_cfg in modes_to_test:
+        print(f"Testing Mode: {mode_cfg['name']}", flush=True)
+        mode_results = []
+        for r in ratios:
+            cache_size = int(model_size_mb * r)
+            print(f"  Ratio: {r*100}% ({cache_size}MB)", flush=True)
+            engine = create_engine(cache_size_mb=cache_size)
             
-        avg_lat = np.mean(latencies)
-        results.append({"ratio": r, "cache_size_mb": cache_size, "latency_ms": float(avg_lat)})
-        print(f"  -> {avg_lat:.2f}ms", flush=True)
+            # Configure
+            engine.prefetcher.mode = mode_cfg["mode"]
+            engine.local_cache.set_eviction_policy(mode_cfg["eviction"])
+            if mode_cfg["mode"] == "static":
+                engine.prefetcher.current_lookahead = 2
+            elif mode_cfg["mode"] == "camp":
+                engine.prefetcher.current_lookahead = 5
+                engine.prefetcher.max_lookahead = 20
+            
+            model_config, weights = engine.create_sample_transformer_model(num_layers=12, hidden_size=1024, vocab_size=32000)
+            engine.register_model(model_config, weights)
+            gc.collect()
+             
+            req = InferenceRequest("warmup", np.random.randn(1, 128), model_config.name, 0)
+            engine.env.run(until=engine.inference(req))
+            
+            latencies = []
+            for i in range(3):
+                req = InferenceRequest(f"req_{i}", np.random.randn(1, 128), model_config.name, engine.env.now)
+                p = engine.inference(req)
+                engine.env.run(until=p)
+                latencies.append(p.value.latency_ms)
+                
+            avg_lat = np.mean(latencies)
+            mode_results.append({"ratio": r, "latency_ms": float(avg_lat)})
+            print(f"    -> {avg_lat:.2f}ms", flush=True)
+            
+        all_results.append({"name": mode_cfg["name"], "data": mode_results})
         
     with open(f"{NUM_DIR}/cache_sensitivity.json", "w") as f:
-        json.dump(results, f, indent=2)
+        json.dump(all_results, f, indent=2)
 
     plt.figure(figsize=(8,6))
-    x = [r["ratio"]*100 for r in results]
-    y = [r["latency_ms"] for r in results]
-    plt.plot(x, y, marker='o', linewidth=2)
+    colors = ['green', 'gray']
+    markers = ['o', 's']
+    
+    for i, series in enumerate(all_results):
+        x = [d["ratio"]*100 for d in series["data"]]
+        y = [d["latency_ms"] for d in series["data"]]
+        plt.plot(x, y, label=series["name"], marker=markers[i], linewidth=2, color=colors[i])
+        
     plt.xlabel("Local Cache Ratio (%)")
     plt.ylabel("Inference Latency (ms)")
     plt.ylim(bottom=0)
     plt.title("Performance vs Local Cache Size")
+    plt.legend()
     plt.grid(True)
     plt.savefig(f"{FIG_DIR}/cache_sensitivity.png")
     plt.close()
@@ -544,10 +571,10 @@ def run_comprehensive_scenarios():
 
 if __name__ == "__main__":
     try:
-        run_ablation_study()
+        # run_ablation_study()
         # run_prefetch_efficacy()
-        run_comprehensive_scenarios()
-        # run_cache_sensitivity()
+        # run_comprehensive_scenarios()
+        run_cache_sensitivity()
         # run_throughput_analysis()
         # run_latency_breakdown()
         print("\nAll Comprehensive Experiments Completed.", flush=True)

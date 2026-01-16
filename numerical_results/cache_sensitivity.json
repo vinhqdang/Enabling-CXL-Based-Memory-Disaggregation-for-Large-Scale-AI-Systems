@@ -1,27 +1,52 @@
 [
   {
-    "ratio": 0.1,
-    "cache_size_mb": 40,
-    "latency_ms": 17.149426962099565
+    "name": "CAMP (Ours)",
+    "data": [
+      {
+        "ratio": 0.1,
+        "latency_ms": 498.19089640209967
+      },
+      {
+        "ratio": 0.25,
+        "latency_ms": 498.19089640209967
+      },
+      {
+        "ratio": 0.5,
+        "latency_ms": 497.25253304506424
+      },
+      {
+        "ratio": 0.75,
+        "latency_ms": 495.6104091668396
+      },
+      {
+        "ratio": 1.0,
+        "latency_ms": 494.06107437908935
+      }
+    ]
   },
   {
-    "ratio": 0.25,
-    "cache_size_mb": 100,
-    "latency_ms": 17.149426962099568
-  },
-  {
-    "ratio": 0.5,
-    "cache_size_mb": 200,
-    "latency_ms": 16.088167680178188
-  },
-  {
-    "ratio": 0.75,
-    "cache_size_mb": 300,
-    "latency_ms": 14.568939726839565
-  },
-  {
-    "ratio": 1.0,
-    "cache_size_mb": 400,
-    "latency_ms": 11.788835691144177
+    "name": "Static (Baseline)",
+    "data": [
+      {
+        "ratio": 0.1,
+        "latency_ms": 498.19089640209967
+      },
+      {
+        "ratio": 0.25,
+        "latency_ms": 498.19089640209967
+      },
+      {
+        "ratio": 0.5,
+        "latency_ms": 498.19089640209967
+      },
+      {
+        "ratio": 0.75,
+        "latency_ms": 495.98500026562505
+      },
+      {
+        "ratio": 1.0,
+        "latency_ms": 494.0774516328125
+      }
+    ]
   }
 ]
