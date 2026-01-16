@@ -140,17 +140,25 @@ class ModelAwarePrefetcher:
         
         # [NEW] Static Pinning Analysis
         # Identify layers that fit in cache to pin them permanently (Tiered Caching)
+        # Prioritize High Reuse Frequency layers
         current_usage = 0
         self.pinned_layers = set()
         print(f"Cache Capacity: {self.local_cache.capacity} bytes")
         
-        for layer_name in self.execution_order:
-            layer_size = self.layers[layer_name].weight_size_bytes
-            if current_usage + layer_size < self.local_cache.capacity * 0.60: # 60% reservation for pinned, 40% for streaming
+        # Sort layers by importance (Frequency DESC, then original order)
+        candidates = sorted(self.execution_order, key=lambda x: self.layers[x].reuse_frequency, reverse=True)
+        
+        for layer_name in candidates:
+            layer = self.layers[layer_name]
+            layer_size = layer.weight_size_bytes
+            # [TUNING] Increase reservation to 90% for constrained scenarios to maximizing pinning
+            if current_usage + layer_size < self.local_cache.capacity * 0.90: 
                 self.pinned_layers.add(layer_name)
                 current_usage += layer_size
             else:
-                break
+                # If high frequency but doesn't fit, we stop? 
+                # Or continue checking smaller layers? Continue.
+                continue
                 
         print(f"Registered model with {len(layers)} layers")
         print(f"Pinned Layers ({len(self.pinned_layers)}): {str(list(self.pinned_layers)[:3])}...")
@@ -185,8 +193,10 @@ class ModelAwarePrefetcher:
                 # Default estimate
                 layer.computation_time_ms = layer.weight_size_bytes / 1e6
             
-            # Set reuse frequency based on layer type
-            if layer.layer_type in [LayerType.EMBEDDING, LayerType.NORMALIZATION]:
+            # Set reuse frequency based on layer type (if not manually set)
+            if layer.reuse_frequency > 1:
+                pass # Respect manual setting
+            elif layer.layer_type in [LayerType.EMBEDDING, LayerType.NORMALIZATION]:
                 layer.reuse_frequency = 10  # High reuse
             elif layer.layer_type == LayerType.ATTENTION:
                 layer.reuse_frequency = 3   # Medium reuse

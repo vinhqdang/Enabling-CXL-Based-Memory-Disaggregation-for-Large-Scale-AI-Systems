@@ -44,10 +44,10 @@
     },
     {
       "mode": "expand",
-      "latency": 496.8167318249999,
-      "hit_rate_pct": 66.66666666666666,
-      "prefetch_accuracy_pct": 66.66666666666666,
-      "stall_count": 7
+      "latency": 618.888044325,
+      "hit_rate_pct": 42.857142857142854,
+      "prefetch_accuracy_pct": 42.857142857142854,
+      "stall_count": 12
     }
   ],
   "streaming": [
@@ -88,68 +88,68 @@
     },
     {
       "mode": "camp",
-      "latency": 606.8185234375,
-      "hit_rate_pct": 32.0,
-      "prefetch_accuracy_pct": 32.0,
-      "stall_count": 34
+      "latency": 628.182228125,
+      "hit_rate_pct": 18.0,
+      "prefetch_accuracy_pct": 18.0,
+      "stall_count": 41
     },
     {
       "mode": "expand",
-      "latency": 612.9224390625,
-      "hit_rate_pct": 28.000000000000004,
-      "prefetch_accuracy_pct": 28.000000000000004,
-      "stall_count": 36
+      "latency": 628.182228125,
+      "hit_rate_pct": 18.0,
+      "prefetch_accuracy_pct": 18.0,
+      "stall_count": 41
     }
   ],
   "thrashing": [
     {
       "mode": "no_prefetch",
-      "latency": 207.44907169790267,
-      "hit_rate_pct": 22.5,
+      "latency": 480.075225,
+      "hit_rate_pct": 33.33333333333333,
       "prefetch_accuracy_pct": 0.0,
-      "stall_count": 31
+      "stall_count": 60
     },
     {
       "mode": "static",
-      "latency": 207.44907169790267,
-      "hit_rate_pct": 72.5,
-      "prefetch_accuracy_pct": 145.0,
-      "stall_count": 11
+      "latency": 480.075225,
+      "hit_rate_pct": 72.22222222222221,
+      "prefetch_accuracy_pct": 185.71428571428572,
+      "stall_count": 25
     },
     {
       "mode": "tmo",
-      "latency": 207.44907169790267,
-      "hit_rate_pct": 72.5,
-      "prefetch_accuracy_pct": 145.0,
-      "stall_count": 11
+      "latency": 519.138525,
+      "hit_rate_pct": 65.55555555555556,
+      "prefetch_accuracy_pct": 168.57142857142858,
+      "stall_count": 31
     },
     {
       "mode": "melody",
-      "latency": 207.44907169790267,
-      "hit_rate_pct": 72.5,
-      "prefetch_accuracy_pct": 145.0,
-      "stall_count": 11
+      "latency": 519.138525,
+      "hit_rate_pct": 53.333333333333336,
+      "prefetch_accuracy_pct": 137.14285714285714,
+      "stall_count": 42
     },
     {
       "mode": "limoncello",
-      "latency": 217.21716912498474,
-      "hit_rate_pct": 45.0,
-      "prefetch_accuracy_pct": 90.0,
-      "stall_count": 22
+      "latency": 519.138525,
+      "hit_rate_pct": 67.77777777777779,
+      "prefetch_accuracy_pct": 174.28571428571428,
+      "stall_count": 29
     },
     {
       "mode": "camp",
-      "latency": 217.21716912498474,
-      "hit_rate_pct": 52.5,
-      "prefetch_accuracy_pct": 105.0,
-      "stall_count": 19
+      "latency": 480.075225,
+      "hit_rate_pct": 72.22222222222221,
+      "prefetch_accuracy_pct": 185.71428571428572,
+      "stall_count": 25
     },
     {
       "mode": "expand",
-      "latency": 207.44907169790267,
-      "hit_rate_pct": 45.0,
-      "prefetch_accuracy_pct": 90.0,
-      "stall_count": 22
+      "latency": 489.84105,
+      "hit_rate_pct": 48.888888888888886,
+      "prefetch_accuracy_pct": 125.71428571428571,
+      "stall_count": 46
     }
   ]
 }
