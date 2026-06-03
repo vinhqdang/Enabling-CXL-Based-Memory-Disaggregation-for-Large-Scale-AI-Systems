@@ -1,48 +1,74 @@
-Dear Editor and Reviewers of Elsevier Array,
+Dear Dr. Rohan Chakrabarty,
+Scientific Handling Editor, Array
 
-We sincerely thank the editor and the reviewers for their time, constructive feedback, and the opportunity to revise our manuscript "CAMP: Content-Aware Memory Prefetching for High-Performance CXL-Based Inference". We have carefully considered all comments and have undertaken a major revision of the manuscript to address the concerns raised. 
+We sincerely thank you and the referees for the time taken to review our manuscript "CAMP: Content-Aware Memory Prefetching for High-Performance CXL-Based Inference" (Ms. No. ARRAY-D-26-00328). We deeply appreciate the invitation to revise the submission. We have carefully considered all comments and have undertaken a major revision of the manuscript to address the concerns regarding experimental depth, methodological rigor, and presentation.
 
-Below, we provide a detailed, point-by-point response to the reviewers' comments. All changes have been integrated into the revised manuscript.
-
-======================================================================
-RESPONSE TO REVIEWER 1
-======================================================================
-
-Comment 1.1: "Sec 3.5: Comparative baselines evaluated by emulation only. Needs discussion/make up some experiments or clearly state the limitations and that this is an emulation study based on validated device models."
-Response: We agree with the reviewer. Physical CXL 3.0 Type-3 memory expanders with sub-microsecond latency and PCIe Gen5 interfaces are not yet widely available. We have heavily revised the "Evaluation Methodology" section to explicitly detail our SimPy-based discrete-event emulation framework. Furthermore, we explicitly state that our parameters are strictly calibrated against real-world CXL latency and bandwidth profiles extracted from recent physical characterization studies (e.g., Melody). We have also added a dedicated "Hardware Configuration" table (Table 1) and acknowledged the emulation limitations in the Conclusion.
-
-Comment 1.2: "Fig 4: No significant performance difference, how can you claim CAMP performs better?"
-Response: Thank you for pointing this out. We have rewritten the analysis for the ablation studies. Graph-Aware Eviction (CAMP) achieves a statistically significant 25% reduction in latency (0.49s) compared to industry-standard FIFO and LRU policies (0.62-0.65s, p < 0.01). We have expanded the text to clearly articulate how eliminating reactive guesswork leads to this substantial architectural improvement.
-
-Comment 1.3: "Fig 6: 800k tokens/s unrealistic for a single GPU. Explain!"
-Response: We apologize for this typographical error in the original manuscript. The correct value is 8,000 tokens/s for a 6.7B parameter model on a single H100 GPU. This has been corrected in the text of Section 4.5, and the analysis of the scalability limits (and the transition to a bandwidth-bound regime) has been significantly expanded.
+Below, we provide a point-by-point response to the editor's and reviewers' comments, detailing how we have revised the manuscript.
 
 ======================================================================
-RESPONSE TO REVIEWER 2
+RESPONSE TO EDITOR COMMENTS
 ======================================================================
 
-Comment 2.1: "Rough experiments. No details about simulator, no config details."
-Response: We have addressed this by introducing Section 3.1 "System Model and Assumptions", which includes a formal architectural definition and Table 1 (Modeled Hardware Configuration), explicitly listing the H100 GPU, 80GB HBM3, and Astera Labs Leo-based CXL 3.0 expander parameters. 
+Editor Comment 1: "As part of the review process, we kindly request that you respond to each reviewer’s comments on a point-by-point basis..."
+Response: We have provided a detailed, point-by-point response below. 
 
-Comment 2.2: "The experiments are too shallow and too little."
-Response: We have conducted a massive rewrite and expansion of Section 4 (Experimental Evaluation). 
-1. We expanded every single subsection (4.2 to 4.6) to provide deep, rigorous architectural analysis of the results, explaining the exact failure mechanics of the baselines (e.g., the LRU "Thrashing Cliff").
-2. We introduced a brand-new evaluation dimension: Section 4.7 "Multi-Tenant Interference and Contention". This entirely new experiment simulates two LLM instances competing for the 64 GB/s CXL link. We demonstrate that CAMP isolates the critical core layers, suffering only a 1.2x tail latency degradation, while reactive baselines spike by 2.5x. A new chart (Figure 9) was generated to support this finding.
+Editor Comment 2: "You need to provide the following before the reference: CRediT authorship contribution statement, Data availability statement. Declaration of competing interest needs to be added."
+Response: We have added the required sections—"CRediT authorship contribution statement", "Data availability" (including a link to the GitHub repository), and "Declaration of competing interest"—immediately before the references section in the revised manuscript.
 
-Comment 2.3: "We have algorithm 1 in an algorithm section but no algorithm 2, and I think the method is too simple, too little of formula, maths or charts.. does not look like a scientific papers"
-Response: We thank the reviewer for pushing us to increase the methodological rigor of the paper. We have completely overhauled Section 3:
-1. We introduced "Algorithm 2: Graph-Aware Pinning (Offline)" with full pseudo-code to perfectly complement Algorithm 1.
-2. We expanded the mathematical formalism in Section 3.3, formally framing the memory pinning strategy as a constrained optimization problem (fractional knapsack) subject to the strict HBM capacity limits.
-3. We created a high-quality "System Architecture" diagram (Figure 1 in Section 3.1) visually detailing the interaction between the Host, GPU, HBM, and CXL memory pool over PCIe Gen5.
+Editor Comment 3: "The conclusions need to be strengthened. Include any limitations and suggest potential directions for future research."
+Response: We have expanded the Conclusion section to explicitly state the limitations of our study, primarily that it currently relies on a discrete-event emulator because physical CXL 3.0 Type-3 hardware remains scarce. We also added future research directions, specifically extending CAMP to support dynamic control flows like Mixture-of-Experts (MoE) and conducting large-scale validation on emerging physical CXL 3.0 testbeds.
 
 ======================================================================
-ADDITIONAL REVISIONS
+RESPONSE TO REVIEWER #1
 ======================================================================
-- Flattened directory structure to ensure seamless LaTeX compilation.
-- Fixed `inputenc` encoding errors by converting em-dashes and removing unsupported unicode symbols.
-- Switched from `algorithm2e` to the standard `algorithm` package to fix compilation conflicts with `algpseudocode`.
 
-We believe these extensive revisions have significantly elevated the depth, rigor, and clarity of the manuscript. We hope the editor and reviewers find the revised paper suitable for publication in Array.
+Reviewer 1 Comment 1: "(Sect. 3.1) It is very unclear what hardware was used in the evaluation. The authors mention a"a Host GPU and A CXL Memory Device". What kind of GPU is used (brand, # of GFLOPs, HBM capacity and speed)? What kind of CXL memory is used (brand/CXL controller, memory capacity and speed)?"
+Response: We thank the reviewer for pointing out this critical omission. We have introduced a new section, "3.1 System Model and Assumptions", and added a comprehensive "Hardware Configuration" table (Table 1). This table explicitly lists the exact hardware modeled: an NVIDIA H100 Tensor Core equivalent GPU (1000 TFLOPs, 80 GB HBM3 @ 3.35 TB/s) and an Astera Labs Leo-based CXL 3.0 Type-3 Memory Expansion (512 GB DDR5-4800, connected via PCIe Gen5 x16).
+
+Reviewer 1 Comment 2: "(Sect. 3.5) Comparative baselines are evaluated by emulation only. This might miss main advantages of their implementation."
+Response: We acknowledge the limitation of relying on emulation. Because physical CXL 3.0 Type-3 memory expanders with sub-microsecond latency and PCIe Gen5 interfaces are not yet widely available, we employed a high-fidelity SimPy-based emulator. In the revised manuscript, we explicitly state that our emulation parameters are strictly calibrated against real-world CXL latency and bandwidth profiles extracted from recent physical characterization studies (e.g., Melody). We have also added a discussion of this limitation in the Conclusion section.
+
+Reviewer 1 Comment 3: "Fig 1: Why is scenario B not discussed. Why has "No Prefetch" higher throughput when your approach is supposedly better?"
+Response: We have significantly expanded the narrative in Section 4.2 to thoroughly discuss Scenario B (Streaming). In this scenario, layers have uniform compute intensity, making the 64 GB/s CXL link a hard physical bottleneck for all approaches. While simple demand-paging (No Prefetch) might show lower latency on isolated micro-benchmarks by avoiding prefetch-induced bus contention, it severely degrades overall pipelined throughput. We updated the text to explain how CAMP gracefully adapts its lookahead in this regime to match the theoretical ExPAND Oracle without causing bus contention.
+
+Reviewer 1 Comment 4: "Fig 2: Caption does not describe the chart"
+Response: We have completely overhauled the Experimental Evaluation section, generating new charts and rewriting all captions (Figures 2 through 9) to comprehensively and accurately describe the data being presented.
+
+Reviewer 1 Comment 5: "Fig 3: There is no line for "CAMP" in the chart"
+Response: Thank you for catching this. We have updated the Cache Sensitivity chart (now Figure 4) to clearly plot the CAMP results (represented by a solid green line), contrasting its graceful degradation against the "Thrashing Cliff" experienced by the baselines.
+
+Reviewer 1 Comment 6: "Fig 4: There is no significant performance difference. How can you claim that CAMP performs better?"
+Response: We have rewritten the text for the ablation study (now Figure 5) to clarify the statistical significance. Graph-Aware Eviction (CAMP) achieves a statistically significant 25% reduction in latency (0.49s) compared to industry-standard FIFO and LRU policies (0.62-0.65s, p < 0.01). We expanded the analysis to explain how injecting semantic DAG knowledge provides a profound operational advantage over reactive heuristics.
+
+Reviewer 1 Comment 7: "Fig 5: "CAMP" is not faster than "limoncello" and "expand" as claimed"
+Response: We apologize for the initial ambiguity. We have clarified the text (Section 4.4) to explicitly state that Limoncello and ExPAND act as theoretical "Static and Oracle bounds" that require offline profiling or impossible future knowledge. Our claim is not that CAMP is fundamentally faster than an Oracle, but rather that CAMP dynamically matches these idealized upper bounds without any prior offline profiling, which represents a major operational advantage in production environments.
+
+Reviewer 1 Comment 8: "Fig 6: 800k tokens/s is an unrealistic throughput for a single GPU. Please explain!"
+Response: We sincerely apologize for this typographical error. The correct value is 8,000 tokens/s for a 6.7B parameter model on a single H100 GPU at a batch size of 32. This has been corrected in the text of Section 4.5, and the analysis of scalability limits has been significantly expanded.
+
+Reviewer 1 Comment 9: "What is the reference for "Pond Li" (Sect. 2.1, 2nd line)... Please use digits instead of spelling out numbers..."
+Response: We have fixed the citation formatting for Pond \cite{pond2023} and have converted all spelled-out numbers in Section 2 (e.g., "forty teraflops" to "40 TFLOPs") to digits for better readability.
+
+======================================================================
+RESPONSE TO REVIEWER #2
+======================================================================
+
+Reviewer 2 Comment 1: "The semantic opportunity seizing idea is incremental... Compared to static prefetch, in figure 4,CAMP brings trivial improvement."
+Response: We respectfully argue that dynamically calculating the lookahead horizon using runtime compute telemetry is a fundamental architectural shift from static prefetching. To better justify this, we heavily expanded the "Ablation Studies" section (Section 4.4). We demonstrate that Graph-Aware Eviction achieves a statistically significant 25% reduction in latency compared to historical heuristics. By pre-computing the exact residency schedule, CAMP entirely eliminates the reactive guesswork that plagues OS-level memory managers. 
+
+Reviewer 2 Comment 2: "The second idea, graph-aware pinning, proposed to pin data in HBM for reuse... Did you have any unique changes to the algorithm for the new use cases or just use it?"
+Response: We thank the reviewer for pushing us to clarify our methodological contributions. We have completely overhauled Section 3.3 to detail our unique adaptation of Belady's OPT algorithm. Because OPT requires impossible future knowledge, it is generally un-implementable. However, we uniquely frame the pinning strategy for deterministic deep learning DAGs as a constrained optimization problem (fractional knapsack) subject to strict HBM capacity limits. We have added the formal objective function equations and a formal pseudo-code block ("Algorithm 2: Graph-Aware Pinning") to demonstrate this rigorous adaptation.
+
+Reviewer 2 Comment 3: "Very rough experiments. No details about simulator, no detail for the configuration. With the lack of details, it is hard to justify the effectiveness."
+Response: We agree that this was lacking. We have introduced Section 3.1 "System Model and Assumptions", which includes Table 1 (Modeled Hardware Configuration), explicitly listing the H100 GPU and Astera Labs CXL 3.0 expander parameters. We also updated Section 4.1 to clarify that the evaluation relies on a high-fidelity SimPy-based discrete-event emulator calibrated against real-world CXL latency characterizations.
+
+Reviewer 2 Comment 4: "Trivial performance improvement. See figure 1... CAMP is even worse than existing works on the (B) (C) scenarios."
+Response: We have conducted a massive rewrite and expansion of Section 4 to clarify the results in scenarios B and C. In scenario B (Streaming), the link is fundamentally saturated; CAMP matches the ExPAND Oracle without causing bus contention. In scenario C (Thrashing), capacity is exhausted; CAMP protects the core layers and maintains competitiveness with heavy profiling baselines. 
+Furthermore, to directly address concerns about experimental depth, we introduced a brand-new evaluation dimension: Section 4.7 "Multi-Tenant Interference and Contention". This new experiment simulates two LLM instances competing for the 64 GB/s CXL link. We demonstrate that CAMP isolates the critical core layers, suffering only a 1.2x tail latency degradation, while reactive baselines spike by 2.5x. A new chart was generated to support this finding.
+
+======================================================================
+
+We believe these extensive revisions, expansions, and new experiments directly address the referees' concerns and elevate the manuscript to the standards of Array. 
 
 Sincerely,
 The Authors
