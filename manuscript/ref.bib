@@ -1,0 +1,985 @@
+
+% Journals
+
+% First the Full Name is given, then the abbreviation used in the AMS Math
+% Reviews, with an indication if it could not be found there.
+% Note the 2nd overwrites the 1st, so swap them if you want the full name.
+
+ %{AMS}
+ @String{AMSTrans = "American Mathematical Society Translations" }
+ @String{AMSTrans = "Amer. Math. Soc. Transl." }
+ @String{BullAMS = "Bulletin of the American Mathematical Society" }
+ @String{BullAMS = "Bull. Amer. Math. Soc." }
+ @String{ProcAMS = "Proceedings of the American Mathematical Society" }
+ @String{ProcAMS = "Proc. Amer. Math. Soc." }
+ @String{TransAMS = "Transactions of the American Mathematical Society" }
+ @String{TransAMS = "Trans. Amer. Math. Soc." }
+
+ %ACM
+ @String{CACM = "Communications of the {ACM}" }
+ @String{CACM = "Commun. {ACM}" }
+ @String{CompServ = "Comput. Surveys" }
+ @String{JACM = "J. ACM" }
+ @String{ACMMathSoft = "{ACM} Transactions on Mathematical Software" }
+ @String{ACMMathSoft = "{ACM} Trans. Math. Software" }
+ @String{SIGNUM = "{ACM} {SIGNUM} Newsletter" }
+ @String{SIGNUM = "{ACM} {SIGNUM} Newslett." }
+
+ @String{AmerSocio = "American Journal of Sociology" }
+ @String{AmerStatAssoc = "Journal of the American Statistical Association" }
+ @String{AmerStatAssoc = "J. Amer. Statist. Assoc." }
+ @String{ApplMathComp = "Applied Mathematics and Computation" }
+ @String{ApplMathComp = "Appl. Math. Comput." }
+ @String{AmerMathMonthly = "American Mathematical Monthly" }
+ @String{AmerMathMonthly = "Amer. Math. Monthly" }
+ @String{BIT = "{BIT}" }
+ @String{BritStatPsych = "British Journal of Mathematical and Statistical
+          Psychology" }
+ @String{BritStatPsych = "Brit. J. Math. Statist. Psych." }
+ @String{CanMathBull = "Canadian Mathematical Bulletin" }
+ @String{CanMathBull = "Canad. Math. Bull." }
+ @String{CompApplMath = "Journal of Computational and Applied Mathematics" }
+ @String{CompApplMath = "J. Comput. Appl. Math." }
+ @String{CompPhys = "Journal of Computational Physics" }
+ @String{CompPhys = "J. Comput. Phys." }
+ @String{CompStruct = "Computers and Structures" }
+ @String{CompStruct = "Comput. \& Structures" }
+ @String{CompJour = "The Computer Journal" }
+ @String{CompJour = "Comput. J." }
+ @String{CompSysSci = "Journal of Computer and System Sciences" }
+ @String{CompSysSci = "J. Comput. System Sci." }
+ @String{Computing = "Computing" }
+ @String{ContempMath = "Contemporary Mathematics" }
+ @String{ContempMath = "Contemp. Math." }
+ @String{Crelle = "Crelle's Journal" }
+ @String{GiornaleMath = "Giornale di Mathematiche" }
+ @String{GiornaleMath = "Giorn. Mat." } % didn't find in AMS MR., ibid.
+
+ %IEEE
+ @String{Computer = "{IEEE} Computer" }
+ @String{IEEETransComp = "{IEEE} Transactions on Computers" }
+ @String{IEEETransComp = "{IEEE} Trans. Comput." }
+ @String{IEEETransAC = "{IEEE} Transactions on Automatic Control" }
+ @String{IEEETransAC = "{IEEE} Trans. Automat. Control" }
+ @String{IEEESpec = "{IEEE} Spectrum" } % didn't find in AMS MR
+ @String{ProcIEEE = "Proceedings of the {IEEE}" }
+ @String{ProcIEEE = "Proc. {IEEE}" } % didn't find in AMS MR
+ @String{IEEETransAeroElec = "{IEEE} Transactions on Aerospace and Electronic
+     Systems" }
+ @String{IEEETransAeroElec = "{IEEE} Trans. Aerospace Electron. Systems" }
+
+ @String{IMANumerAna = "{IMA} Journal of Numerical Analysis" }
+ @String{IMANumerAna = "{IMA} J. Numer. Anal." }
+ @String{InfProcLet = "Information Processing Letters" }
+ @String{InfProcLet = "Inform. Process. Lett." }
+ @String{InstMathApp = "Journal of the Institute of Mathematics and
+     its Applications" }
+ @String{InstMathApp = "J. Inst. Math. Appl." }
+ @String{IntControl = "International Journal of Control" }
+ @String{IntControl = "Internat. J. Control" }
+ @String{IntNumerEng = "International Journal for Numerical Methods in
+     Engineering" }
+ @String{IntNumerEng = "Internat. J. Numer. Methods Engrg." }
+ @String{IntSuper = "International Journal of Supercomputing Applications" }
+ @String{IntSuper = "Internat. J. Supercomputing Applic." } % didn't find
+%% in AMS MR
+ @String{Kibernetika = "Kibernetika" }
+ @String{JResNatBurStand = "Journal of Research of the National Bureau
+     of Standards" }
+ @String{JResNatBurStand = "J. Res. Nat. Bur. Standards" }
+ @String{LinAlgApp = "Linear Algebra and its Applications" }
+ @String{LinAlgApp = "Linear Algebra Appl." }
+ @String{MathAnaAppl = "Journal of Mathematical Analysis and Applications" }
+ @String{MathAnaAppl = "J. Math. Anal. Appl." }
+ @String{MathAnnalen = "Mathematische Annalen" }
+ @String{MathAnnalen = "Math. Ann." }
+ @String{MathPhys = "Journal of Mathematical Physics" }
+ @String{MathPhys = "J. Math. Phys." }
+ @String{MathComp = "Mathematics of Computation" }
+ @String{MathComp = "Math. Comp." }
+ @String{MathScand = "Mathematica Scandinavica" }
+ @String{MathScand = "Math. Scand." }
+ @String{TablesAidsComp = "Mathematical Tables and Other Aids to Computation" }
+ @String{TablesAidsComp = "Math. Tables Aids Comput." }
+ @String{NumerMath = "Numerische Mathematik" }
+ @String{NumerMath = "Numer. Math." }
+ @String{PacificMath = "Pacific Journal of Mathematics" }
+ @String{PacificMath = "Pacific J. Math." }
+ @String{ParDistComp = "Journal of Parallel and Distributed Computing" }
+ @String{ParDistComp = "J. Parallel and Distrib. Comput." } % didn't find
+%% in AMS MR
+ @String{ParComputing = "Parallel Computing" }
+ @String{ParComputing = "Parallel Comput." }
+ @String{PhilMag = "Philosophical Magazine" }
+ @String{PhilMag = "Philos. Mag." }
+ @String{ProcNAS = "Proceedings of the National Academy of Sciences
+                    of the USA" }
+ @String{ProcNAS = "Proc. Nat. Acad. Sci. U. S. A." }
+ @String{Psychometrika = "Psychometrika" }
+ @String{QuartMath = "Quarterly Journal of Mathematics, Oxford, Series (2)" }
+ @String{QuartMath = "Quart. J. Math. Oxford Ser. (2)" }
+ @String{QuartApplMath = "Quarterly of Applied Mathematics" }
+ @String{QuartApplMath = "Quart. Appl. Math." }
+ @String{RevueInstStat = "Review of the International Statisical Institute" }
+ @String{RevueInstStat = "Rev. Inst. Internat. Statist." }
+
+ %SIAM
+ @String{JSIAM = "Journal of the Society for Industrial and Applied
+     Mathematics" }
+ @String{JSIAM = "J. Soc. Indust. Appl. Math." }
+ @String{JSIAMB = "Journal of the Society for Industrial and Applied
+     Mathematics, Series B, Numerical Analysis" }
+ @String{JSIAMB = "J. Soc. Indust. Appl. Math. Ser. B Numer. Anal." }
+ @String{SIAMAlgMeth = "{SIAM} Journal on Algebraic and Discrete Methods" }
+ @String{SIAMAlgMeth = "{SIAM} J. Algebraic Discrete Methods" }
+ @String{SIAMAppMath = "{SIAM} Journal on Applied Mathematics" }
+ @String{SIAMAppMath = "{SIAM} J. Appl. Math." }
+ @String{SIAMComp = "{SIAM} Journal on Computing" }
+ @String{SIAMComp = "{SIAM} J. Comput." }
+ @String{SIAMMatrix = "{SIAM} Journal on Matrix Analysis and Applications" }
+ @String{SIAMMatrix = "{SIAM} J. Matrix Anal. Appl." }
+ @String{SIAMNumAnal = "{SIAM} Journal on Numerical Analysis" }
+ @String{SIAMNumAnal = "{SIAM} J. Numer. Anal." }
+ @String{SIAMReview = "{SIAM} Review" }
+ @String{SIAMReview = "{SIAM} Rev." }
+ @String{SIAMSciStat = "{SIAM} Journal on Scientific and Statistical
+     Computing" }
+ @String{SIAMSciStat = "{SIAM} J. Sci. Statist. Comput." }
+
+ @String{SoftPracExp = "Software Practice and Experience" }
+ @String{SoftPracExp = "Software Prac. Experience" } % didn't find in AMS MR
+ @String{StatScience = "Statistical Science" }
+ @String{StatScience = "Statist. Sci." }
+ @String{Techno = "Technometrics" }
+ @String{USSRCompMathPhys = "{USSR} Computational Mathematics and Mathematical
+     Physics" }
+ @String{USSRCompMathPhys = "{U. S. S. R.} Comput. Math. and Math. Phys." }
+ @String{VLSICompSys = "Journal of {VLSI} and Computer Systems" }
+ @String{VLSICompSys = "J. {VLSI} Comput. Syst." }
+ @String{ZAngewMathMech = "Zeitschrift fur Angewandte Mathematik und
+     Mechanik" }
+ @String{ZAngewMathMech = "Z. Angew. Math. Mech." }
+ @String{ZAngewMathPhys = "Zeitschrift fur Angewandte Mathematik und Physik" }
+ @String{ZAngewMathPhys = "Z. Angew. Math. Phys." }
+
+% Publishers % ================================================= |
+
+ @String{Academic = "Academic Press" }
+ @String{ACMPress = "{ACM} Press" }
+ @String{AdamHilger = "Adam Hilger" }
+ @String{AddisonWesley = "Addison-Wesley" }
+ @String{AllynBacon = "Allyn and Bacon" }
+ @String{AMS = "American Mathematical Society" }
+ @String{Birkhauser = "Birkh{\"a}user" }
+ @String{CambridgePress = "Cambridge University Press" }
+ @String{Chelsea = "Chelsea" }
+ @String{ClaredonPress = "Claredon Press" }
+ @String{DoverPub = "Dover Publications" }
+ @String{Eyolles = "Eyolles" }
+ @String{HoltRinehartWinston = "Holt, Rinehart and Winston" }
+ @String{Interscience = "Interscience" }
+ @String{JohnsHopkinsPress = "The Johns Hopkins University Press" }
+ @String{JohnWileySons = "John Wiley and Sons" }
+ @String{Macmillan = "Macmillan" }
+ @String{MathWorks = "The Math Works Inc." }
+ @String{McGrawHill = "McGraw-Hill" }
+ @String{NatBurStd = "National Bureau of Standards" }
+ @String{NorthHolland = "North-Holland" }
+ @String{OxfordPress = "Oxford University Press" }  %address Oxford or London?
+ @String{PergamonPress = "Pergamon Press" }
+ @String{PlenumPress = "Plenum Press" }
+ @String{PrenticeHall = "Prentice-Hall" }
+ @String{SIAMPub = "{SIAM} Publications" }
+ @String{Springer = "Springer-Verlag" }
+ @String{TexasPress = "University of Texas Press" }
+ @String{VanNostrand = "Van Nostrand" }
+ @String{WHFreeman = "W. H. Freeman and Co." }
+
+%Entries
+@inproceedings{pond2023,
+  author = {Li, Huaicheng and Berger, Daniel S. and Hsu, Lisa and Ernst, Daniel and Zardoshti, Pantea and Novakovic, Stanko and Shah, Monish and Rajadnya, Samir and Lee, Scott and Agarwal, Ishwar and Hill, Mark D. and Fontoura, Marcus and Bianchini, Ricardo},
+  title = {Pond: CXL-Based Memory Pooling Systems for Cloud Platforms},
+  booktitle = {Proceedings of the 28th ACM International Conference on Architectural Support for Programming Languages and Operating Systems, Volume 2},
+  series = {ASPLOS '23},
+  year = {2023},
+  isbn = {9798400700262},
+  location = {Vancouver, BC, Canada},
+  pages = {574--587},
+  numpages = {14},
+  url = {https://doi.org/10.1145/3575693.3578835},
+  doi = {10.1145/3575693.3578835},
+  acmid = {3578835},
+  publisher = {ACM},
+  address = {New York, NY, USA}
+}
+
+@inproceedings{directcxl2022,
+  author = {Gouk, Donghyun and Lee, Sangwon and Kwon, Miryeong and Jung, Myoungsoo},
+  title = {Direct Access, High-Performance Memory Disaggregation with DirectCXL},
+  booktitle = {2022 USENIX Annual Technical Conference},
+  series = {USENIX ATC '22},
+  year = {2022},
+  isbn = {978-1-939133-29-9},
+  location = {Carlsbad, CA, USA},
+  pages = {287--294},
+  numpages = {8},
+  url = {https://www.usenix.org/conference/atc22/presentation/gouk},
+  publisher = {USENIX Association},
+  address = {Berkeley, CA, USA}
+}
+
+@inproceedings{tpp2023,
+  author = {Maruf, Hasan Al and Wang, Hao and Dhanotia, Abhishek and Weiner, Johannes and Agarwal, Niket and Bhattacharya, Pallab and Petersen, Chris and Chowdhury, Mosharaf and Kanaujia, Shobhit and Chauhan, Prakash},
+  title = {TPP: Transparent Page Placement for CXL-Enabled Tiered-Memory},
+  booktitle = {Proceedings of the 28th ACM International Conference on Architectural Support for Programming Languages and Operating Systems, Volume 3},
+  series = {ASPLOS '23},
+  year = {2023},
+  isbn = {9798400700279},
+  location = {Vancouver, BC, Canada},
+  pages = {742--755},
+  numpages = {14},
+  url = {https://doi.org/10.1145/3582016.3582063},
+  doi = {10.1145/3582016.3582063},
+  acmid = {3582063},
+  publisher = {ACM},
+  address = {New York, NY, USA}
+}
+
+@inproceedings{cxlshm2023,
+  author = {Zhang, Mingxing and Ma, Teng and Hua, Jinqi and Liu, Zheng and Chen, Kang and Ding, Ning and Du, Fan and Jiang, Jinlei and Ma, Tao and Wu, Yongwei},
+  title = {Partial Failure Resilient Memory Management System for (CXL-based) Distributed Shared Memory},
+  booktitle = {Proceedings of the 29th Symposium on Operating Systems Principles},
+  series = {SOSP '23},
+  year = {2023},
+  isbn = {9798400702297},
+  location = {Koblenz, Germany},
+  pages = {658--674},
+  numpages = {17},
+  url = {https://doi.org/10.1145/3600006.3613135},
+  doi = {10.1145/3600006.3613135},
+  acmid = {3613135},
+  publisher = {ACM},
+  address = {New York, NY, USA}
+}
+
+@inproceedings{zerooffload2021,
+  author = {Ren, Jie and Rajbhandari, Samyam and Aminabadi, Reza Yazdani and Ruwase, Olatunji and Yang, Shuangyan and Zhang, Minjia and Li, Dong and He, Yuxiong},
+  title = {ZeRO-Offload: Democratizing Billion-Scale Model Training},
+  booktitle = {2021 USENIX Annual Technical Conference},
+  series = {USENIX ATC '21},
+  year = {2021},
+  isbn = {978-1-939133-23-7},
+  location = {Online},
+  pages = {551--564},
+  numpages = {14},
+  url = {https://www.usenix.org/conference/atc21/presentation/ren-jie},
+  publisher = {USENIX Association},
+  address = {Berkeley, CA, USA}
+}
+
+@inproceedings{swapadvisor2020,
+  author = {Huang, Chien-Chin and Jin, Gu and Li, Jinyang},
+  title = {SwapAdvisor: Pushing Deep Learning Beyond the GPU Memory Limit via Smart Swapping},
+  booktitle = {Proceedings of the Twenty-Fifth International Conference on Architectural Support for Programming Languages and Operating Systems},
+  series = {ASPLOS '20},
+  year = {2020},
+  isbn = {9781450371025},
+  location = {Lausanne, Switzerland},
+  pages = {1341--1355},
+  numpages = {15},
+  url = {https://doi.org/10.1145/3373376.3378530},
+  doi = {10.1145/3373376.3378530},
+  acmid = {3378530},
+  publisher = {ACM},
+  address = {New York, NY, USA}
+}
+
+@inproceedings{vdnn2016,
+  author = {Rhu, Minsoo and Gimelshein, Natalia and Clemons, Jason and Zulfiqar, Arslan and Keckler, Stephen W},
+  title = {vDNN: Virtualized Deep Neural Networks for Scalable, Memory-Efficient Neural Network Design},
+  booktitle = {The 49th Annual IEEE/ACM International Symposium on Microarchitecture},
+  series = {MICRO '16},
+  year = {2016},
+  isbn = {978-1-5090-3508-3},
+  location = {Taipei, Taiwan},
+  pages = {18:1--18:13},
+  articleno = {18},
+  numpages = {13},
+  url = {https://doi.org/10.1109/MICRO.2016.7783725},
+  doi = {10.1109/MICRO.2016.7783725},
+  acmid = {3195638},
+  publisher = {IEEE Press},
+  address = {Piscataway, NJ, USA}
+}
+
+@inproceedings{flashattention2022,
+  author = {Dao, Tri and Fu, Daniel Y and Ermon, Stefano and Rudra, Atri and R{\'e}, Christopher},
+  title = {FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness},
+  booktitle = {Advances in Neural Information Processing Systems},
+  volume = {35},
+  pages = {16344--16359},
+  year = {2022},
+  publisher = {Curran Associates, Inc.},
+  url = {https://proceedings.neurips.cc/paper/2022/file/67d57c32e20fd0a7a302cb81d36e40d5-Paper-Conference.pdf},
+address = {USA}
+}
+
+@inproceedings{vattention2025,
+  title={vattention: Dynamic memory management for serving llms without pagedattention},
+  author={Prabhu, Ramya and Nayak, Ajay and Mohan, Jayashree and Ramjee, Ramachandran and Panwar, Ashish},
+  booktitle={Proceedings of the 30th ACM International Conference on Architectural Support for Programming Languages and Operating Systems, Volume 1},
+  pages={1133--1150},
+  year={2025},
+address = {New York, NY, USA},
+publisher = {ACM}
+}
+
+@inproceedings{mimdram2024,
+  author = {Oliveira, Geraldo F. and Olgun, Ataberk and Yaglikci, A. Giray and Luo, Yahya Can and Kanellopoulos, Konstantinos and Ghose, Saugata and Gomez-Luna, Juan and Mutlu, Onur},
+  title = {MIMDRAM: An End-to-End Processing-Using-DRAM System for High-Throughput, Energy-Efficient and Programmer-Transparent Multiple-Instruction Multiple-Data Computing},
+  booktitle = {2024 IEEE International Symposium on High-Performance Computer Architecture},
+  series = {HPCA '24},
+  year = {2024},
+  pages = {427--442},
+  doi = {10.1109/HPCA57654.2024.00040},
+  publisher = {IEEE Computer Society},
+  address = {Los Alamitos, CA, USA}
+}
+
+@inproceedings{cxlanns2023,
+  author = {Jang, Junhyeok and Choi, Hanjin and Bae, Hanyeoreum and Lee, Seungjun and Kwon, Miryeong and Jung, Myoungsoo},
+  title = {CXL-ANNS: Software-Hardware Collaborative Memory Disaggregation and Computation for Billion-Scale Approximate Nearest Neighbor Search},
+  booktitle = {2023 USENIX Annual Technical Conference},
+  series = {USENIX ATC '23},
+  year = {2023},
+  isbn = {978-1-939133-35-0},
+  location = {Boston, MA, USA},
+  pages = {585--600},
+  numpages = {16},
+  url = {https://www.usenix.org/conference/atc23/presentation/jang},
+  publisher = {USENIX Association},
+  address = {Berkeley, CA, USA}
+}
+
+@inproceedings{cxlrec2024,
+  author = {Chen, Hanqiu and Xu, Cong and Li, Jiang and Wang, Xiaohan and Chen, Tianyi and Meng, Chenxi and Li, Ang},
+  title = {Enabling Efficient Large Recommendation Model Training with near CXL Memory Processing},
+  booktitle = {The 51st Annual International Symposium on Computer Architecture},
+  series = {ISCA '24},
+  year = {2024},
+  isbn = {9798400706004},
+  location = {Buenos Aires, Argentina},
+  pages = {426--439},
+  numpages = {14},
+  url = {https://doi.org/10.1109/ISCA59077.2024.00036},
+  doi = {10.1109/ISCA59077.2024.00036},
+  acmid = {00036},
+  publisher = {IEEE Press},
+  address = {Piscataway, NJ, USA}
+}
+
+@article{muxflow2024,
+  author = {Liu, Xiaodong and Zhao, Yinghao and Liu, Shuai and Yang, Fan and Jiang, Meng and Song, Lingjie and Xu, Zheng and Yang, Zhibin and Zhou, Xin and Zhang, Yuhang and Chen, Zijian and Li, Jidong and Yu, Lei and Ma, Xianyan and Qiao, Lin and Ye, Jilong},
+  title = {MuxFlow: efficient GPU sharing in production-level clusters with more than 10000 GPUs},
+  journal = {Science China Information Sciences},
+  volume = {67},
+  number = {12},
+  pages = {222101},
+  year = {2024},
+  publisher = {Springer},
+  doi = {10.1007/s11432-024-4227-2}
+}
+
+@inproceedings{pipeswitch2020,
+  author = {Bai, Zhihao and Zhang, Zhen and Zhu, Yibo and Jin, Xin},
+  title = {PipeSwitch: Fast Pipelined Context Switching for Deep Learning Applications},
+  booktitle = {14th USENIX Symposium on Operating Systems Design and Implementation},
+  series = {OSDI '20},
+  year = {2020},
+  isbn = {978-1-939133-19-0},
+  location = {Online},
+  pages = {499--514},
+  numpages = {16},
+  url = {https://www.usenix.org/conference/osdi20/presentation/bai},
+  publisher = {USENIX Association},
+  address = {Berkeley, CA, USA}
+}
+
+@inproceedings{dota2022,
+  author = {Qu, Zheng and Liu, Liu and Tu, Fengbin and Chen, Zhaodong and Ding, Yufei and Xie, Yuan},
+  title = {DOTA: detect and omit weak attentions for scalable transformer acceleration},
+  booktitle = {Proceedings of the 27th ACM International Conference on Architectural Support for Programming Languages and Operating Systems},
+  series = {ASPLOS '22},
+  year = {2022},
+  isbn = {9781450392051},
+  location = {Lausanne, Switzerland},
+  pages = {14--26},
+  numpages = {13},
+  url = {https://doi.org/10.1145/3503222.3507747},
+  doi = {10.1145/3503222.3507747},
+  acmid = {3507747},
+  publisher = {ACM},
+  address = {New York, NY, USA}
+}
+
+@inproceedings{spotserve2024,
+  author = {Xiao, Xupeng and Zhong, Chunan and Zhong, Zhuzhong and Chen, Haiyang and Yang, Hongyin and Zhang, Minjia and Chen, Qirong and Xiao, Zeqiang and Chowdhery, Aakanksha and Cai, Hongyi and Yang, Yongqiang and Tandon, Rashmi},
+  title = {SpotServe: Serving Generative Large Language Models on Preemptible Instances},
+  booktitle = {Proceedings of the 29th ACM International Conference on Architectural Support for Programming Languages and Operating Systems, Volume 2},
+  series = {ASPLOS '24},
+  year = {2024},
+  isbn = {9798400703850},
+  location = {La Jolla, CA, USA},
+  pages = {818--835},
+  numpages = {18},
+  url = {https://doi.org/10.1145/3620666.3651335},
+  doi = {10.1145/3620666.3651335},
+  acmid = {3651335},
+  publisher = {ACM},
+  address = {New York, NY, USA}
+}
+
+@inproceedings{helix2025,
+  title={Helix: Serving large language models over heterogeneous gpus and network via max-flow},
+  author={Mei, Yixuan and Zhuang, Yonghao and Miao, Xupeng and Yang, Juncheng and Jia, Zhihao and Vinayak, Rashmi},
+  booktitle={Proceedings of the 30th ACM International Conference on Architectural Support for Programming Languages and Operating Systems, Volume 1},
+  pages={586--602},
+  year={2025},
+address = {New York, NY, USA},
+    publisher = {ACM}
+}
+
+@inproceedings{melody2025,
+  author = {Liu, Jinshu and Hadian, Hamid and Wang, Yuyue and Berger, Daniel S. and Nguyen, Marie and Jian, Xun and Noh, Sam H. and Li, Huaicheng},
+  title = {Systematic CXL Memory Characterization and Performance Analysis at Scale},
+  booktitle = {Proceedings of the 30th ACM International Conference on Architectural Support for Programming Languages and Operating Systems, Volume 2},
+  series = {ASPLOS '25},
+  year = {2025},
+  isbn = {9798400711367},
+  location = {Rotterdam, Netherlands},
+  pages = {404--418},
+  numpages = {15},
+  url = {https://doi.org/10.1145/3676641.3715987},
+  doi = {10.1145/3676641.3715987},
+  acmid = {3715987},
+  publisher = {ACM},
+  address = {New York, NY, USA}
+}
+
+@inproceedings{demystifying2023,
+  author = {Sun, Yan and Yuan, Yifan and Yu, Zeduo and Kuper, Reese and Song, Chihun and Huang, Jinghan and Ji, Houxiang and Agarwal, Siddharth and Lou, Jiaqi and Jeong, Ipoom and Wang, Ren and Ahn, Jung Ho and Xu, Tianyin and Kim, Nam Sung},
+  title = {Demystifying CXL Memory with Genuine CXL-Ready Systems and Devices},
+  booktitle = {Proceedings of the 56th Annual IEEE/ACM International Symposium on Microarchitecture},
+  series = {MICRO '23},
+  year = {2023},
+  isbn = {9798400703294},
+  location = {Toronto, ON, Canada},
+  pages = {105--121},
+  numpages = {17},
+  url = {https://doi.org/10.1145/3613424.3614256},
+  doi = {10.1145/3613424.3614256},
+  acmid = {3614256},
+  publisher = {ACM},
+  address = {New York, NY, USA}
+}
+
+@inproceedings{ccnic2024,
+  author = {Schuh, Hannah N. and Choi, Minseok and Shin, Seunghee and Wang, Qizhen and Beckmann, Nathan and Sewell, Christopher and Bianchini, Ricardo and Wenisch, Thomas F.},
+  title = {CC-NIC: a Cache-Coherent Interface to the NIC},
+  booktitle = {Proceedings of the 29th ACM International Conference on Architectural Support for Programming Languages and Operating Systems, Volume 2},
+  series = {ASPLOS '24},
+  year = {2024},
+  isbn = {9798400703850},
+  location = {La Jolla, CA, USA},
+  pages = {647--663},
+  numpages = {17},
+  url = {https://doi.org/10.1145/3620666.3651382},
+  doi = {10.1145/3620666.3651382},
+  acmid = {3651382},
+  publisher = {ACM},
+  address = {New York, NY, USA}
+}
+
+@inproceedings{hydrarpc2024,
+  author = {Ma, Teng and Liu, Zheng and Wei, Chengkun and Hua, Jinqi and Zhang, Mingxing and Chen, Kang and Wu, Yongwei},
+  title = {HydraRPC: RPC in the CXL Era},
+  booktitle = {2024 USENIX Annual Technical Conference},
+  series = {USENIX ATC '24},
+  year = {2024},
+  isbn = {978-1-939133-41-1},
+  location = {Santa Clara, CA, USA},
+  pages = {387--395},
+  numpages = {9},
+  url = {https://www.usenix.org/conference/atc24/presentation/ma-teng},
+  publisher = {USENIX Association},
+  address = {Berkeley, CA, USA}
+}
+
+@inproceedings{tmo,
+    author    = {Weiner, Johannes and Agarwal, Niket and Schatzberg, Dan and Yang, Leon and Wang, Hao and Sanouillet, Blaise and Sharma, Bikash and Heo, Tejun and Jain, Mayank and Tang, Chunqiang and Skarlatos, Dimitrios},
+    title     = {{TMO}: Transparent Memory Offloading in Datacenters},
+    booktitle = {Proceedings of the 27th ACM International Conference on Architectural Support for Programming Languages and Operating Systems (ASPLOS)},
+    year      = {2022},
+    pages     = {609--621},
+    doi       = {10.1145/3503222.3507731}
+}
+
+@inproceedings{limoncello,
+    author       = {Akanksha Jain and
+                  Hannah Lin and
+                  Carlos Villavieja and
+                  Baris Kasikci and
+                  Chris Kennelly and
+                  Milad Hashemi and
+                  Parthasarathy Ranganathan},
+  editor       = {Rajiv Gupta and
+                  Nael B. Abu{-}Ghazaleh and
+                  Madan Musuvathi and
+                  Dan Tsafrir},
+  title        = {Limoncello: Prefetchers for Scale},
+  booktitle    = {Proceedings of the 29th {ACM} International Conference on Architectural
+                  Support for Programming Languages and Operating Systems, Volume 3,
+                  {ASPLOS} 2024, La Jolla, CA, USA, 27 April 2024- 1 May 2024},
+  pages        = {577--590},
+  publisher    = {{ACM}},
+  year         = {2024},
+  url          = {https://doi.org/10.1145/3620666.3651373},
+  doi          = {10.1145/3620666.3651373},
+  timestamp    = {Sat, 04 May 2024 10:55:05 +0200},
+  biburl       = {https://dblp.org/rec/conf/asplos/JainLVKKHR24.bib},
+  bibsource    = {dblp computer science bibliography, https://dblp.org}
+}
+
+@article{DBLP:journals/pvldb/WeisgutRTBR25,
+  author       = {Marcel Weisgut and
+                  Daniel Ritter and
+                  Pinar T{\"{o}}z{\"{u}}n and
+                  Lawrence Benson and
+                  Tilmann Rabl},
+  title        = {{CXL} Memory Performance for In-Memory Data Processing},
+  journal      = {Proc. {VLDB} Endow.},
+  volume       = {18},
+  number       = {9},
+  pages        = {3119--3133},
+  year         = {2025},
+  url          = {https://www.vldb.org/pvldb/vol18/p3119-weisgut.pdf},
+  doi          = {10.14778/3746405.3746432},
+  timestamp    = {Thu, 25 Dec 2025 12:45:47 +0100},
+  biburl       = {https://dblp.org/rec/journals/pvldb/WeisgutRTBR25.bib},
+  bibsource    = {dblp computer science bibliography, https://dblp.org}
+}
+
+@inproceedings{DBLP:conf/asplos/LiuHWBNJNL25,
+  author       = {Jinshu Liu and
+                  Hamid Hadian and
+                  Yuyue Wang and
+                  Daniel S. Berger and
+                  Marie Nguyen and
+                  Xun Jian and
+                  Sam H. Noh and
+                  Huaicheng Li},
+  editor       = {Lieven Eeckhout and
+                  Georgios Smaragdakis and
+                  Katai Liang and
+                  Adrian Sampson and
+                  Martha A. Kim and
+                  Christopher J. Rossbach},
+  title        = {Systematic {CXL} Memory Characterization and Performance Analysis
+                  at Scale},
+  booktitle    = {Proceedings of the 30th {ACM} International Conference on Architectural
+                  Support for Programming Languages and Operating Systems, Volume 2,
+                  {ASPLOS} 2025, Rotterdam, Netherlands, 30 March 2025 - 3 April 2025},
+  pages        = {1203--1217},
+  publisher    = {{ACM}},
+  year         = {2025},
+  url          = {https://doi.org/10.1145/3676641.3715987},
+  doi          = {10.1145/3676641.3715987},
+  timestamp    = {Fri, 09 May 2025 20:27:57 +0200},
+  biburl       = {https://dblp.org/rec/conf/asplos/LiuHWBNJNL25.bib},
+  bibsource    = {dblp computer science bibliography, https://dblp.org}
+}
+
+@article{DBLP:journals/cluster/LiYWZDCL26,
+  author       = {Shibao Li and
+                  Zhou Yang and
+                  Chengzhi Wang and
+                  Yunwu Zhang and
+                  Wei Dou and
+                  Xuerong Cui and
+                  Jianhang Liu},
+  title        = {Local feedback and dynamic adjustment best offset prefetcher in {CXL-SSD}},
+  journal      = {Clust. Comput.},
+  volume       = {29},
+  number       = {1},
+  pages        = {18},
+  year         = {2026},
+  url          = {https://doi.org/10.1007/s10586-025-05782-3},
+  doi          = {10.1007/S10586-025-05782-3},
+  timestamp    = {Thu, 20 Nov 2025 07:44:45 +0100},
+  biburl       = {https://dblp.org/rec/journals/cluster/LiYWZDCL26.bib},
+  bibsource    = {dblp computer science bibliography, https://dblp.org}
+}
+
+@inproceedings{melody,
+    author = {Liu, Jinshu and Hadian, Hamid and Wang, Yuyue and Berger, Daniel S. and Nguyen, Marie and Jian, Xun and Noh, Sam H. and Li, Huaicheng},
+title = {Systematic CXL Memory Characterization and Performance Analysis at Scale},
+year = {2025},
+isbn = {9798400710797},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/3676641.3715987},
+doi = {10.1145/3676641.3715987},
+booktitle = {Proceedings of the 30th ACM International Conference on Architectural Support for Programming Languages and Operating Systems, Volume 2}
+}
+
+}
+
+@article{expand,
+    author       = {Dongsuk Oh and
+                  Miryeong Kwon and
+                  Jiseon Kim and
+                  Eunjee Na and
+                  Junseok Moon and
+                  Hyunkyu Choi and
+                  Seonghyeon Jang and
+                  Hanjin Choi and
+                  Hongjoo Jung and
+                  Sangwon Lee and
+                  Myoungsoo Jung},
+  title        = {{CXL} Topology-Aware and Expander-Driven Prefetching: Unlocking {SSD}
+                  Performance},
+  journal      = {CoRR},
+  volume       = {abs/2505.18577},
+  year         = {2025},
+  url          = {https://doi.org/10.48550/arXiv.2505.18577},
+  doi          = {10.48550/ARXIV.2505.18577},
+  eprinttype    = {arXiv},
+  eprint       = {2505.18577},
+  timestamp    = {Sun, 29 Jun 2025 10:28:01 +0200},
+  biburl       = {https://dblp.org/rec/journals/corr/abs-2505-18577.bib},
+  bibsource    = {dblp computer science bibliography, https://dblp.org}
+}
+
+% ============================================================
+%  camp_new_references.bib
+%  BibTeX entries for the THREE NEW subsections added to
+%  "CAMP: Content-Aware Memory Prefetching for High-Performance
+%   CXL-Based Inference"
+%
+%  Key convention: firstauthorlastname + year + keyword
+%  (matching the dang2026camp style requested)
+%
+%  WARNING: AUTHOR-LIST WARNING:
+%    yang2026beluga - only the first six confirmed authors are
+%    listed; fetch the full list from ACM DL before submission:
+%    https://doi.org/10.1145/3786627
+%
+%  WARNING: USENIX PAPERS have no DOIs; URLs point to USENIX or arXiv.
+% ============================================================
+
+
+% ------------------------------------------------------------
+% Subsection: CXL Memory Tiering and AI-Oriented CXL Architectures
+% ------------------------------------------------------------
+
+@inproceedings{zhong2024cxlvirt,
+  author    = {Yuhong Zhong and
+               Daniel S. Berger and
+               Carl Waldspurger and
+               Ryan Wee and
+               Ishwar Agarwal and
+               Rajat Agarwal and
+               Frank Hady and
+               Karthik Kumar and
+               Mark D. Hill and
+               Mosharaf Chowdhury and
+               Asaf Cidon},
+  title     = {Managing Memory Tiers with {CXL} in Virtualized Environments},
+  booktitle = {18th {USENIX} Symposium on Operating Systems Design and
+               Implementation ({OSDI} '24)},
+  pages     = {37--56},
+  year      = {2024},
+  publisher = {{USENIX} Association},
+  address   = {Santa Clara, CA, USA},
+  url       = {https://www.usenix.org/conference/osdi24/presentation/zhong-yuhong},
+}
+
+@inproceedings{xiang2024nomad,
+  author    = {Lingfeng Xiang and
+               Zhen Lin and
+               Weishu Deng and
+               Hui Lu and
+               Jia Rao and
+               Yifan Yuan and
+               Ren Wang},
+  title     = {Nomad: Non-Exclusive Memory Tiering via Transactional Page Migration},
+  booktitle = {18th {USENIX} Symposium on Operating Systems Design and
+               Implementation ({OSDI} '24)},
+  year      = {2024},
+  publisher = {{USENIX} Association},
+  address   = {Santa Clara, CA, USA},
+  url       = {https://arxiv.org/abs/2401.13154},
+}
+
+@inproceedings{sun2025m5,
+  author    = {Yan Sun and
+               Jongyul Kim and
+               Zeduo Yu and
+               Jiyuan Zhang and
+               Siyuan Chai and
+               Michael Jaemin Kim and
+               Hwayong Nam and
+               Jaehyun Park and
+               Eojin Na and
+               Yifan Yuan and
+               Ren Wang and
+               Jung Ho Ahn and
+               Tianyin Xu and
+               Nam Sung Kim},
+  title     = {{M5}: Mastering Page Migration and Memory Management for
+               {CXL}-Based Tiered Memory Systems},
+  booktitle = {Proceedings of the 30th {ACM} International Conference on
+               Architectural Support for Programming Languages and Operating
+               Systems, Volume~2},
+  series    = {{ASPLOS} '25},
+  pages     = {604--621},
+  year      = {2025},
+  publisher = {{ACM}},
+  address   = {Rotterdam, Netherlands},
+  doi       = {10.1145/3676641.3711999},
+  url       = {https://doi.org/10.1145/3676641.3711999},
+}
+
+@inproceedings{gu2025pim,
+  author    = {Yufeng Gu and
+               Alireza Khadem and
+               Sumanth Umesh and
+               Ning Liang and
+               Xavier Servot and
+               Onur Mutlu and
+               Ravi Iyer and
+               Reetuparna Das},
+  title     = {{PIM} Is All You Need: A {CXL}-Enabled {GPU}-Free System for
+               Large Language Model Inference},
+  booktitle = {Proceedings of the 30th {ACM} International Conference on
+               Architectural Support for Programming Languages and Operating
+               Systems, Volume~2},
+  series    = {{ASPLOS} '25},
+  year      = {2025},
+  publisher = {{ACM}},
+  address   = {Rotterdam, Netherlands},
+  doi       = {10.1145/3676641.3716267},
+  url       = {https://arxiv.org/abs/2502.07578},
+}
+
+% WARNING: INCOMPLETE AUTHOR LIST - verify at https://doi.org/10.1145/3786627
+@article{yang2026beluga,
+  author    = {Xinjun Yang and
+               Qingda Hu and
+               Junru Li and
+               Feifei Li and
+               Yuqi Zhou and
+               Yicong Zhu},
+  title     = {Beluga: A {CXL}-Based Memory Architecture for Scalable and
+               Efficient {LLM} {KV}-Cache Management},
+  journal   = {Proceedings of the {ACM} on Management of Data},
+  volume    = {4},
+  number    = {1},
+  year      = {2026},
+  doi       = {10.1145/3786627},
+  url       = {https://doi.org/10.1145/3786627},
+}
+
+@inproceedings{ji2024demystifying,
+  author    = {Houxiang Ji and
+               Srikar Vanavasam and
+               Yang Zhou and
+               Qirong Xia and
+               Jinghan Huang and
+               Yifan Yuan and
+               Ren Wang and
+               Pekon Gupta and
+               Bhushan Chitlur and
+               Ipoom Jeong and
+               Nam Sung Kim},
+  title     = {Demystifying a {CXL} Type-2 Device: A Heterogeneous
+               Cooperative Computing Perspective},
+  booktitle = {57th {IEEE/ACM} International Symposium on Microarchitecture
+               ({MICRO} 2024)},
+  pages     = {1504--1517},
+  year      = {2024},
+  publisher = {{IEEE} Computer Society},
+  address   = {Austin, TX, USA},
+  doi       = {10.1109/MICRO61859.2024.00110},
+  url       = {https://doi.org/10.1109/MICRO61859.2024.00110},
+}
+
+
+% ------------------------------------------------------------
+% Subsection: KV Cache Management and Phase-Aware LLM Serving
+% ------------------------------------------------------------
+
+@inproceedings{lee2024infinigen,
+  author    = {Wonbeom Lee and
+               Jungi Lee and
+               Junghwan Seo and
+               Jaewoong Sim},
+  title     = {{InfiniGen}: Efficient Generative Inference of Large Language
+               Models with Dynamic {KV} Cache Management},
+  booktitle = {18th {USENIX} Symposium on Operating Systems Design and
+               Implementation ({OSDI} '24)},
+  year      = {2024},
+  publisher = {{USENIX} Association},
+  address   = {Santa Clara, CA, USA},
+  url       = {https://www.usenix.org/conference/osdi24/presentation/lee-wonbeom},
+}
+
+@inproceedings{zhong2024distserve,
+  author    = {Yinmin Zhong and
+               Shengyu Liu and
+               Junda Chen and
+               Jianbo Hu and
+               Yibo Zhu and
+               Xuanzhe Liu and
+               Xin Jin and
+               Hao Zhang},
+  title     = {{DistServe}: Disaggregating Prefill and Decoding for
+               Goodput-Optimized Large Language Model Serving},
+  booktitle = {18th {USENIX} Symposium on Operating Systems Design and
+               Implementation ({OSDI} '24)},
+  year      = {2024},
+  publisher = {{USENIX} Association},
+  address   = {Santa Clara, CA, USA},
+  url       = {https://www.usenix.org/conference/osdi24/presentation/zhong-yinmin},
+}
+
+@inproceedings{sun2024llumnix,
+  author    = {Biao Sun and
+               Ziming Huang and
+               Hanyu Zhao and
+               Wencong Xiao and
+               Xinyi Zhang and
+               Yong Li and
+               Wei Lin},
+  title     = {Llumnix: Dynamic Scheduling for Large Language Model Serving},
+  booktitle = {18th {USENIX} Symposium on Operating Systems Design and
+               Implementation ({OSDI} '24)},
+  year      = {2024},
+  publisher = {{USENIX} Association},
+  address   = {Santa Clara, CA, USA},
+  url       = {https://www.usenix.org/conference/osdi24/presentation/sun-biao},
+}
+
+@inproceedings{shah2024flashattention3,
+  author    = {Jay Shah and
+               Ganesh Bikshandi and
+               Ying Zhang and
+               Vijay Thakkar and
+               Pradeep Ramani and
+               Tri Dao},
+  title     = {{FlashAttention-3}: Fast and Accurate Attention with
+               Asynchrony and Low-Precision},
+  booktitle = {Advances in Neural Information Processing Systems
+               ({NeurIPS} 2024)},
+  volume    = {37},
+  year      = {2024},
+  publisher = {Curran Associates, Inc.},
+  url       = {https://arxiv.org/abs/2407.08608},
+}
+
+@inproceedings{qin2025mooncake,
+  author    = {Ruoyu Qin and
+               Zheming Li and
+               Weiran He and
+               Jialei Cui and
+               Feng Ren and
+               Mingxing Zhang and
+               Yongwei Wu and
+               Weimin Zheng and
+               Xinran Xu},
+  title     = {Mooncake: Trading More Storage for Less Computation---{A}
+               {KVCache}-Centric Architecture for Serving {LLM} Chatbot},
+  booktitle = {23rd {USENIX} Conference on File and Storage Technologies
+               ({FAST} '25)},
+  pages     = {155--170},
+  year      = {2025},
+  publisher = {{USENIX} Association},
+  address   = {Santa Clara, CA, USA},
+  note      = {Best Paper Award},
+  url       = {https://arxiv.org/abs/2407.00079},
+}
+
+
+% ------------------------------------------------------------
+% Subsection: Graph-Aware and Dataflow-Driven Memory Optimization
+% ------------------------------------------------------------
+
+@inproceedings{chen2024magis,
+  author    = {Renze Chen and
+               Zijian Ding and
+               Size Zheng and
+               Chengrui Zhang and
+               Jingwen Leng and
+               Xuanzhe Liu and
+               Yun Liang},
+  title     = {{MAGIS}: Memory Optimization via Coordinated Graph
+               Transformation and Scheduling for {DNN}},
+  booktitle = {Proceedings of the 29th {ACM} International Conference on
+               Architectural Support for Programming Languages and Operating
+               Systems, Volume~3},
+  series    = {{ASPLOS} '24},
+  pages     = {607--621},
+  year      = {2024},
+  publisher = {{ACM}},
+  address   = {La Jolla, CA, USA},
+  doi       = {10.1145/3620666.3651330},
+  url       = {https://doi.org/10.1145/3620666.3651330},
+}
+
+@article{zhao2025memo,
+  author    = {Pinxue Zhao and
+               Hailin Zhang and
+               Fangcheng Fu and
+               Xiaonan Nie and
+               Qibin Liu and
+               Fang Yang and
+               Yuanbo Peng and
+               Dian Jiao and
+               Shuaipeng Li and
+               Jinbao Xue and
+               Yangyu Tao and
+               Bin Cui},
+  title     = {{MEMO}: Fine-Grained Tensor Management for Ultra-Long
+               Context {LLM} Training},
+  journal   = {Proceedings of the {ACM} on Management of Data},
+  volume    = {3},
+  number    = {1},
+  articleno = {53},
+  year      = {2025},
+  doi       = {10.1145/3709703},
+  url       = {https://arxiv.org/abs/2407.12117},
+}
+
+@inproceedings{huang2026stalloc,
+  author    = {Zixiao Huang and
+               Junhao Hu and
+               Hao Lin and
+               Chunyang Zhu and
+               Yueran Tang and
+               Quanlu Zhang and
+               Zhen Guo and
+               Zhenhua Li and
+               Shengen Yan and
+               Zhenhua Zhu and
+               Guohao Dai and
+               Yu Wang},
+  title     = {{STAlloc}: Enhancing Memory Efficiency in Large-Scale
+               Model Training with Spatio-Temporal Planning},
+  booktitle = {Proceedings of the 21st European Conference on Computer
+               Systems ({EuroSys} '26)},
+  year      = {2026},
+  publisher = {{ACM}},
+  address   = {New York, NY, USA},
+  doi       = {10.1145/3767295.3769335},
+  url       = {https://arxiv.org/abs/2507.16274},
+}
