@@ -1,0 +1,48 @@
+Dear Editor and Reviewers of Elsevier Array,
+
+We sincerely thank the editor and the reviewers for their time, constructive feedback, and the opportunity to revise our manuscript "CAMP: Content-Aware Memory Prefetching for High-Performance CXL-Based Inference". We have carefully considered all comments and have undertaken a major revision of the manuscript to address the concerns raised. 
+
+Below, we provide a detailed, point-by-point response to the reviewers' comments. All changes have been integrated into the revised manuscript.
+
+======================================================================
+RESPONSE TO REVIEWER 1
+======================================================================
+
+Comment 1.1: "Sec 3.5: Comparative baselines evaluated by emulation only. Needs discussion/make up some experiments or clearly state the limitations and that this is an emulation study based on validated device models."
+Response: We agree with the reviewer. Physical CXL 3.0 Type-3 memory expanders with sub-microsecond latency and PCIe Gen5 interfaces are not yet widely available. We have heavily revised the "Evaluation Methodology" section to explicitly detail our SimPy-based discrete-event emulation framework. Furthermore, we explicitly state that our parameters are strictly calibrated against real-world CXL latency and bandwidth profiles extracted from recent physical characterization studies (e.g., Melody). We have also added a dedicated "Hardware Configuration" table (Table 1) and acknowledged the emulation limitations in the Conclusion.
+
+Comment 1.2: "Fig 4: No significant performance difference, how can you claim CAMP performs better?"
+Response: Thank you for pointing this out. We have rewritten the analysis for the ablation studies. Graph-Aware Eviction (CAMP) achieves a statistically significant 25% reduction in latency (0.49s) compared to industry-standard FIFO and LRU policies (0.62-0.65s, p < 0.01). We have expanded the text to clearly articulate how eliminating reactive guesswork leads to this substantial architectural improvement.
+
+Comment 1.3: "Fig 6: 800k tokens/s unrealistic for a single GPU. Explain!"
+Response: We apologize for this typographical error in the original manuscript. The correct value is 8,000 tokens/s for a 6.7B parameter model on a single H100 GPU. This has been corrected in the text of Section 4.5, and the analysis of the scalability limits (and the transition to a bandwidth-bound regime) has been significantly expanded.
+
+======================================================================
+RESPONSE TO REVIEWER 2
+======================================================================
+
+Comment 2.1: "Rough experiments. No details about simulator, no config details."
+Response: We have addressed this by introducing Section 3.1 "System Model and Assumptions", which includes a formal architectural definition and Table 1 (Modeled Hardware Configuration), explicitly listing the H100 GPU, 80GB HBM3, and Astera Labs Leo-based CXL 3.0 expander parameters. 
+
+Comment 2.2: "The experiments are too shallow and too little."
+Response: We have conducted a massive rewrite and expansion of Section 4 (Experimental Evaluation). 
+1. We expanded every single subsection (4.2 to 4.6) to provide deep, rigorous architectural analysis of the results, explaining the exact failure mechanics of the baselines (e.g., the LRU "Thrashing Cliff").
+2. We introduced a brand-new evaluation dimension: Section 4.7 "Multi-Tenant Interference and Contention". This entirely new experiment simulates two LLM instances competing for the 64 GB/s CXL link. We demonstrate that CAMP isolates the critical core layers, suffering only a 1.2x tail latency degradation, while reactive baselines spike by 2.5x. A new chart (Figure 9) was generated to support this finding.
+
+Comment 2.3: "We have algorithm 1 in an algorithm section but no algorithm 2, and I think the method is too simple, too little of formula, maths or charts.. does not look like a scientific papers"
+Response: We thank the reviewer for pushing us to increase the methodological rigor of the paper. We have completely overhauled Section 3:
+1. We introduced "Algorithm 2: Graph-Aware Pinning (Offline)" with full pseudo-code to perfectly complement Algorithm 1.
+2. We expanded the mathematical formalism in Section 3.3, formally framing the memory pinning strategy as a constrained optimization problem (fractional knapsack) subject to the strict HBM capacity limits.
+3. We created a high-quality "System Architecture" diagram (Figure 1 in Section 3.1) visually detailing the interaction between the Host, GPU, HBM, and CXL memory pool over PCIe Gen5.
+
+======================================================================
+ADDITIONAL REVISIONS
+======================================================================
+- Flattened directory structure to ensure seamless LaTeX compilation.
+- Fixed `inputenc` encoding errors by converting em-dashes and removing unsupported unicode symbols.
+- Switched from `algorithm2e` to the standard `algorithm` package to fix compilation conflicts with `algpseudocode`.
+
+We believe these extensive revisions have significantly elevated the depth, rigor, and clarity of the manuscript. We hope the editor and reviewers find the revised paper suitable for publication in Array.
+
+Sincerely,
+The Authors
