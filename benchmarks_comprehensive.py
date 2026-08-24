@@ -587,11 +587,22 @@ def run_latency_breakdown():
     with open(f"{NUM_DIR}/latency_breakdown.json", "w") as f:
         json.dump(data, f, indent=2)
 
+    # Near-zero slices (Compute Queueing, Overhead) previously collided with
+    # neighboring inline labels; use a legend instead of on-slice labels so
+    # tiny slices remain legible regardless of their share of the total.
     plt.figure(figsize=(6, 6))
-    plt.pie(data.values(), labels=data.keys(), autopct='%1.1f%%',
-            colors=['#4CAF50', '#F44336', '#03A9F4', '#FFC107'])
+    labels = list(data.keys())
+    values = list(data.values())
+    colors = ['#4CAF50', '#F44336', '#03A9F4', '#FFC107']
+    wedges, _, autotexts = plt.pie(
+        values, autopct=lambda pct: f'{pct:.1f}%' if pct > 1.5 else '',
+        colors=colors, pctdistance=0.75
+    )
+    plt.legend(wedges, [f"{l} ({v:.2f}ms)" for l, v in zip(labels, values)],
+               loc='center left', bbox_to_anchor=(1, 0.5))
     plt.title("Latency Breakdown (Constrained Cache, Measured)")
-    plt.savefig(f"{FIG_DIR}/latency_breakdown.png")
+    plt.tight_layout()
+    plt.savefig(f"{FIG_DIR}/latency_breakdown.png", bbox_inches='tight')
     plt.close()
     plt.close()
 

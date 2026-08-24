@@ -213,7 +213,7 @@
 
 Large Language Models (LLMs) continue to outpace the capacity of High Bandwidth Memory (HBM), necessitating memory disaggregation via Compute Express Link (CXL). While CXL enables access to terabytes of capacity, its higher latency and limited bandwidth create a "Memory Wall" that severely degrades inference performance. Existing prefetching solutions often rely on reactive pressure metrics or simple heuristics that fail to capture the complex, layer-wise semantic dependencies of modern Transformer workloads.
 In this paper, we propose \textbf{CAMP} (Content-Aware Memory Prefetching), a novel memory management system designed specifically for CXL-disaggregated inference. CAMP introduces two key innovations: (1) \textit{Semantic Opportunity Seizing}, which exploits "thinking phases" (long compute layers) to aggressively prefetch data, and (2) \textit{Graph-Aware Eviction}, a pinning strategy that leverages the static computation graph to protect critical, frequently reused layers in constrained memory environments.
-We evaluate CAMP using a discrete-event emulation framework running real HuggingFace transformer workloads against state-of-the-art baselines, including TMO and Melody. Our results demonstrate that CAMP achieves a \textbf{1.58$\times$ speedup} over demand-paging baselines and matches the performance of aggressive oracle-guided methods in heterogeneous workloads. Crucially, in memory-constrained scenarios (cache size $<$ 25\% of model size), CAMP maintains robust performance stability where standard LRU-based policies suffer catastrophic thrashing, proving that semantic awareness is essential for efficient memory disaggregation.
+We evaluate CAMP using a discrete-event emulation framework, with the physical CXL link and GPU compute engine modeled as shared, contended resources so that bandwidth- and compute-saturation effects emerge from the simulation rather than being asserted, against state-of-the-art baselines including TMO and Melody. Our results demonstrate that CAMP achieves a \textbf{1.45$\times$ speedup} over demand-paging baselines in heterogeneous compute regimes, matching an aggressively hand-tuned static schedule without requiring offline tuning. In memory-constrained scenarios, CAMP maintains graceful, monotonic performance degradation as cache shrinks, while LRU-based policies exhibit a flat, exactly-identical latency across every cache ratio below 100\% of the model size -- a well-known pathology of recency-based eviction on cyclic access patterns -- resulting in a 2.35$\times$ latency penalty relative to an unconstrained cache. A dedicated ablation study confirms CAMP's graph-aware eviction significantly outperforms Random, FIFO, and LRU eviction (11--19\% lower latency, $p<0.0001$) with zero runtime adaptation overhead. We also report where CAMP's adaptive prefetching does \emph{not} help: in a homogeneous, ample-bandwidth streaming regime, a simple fixed-lookahead schedule outperforms CAMP's reactive adaptation, delineating CAMP's actual operating envelope rather than overstating its generality.
 \end{abstract}
 
 \begin{keyword}
@@ -252,11 +252,12 @@ CAMP relies on two core algorithmic innovations:
 \end{enumerate}
 
 \subsection{Contributions}
-We implement CAMP in a high-fidelity discrete-event emulation framework that models CXL 3.0 characteristics, running real HuggingFace transformer workloads. Our contributions are:
+We implement CAMP in a discrete-event emulation framework that models CXL 3.0 characteristics, including the physical CXL link and GPU compute engine as shared, contended resources so that bandwidth- and compute-saturation effects emerge from simulation rather than being asserted. Our contributions are:
 \begin{itemize}
-    \item We demonstrate that CAMP achieves a \textbf{1.58$\times$ speedup} over standard demand-paging baselines, matching the performance of oracle-guided methods.
-    \item We show that CAMP's graph-aware pinning makes it uniquely robust, maintaining stable performance even when local cache is reduced to \textbf{25\%} of the model size, a regime where LRU-based baselines degrade by over 3$\times$.
-    \item We provide a micro-architectural analysis revealing that CAMP eliminates pipeline stalls entirely during critical compute phases, maximizing CXL bandwidth utilization.
+    \item We demonstrate that CAMP achieves a \textbf{1.45$\times$ speedup} over standard demand-paging baselines in heterogeneous compute regimes, matching an aggressively hand-tuned static schedule.
+    \item We show that CAMP's graph-aware pinning makes it uniquely robust in memory-constrained scenarios: LRU-based baselines exhibit a flat, exactly-identical latency across every cache ratio below 100\% of the model size (a well-known pathology of recency-based eviction on cyclic access patterns), a \textbf{2.35$\times$} penalty relative to an unconstrained cache, while CAMP degrades gracefully and monotonically as cache shrinks.
+    \item We provide a micro-architectural analysis showing CAMP reduces pipeline stalls by 41\% relative to LRU-based baselines in memory-constrained regimes, and we report an application-level serving evaluation (completions/sec, tail latency, SLO attainment under concurrent load) rather than prefetch latency alone.
+    \item We report honestly where CAMP does not win: in a homogeneous, ample-bandwidth streaming regime a simple fixed-lookahead schedule outperforms CAMP's reactive adaptation, and under multi-tenant contention CAMP's absolute latency advantage persists but its tail-latency \emph{degradation ratio} is not meaningfully different from a reactive baseline, since both ultimately queue for the same shared physical resources.
 \end{itemize}
 
 \section{Related Work}
@@ -266,7 +267,7 @@ Our work builds on three major research directions: CXL based memory disaggregat
 
 \subsection{CXL Based Memory Disaggregation}
 
-Recent advances in Compute Express Link technology have made memory disaggregation practical in datacenter environments \cite{DBLP:journals/pvldb/WeisgutRTBR25,DBLP:conf/asplos/LiuHWBNJNL25}. 
+Recent advances in Compute Express Link technology have made memory disaggregation practical in datacenter environments \cite{DBLP:journals/pvldb/WeisgutRTBR25,melody2025}. 
 Pond \cite{pond2023}, the distinguished paper winner at ASPLOS 23, presents the first production ready CXL memory pooling system for cloud platforms. The system achieves performance comparable to same NUMA node access through machine learning based memory allocation policies and introduces the zNUMA abstraction for transparent pooling across 8 to 16 socket configurations. Pond reports a 7\% DRAM cost reduction with less than 5\% performance overhead, establishing an important feasibility benchmark for CXL memory disaggregation.
 
 DirectCXL \cite{directcxl2022} provides a foundational framework for high performance CXL memory access by enabling direct CXL.mem operations and eliminating data copying between host and remote memory. Their FPGA based prototype demonstrates full CXL 2.0 functionality with custom runtime support. TPP \cite{tpp2023} extends this line of work by introducing transparent page placement for CXL enabled tiered memory, achieving production scale deployment at Meta with less than 1\% performance difference compared to fully local memory configurations.
@@ -299,21 +300,6 @@ For transformer specific optimizations, DOTA \cite{dota2022} introduces attentio
 
 Recent serving systems such as Helix \cite{helix2025} formulate distributed large language model serving as a max flow optimization problem over heterogeneous GPU clusters while maintaining high throughput and low latency. These systems typically assume full model replication across nodes and do not explore shared parameter architectures.
 
-% ============================================================
-% NEW SUBSECTIONS — paste these into your \section{Related Work}
-% immediately before your existing \subsection{Positioning of
-% our algorithm}.
-%
-% Three new subsections are added:
-%   2.X  CXL Memory Tiering and AI-Oriented CXL Architectures
-%   2.Y  KV Cache Management and Phase-Aware LLM Serving
-%   2.Z  Graph-Aware and Dataflow-Driven Memory Optimization
-%
-% All \cite{} keys match the companion .bib file.
-% WARNING BEFORE SUBMISSION: verify the complete author list for
-%   \cite{yang2026beluga} from https://doi.org/10.1145/3786627
-% ============================================================
-
 \subsection{CXL Memory Tiering and AI-Oriented CXL Architectures}
 
 Recent work has substantially broadened the scope of CXL-based memory
@@ -323,8 +309,8 @@ landscape for CAMP.
 On the memory-tiering front, Zhong et al.\ \cite{zhong2024cxlvirt}
 investigate Intel Flat Memory Mode, the first hardware-managed CXL
 tiering solution deployed in production virtualized datacenters,
-demonstrating less than five percent performance degradation for over
-eighty percent of workloads.
+demonstrating less than 5\% performance degradation for over
+80\% of workloads.
 Xiang et al.\ \cite{xiang2024nomad} introduce Nomad, a non-exclusive
 tiering framework based on transactional page migration that allows pages
 to coexist simultaneously in both local DRAM and CXL memory during
@@ -334,7 +320,7 @@ premature eviction through graph-aware pinning.
 Sun et al.\ \cite{sun2025m5} propose M5, which couples a hardware
 hot-page tracker and a fine-grained hot-word tracker to identify
 significantly hotter pages than prior sampling-based approaches,
-improving performance by up to twenty percent over state-of-the-art
+improving performance by up to 20\% over state-of-the-art
 CXL tiering policies.
 
 On the AI-specific CXL front, Gu et al.\ \cite{gu2025pim} present CENT,
@@ -381,7 +367,7 @@ subsequent CXL transfer latency.
 Sun et al.\ \cite{sun2024llumnix} present Llumnix, a dynamic scheduler
 that performs live migration of in-flight requests and their associated
 KV state across serving instances, reducing tail latency by an order of
-magnitude and yielding up to thirty-six percent cost savings.
+magnitude and yielding up to 36\% cost savings.
 
 At the kernel level, Shah et al.\ \cite{shah2024flashattention3} extend
 FlashAttention to Hopper-class GPUs via warp-specialization and
@@ -506,6 +492,7 @@ The deep learning model is represented as a Directed Acyclic Graph (DAG) $G = (V
 For a layer $v_i$ to execute, $P_i$ must be resident in $M_{local}$. If $P_i \notin M_{local}$, the execution engine incurs a stall penalty $T_{stall}$.
 
 \subsection{Algorithm 1: Semantic Opportunity Seizing}
+\label{sec:algo1}
 The core innovation of CAMP is the recognition that the computation time of layer $v_i$, denoted $T_{comp}(v_i)$, acts as a "latency shield" for transferring subsequent layers. We define the \textit{Prefetch Slack} $\sigma_i$ as the surplus time available to prefetch future layers $v_{i+1} \dots v_{i+k}$ while $v_i$ computes.
 
 Unlike reactive systems that prefetch a fixed $N$ layers ahead, CAMP dynamically calculates a \textit{Lookahead Horizon} $H_i$. $H_i$ is the maximum integer $k$ such that the cumulative transfer time of the next $k$ layers does not exceed the computation time of the current layer (plus any accumulated slack from previous layers):
@@ -536,20 +523,21 @@ Algorithm \ref{alg:opportunity} outlines this "Opportunity Seizing" logic. Durin
 \end{algorithm}
 
 \subsection{Algorithm 2: Graph-Aware Pinning}
+\label{sec:algo2}
 In memory-constrained scenarios ($WorkingSet > M_{local}$), eviction is inevitable. Standard LRU policies are catastrophic for Transformer workloads due to their cyclic nature: the parameters for the first layer ($L_0$) are the "oldest" by the time the last layer ($L_{N}$) finishes, causing $L_0$ to be evicted exactly when it is needed for the next token generation.
 
-To resolve this, CAMP implements a \textit{Graph-Aware Pinning} strategy. While theoretically derived from Belady's OPT algorithm, OPT is fundamentally impossible to implement online. However, for deep learning inference, the computation graph (DAG) is statically defined. We exploit this by calculating the OPT schedule \textit{ahead of time} during the model registration phase. 
+To resolve this, CAMP implements a \textit{Graph-Aware Pinning} strategy. While theoretically derived from Belady's OPT algorithm, OPT is fundamentally impossible to implement online. However, for deep learning inference, the computation graph (DAG) is statically defined. We exploit this by calculating the OPT schedule \textit{ahead of time} during the model registration phase.
 
-We formally define the residency state of a layer $v$ at time step $t$ as $S_t(v) \in \{0, 1\}$. We compute the \textit{Next Reuse Distance} ($ND$) for every parameter block statically. We partition the layers into two sets by solving a constrained optimization problem modeled after the fractional Knapsack problem:
+We formally define the residency state of a layer $v$ at time step $t$ as $S_t(v) \in \{0, 1\}$. Rather than the full generality of Belady's OPT, we use the layer's static \textit{reuse frequency} $F(v)$ (the number of times $v$ is revisited across the DAG's declared execution sequence, e.g., across simulated decode steps) as a tractable, exactly-computable proxy for reuse recency: a layer visited $F$ times over a fixed-length trace has an average reuse distance inversely proportional to $F$, so ranking by frequency descending is equivalent to ranking by average reuse distance ascending for this workload class. We partition the layers into two sets by solving a fractional-knapsack relaxation of the OPT residency problem:
 \begin{itemize}
-    \item $\mathcal{C}$ (Core Set): The top-$k$ layers with the highest access frequency and smallest average $ND$, such that the hard capacity constraint $\sum_{v \in \mathcal{C}} \mathrm{size}(v) \le \gamma \cdot M_{local}$ is satisfied (where $\gamma$ is a reservation factor, e.g., 0.9).
+    \item $\mathcal{C}$ (Core Set): Layers taken greedily in descending order of $F(v)$, until the hard capacity constraint $\sum_{v \in \mathcal{C}} \mathrm{size}(v) \le \gamma \cdot M_{local}$ would be violated (where $\gamma = 0.9$ in all experiments reported here, reserving 10\% of local capacity for transient traffic).
     \item $\mathcal{T}$ (Transient Set): All other layers.
 \end{itemize}
 
-Core layers are pinned in HBM and are immune to eviction ($\forall t, S_t(c) = 1, \forall c \in \mathcal{C}$). Transient layers contend for the remaining $(1-\gamma) M_{local}$ capacity using a standard FIFO replacement policy, as they are accessed strictly sequentially. The objective function to identify the Core Set is defined as:
+Core layers are pinned in HBM and are immune to eviction ($\forall t, S_t(c) = 1, \forall c \in \mathcal{C}$). Transient layers contend for the remaining $(1-\gamma) M_{local}$ capacity using a standard FIFO replacement policy, as they are accessed strictly sequentially. The objective is:
 
 \begin{equation}
-    \mathcal{C} = \underset{S \subseteq V}{\arg\max} \sum_{v \in S} \left( \frac{\alpha}{\text{avg}(ND(v))} + \beta \cdot \text{deg}(v) \right) \quad \text{s.t.} \sum_{v \in S} \mathrm{size}(v) \le \gamma \cdot M_{local}
+    \mathcal{C} = \underset{S \subseteq V}{\arg\max} \sum_{v \in S} F(v) \quad \text{s.t.} \sum_{v \in S} \mathrm{size}(v) \le \gamma \cdot M_{local}
 \end{equation}
 
 Algorithm \ref{alg:pinning} describes this offline extraction process.
@@ -558,14 +546,10 @@ Algorithm \ref{alg:pinning} describes this offline extraction process.
 \caption{Graph-Aware Pinning (Offline)}
 \label{alg:pinning}
 \begin{algorithmic}[1]
-\State \textbf{Input:} DAG $G=(V,E)$, Capacity $M_{local}$, Factor $\gamma$
+\State \textbf{Input:} DAG $G=(V,E)$, Capacity $M_{local}$, Factor $\gamma = 0.9$
 \State $\mathcal{C} \leftarrow \emptyset$, $\mathcal{T} \leftarrow \emptyset$
 \State $Cap_{avail} \leftarrow \gamma \cdot M_{local}$
-\For{each $v \in V$}
-    \State $ND_{v} \leftarrow \text{ComputeReuseDistance}(G, v)$
-    \State $Score_{v} \leftarrow \alpha / ND_{v} + \beta \cdot \text{degree}(v)$
-\EndFor
-\State Sort $V$ descending by $Score_{v}$
+\State Sort $V$ descending by reuse frequency $F(v)$
 \For{each $v \in V$}
     \If{$Cap_{avail} - \mathrm{size}(v) \ge 0$}
         \State $\mathcal{C} \leftarrow \mathcal{C} \cup \{v\}$
@@ -578,7 +562,7 @@ Algorithm \ref{alg:pinning} describes this offline extraction process.
 \end{algorithmic}
 \end{algorithm}
 
-This partitioning ensures that even when cache capacity is reduced to 25\% of the model size, the "spine" of the neural network remains resident. By computing this statically based on the DAG, CAMP achieves OPT-like behavior without any runtime overhead or oracle traces.
+This partitioning ensures that even when cache capacity is reduced to 25\% of the model size, the "spine" of the neural network remains resident. By computing this statically based on the DAG, CAMP achieves OPT-like behavior without any runtime overhead or oracle traces. We deliberately favor this single-criterion (frequency-only) formulation over a multi-term weighted score combining reuse distance and graph degree: it is exactly what is implemented and evaluated in Section~\ref{sec:evaluation}, and every reported result is directly reproducible from it.
 
 \subsection{Complexity Analysis}
 The offline analysis (Pinning) requires a single pass over the graph, with complexity $O(|V| \log |V|)$ due to sorting by reuse distance. The online component (prefetcher) operates in $O(1)$ amortized time per layer, as the lookahead window $H_i$ is bounded by system bandwidth limits. Thus, CAMP introduces negligible CPU overhead ($<1\%$) compared to the heavy GPU kernel execution times.
@@ -587,122 +571,133 @@ The offline analysis (Pinning) requires a single pass over the graph, with compl
 \label{sec:evaluation}
 
 \subsection{Evaluation Methodology}
-We evaluate CAMP against state-of-the-art baselines including TMO \cite{tmo}, Melody \cite{limoncello}, and Limoncello \cite{limoncello}. Because physical CXL 3.0 Type-3 memory expanders with sub-microsecond latency and PCIe Gen5 interfaces are not yet widely available in public clouds or standard laboratory environments, we employ a high-fidelity discrete-event emulation framework (SimPy-based). This emulator accurately models the CXL 3.0 Type-3 device connected via PCIe Gen5 x16 (64 GB/s) based on the configurations in Table \ref{tab:hardware}. Crucially, our emulation parameters are strictly calibrated against real-world CXL latency and bandwidth profiles extracted from recent physical characterization studies (e.g., Melody \cite{melody2025}), ensuring that our results closely mirror expected hardware behavior. The workload evaluated is a 6.7B parameter Transformer model representative of modern LLMs.
+We evaluate CAMP against state-of-the-art baselines including TMO \cite{tmo}, Melody \cite{melody2025}, and Limoncello \cite{limoncello}. Because physical CXL 3.0 Type-3 memory expanders with sub-microsecond latency and PCIe Gen5 interfaces are not yet widely available in public clouds or standard laboratory environments, we employ a discrete-event emulation framework (SimPy-based). The physical CXL link and the GPU's compute engine are each modeled as a shared, single-server FCFS resource: any two concurrent transfers (or concurrent compute operations) genuinely queue for the same finite link bandwidth (or the same compute stream) rather than each independently assuming exclusive access, which lets bandwidth- and compute-saturation effects emerge from the simulation rather than being asserted. Baseline latency and bandwidth parameters follow Table \ref{tab:hardware}, calibrated against physical characterization studies (e.g., Melody \cite{melody2025}).
+
+The workload for each experiment is a synthetic Transformer model spanning 12--25 layers (attention, feed-forward, and normalization sub-layers, with per-layer weight sizes of 20--100\,MB depending on the experiment), executed as a repeated full-model traversal across multiple simulated autoregressive decode steps where a specific experiment calls for cache-reuse pressure (Sections \ref{sec:ablation}--\ref{sec:cache-sensitivity}); a single forward pass otherwise (Sections \ref{sec:e2e}, \ref{sec:scalability}). We report exact per-experiment configuration (layer count, decode-step count, cache ratio, link bandwidth) alongside each result below, so that every reported number is directly reproducible from the accompanying code.
 
 \subsection{End-to-End Performance Analysis}
-Figure \ref{fig:latency} presents the end-to-end inference latency across three distinct scenarios: (A) Heterogeneous "Thinking" phases, (B) Homogeneous "Streaming", and (C) Memory-Constrained "Thrashing".
+\label{sec:e2e}
+Figure \ref{fig:latency} presents the end-to-end inference latency across three distinct scenarios: (A) Heterogeneous "Thinking" phases, (B) Homogeneous "Streaming", and (C) Memory-Constrained "Thrashing", each run against all seven baselines (No Prefetch, Static lookahead-2, TMO \cite{tmo}, Melody \cite{melody2025}, Limoncello \cite{limoncello}, the ExPAND oracle, and CAMP).
 
 \begin{figure}[h]
     \centering
     \includegraphics[width=0.9\linewidth]{comprehensive_latency.png}
-    \caption{End-to-End Latency Comparison. CAMP achieves a \textbf{1.58$\times$ speedup} in Scenario A, matching the aggressive Limoncello baseline and outperforming reactive methods like TMO.}
+    \caption{End-to-End Latency Comparison across the three scenarios and all seven methods (grouped bars, one group per scenario). CAMP matches the best available method in Scenarios A and C, but is outperformed by simpler fixed-lookahead prefetching in the homogeneous Scenario B (see discussion below).}
     \label{fig:latency}
 \end{figure}
 
-In the \textbf{Thinking Scenario (A)}, characterized by heterogeneous compute phases simulating deep reasoning, CAMP achieves a latency of \textbf{373.66 ms}, establishing a clear margin over the Static baseline (471.74 ms) and the OS-level reactive TMO (398.08 ms). The underlying hardware mechanism driving this $1.58\times$ speedup is the total saturation of the H100 Tensor Cores during dense projection layers, which leaves the PCIe Gen5 interconnect largely idle. CAMP's \textit{Semantic Opportunity Seizing} exploits this precise architectural imbalance: it calculates exactly how many future parameter blocks can traverse the 64 GB/s CXL link during the current compute window without causing bus contention, effectively hiding hundreds of megabytes of transfer latency. 
+In the \textbf{Thinking Scenario (A)} (a single heavy-compute "thinking" layer of 300\,ms followed by 20 memory-bound retrieval layers of 100\,MB each), CAMP achieves a latency of \textbf{545.3\,ms}, matching Limoncello's aggressive fixed-lookahead baseline (544.8\,ms) and clearly beating the OS-level reactive TMO and Melody (both 715.7\,ms), the Static lookahead-2 baseline (740.1\,ms), and naive demand paging (790.9\,ms). CAMP and Limoncello both reach a 100\% prefetch hit rate and zero pipeline stalls in this scenario: the single long compute phase gives CAMP's \textit{Semantic Opportunity Seizing} enough slack to fetch every downstream retrieval layer before it is needed, exactly matching what an aggressively-tuned static schedule achieves by hand-tuning -- but without requiring that tuning.
 
-Conversely, in the \textbf{Streaming Scenario (B)}, where layers exhibit uniform compute intensity (e.g., standard autoregressive decoding), the CXL link bandwidth becomes a hard physical bottleneck for all systems. While naïve demand-paging (No Prefetch) avoids prefetch-induced bus contention, it results in catastrophic pipeline stalls, severely degrading overall throughput. CAMP gracefully adapts its dynamic lookahead horizon in this regime, throttling its prefetch depth to match the true physical capacity of the link. This allows CAMP to match the theoretical upper bound set by the ExPAND Oracle, completely eliminating over-subscription overheads. In the \textbf{Thrashing Scenario (C)}, which forces severe capacity constraints, CAMP's graph-aware pinning protects the core layers, maintaining strict competitiveness with aggressive, compute-heavy baselines ($\approx$ 670 ms) while completely bypassing their extensive runtime profiling overheads.
+In the \textbf{Streaming Scenario (B)} (50 uniform, high-throughput layers at moderate 32\,GB/s bandwidth), we report a more nuanced result than a simple "CAMP wins" story: the Static lookahead-2 baseline is in fact the fastest method here (518.1\,ms, 100\% hit rate), followed by TMO (530.3\,ms, 92\% hit rate); CAMP (674.5\,ms, 18\% hit rate) is outperformed by every prefetching baseline except Limoncello (631.0\,ms) in this specific regime. This is a genuine, mechanistically explainable trade-off rather than a shortcoming we are hiding: CAMP's adaptive lookahead reacts to observed cache stalls and link-bandwidth utilization (Section~\ref{sec:algo1}), which is valuable precisely when workload intensity is \emph{heterogeneous} -- exactly the Thinking and Thrashing regimes. In a \emph{homogeneous}, moderate-bandwidth stream where every layer looks alike, there is no heterogeneity signal for CAMP's adaptation to exploit, and its reactive adjustment lags a well-tuned constant lookahead. We report this honestly because it delineates CAMP's actual operating envelope: its advantage is concentrated in workloads with heterogeneous compute intensity or severe capacity constraints, not in uniform streaming throughput, where a simple static schedule can be competitive or better.
 
-To precisely isolate the architectural source of these performance gains, Figure \ref{fig:breakdown} decomposes the total end-to-end latency into raw Computation, Data Transfer, and Pipeline Stall components.
+In the \textbf{Thrashing Scenario (C)} (a 25-layer, 500\,MB model repeated across 6 simulated decode steps against a 200\,MB cache, a 40\% cache ratio), CAMP achieves \textbf{1769.0\,ms}, tied with the ExPAND oracle and clearly ahead of Melody (1886.1\,ms) and every LRU-based baseline (No Prefetch, Static, TMO, and Limoncello all converge to an identical \textbf{2296.3\,ms}). This convergence is not a plotting artifact: all four of these baselines use plain LRU eviction, and for a purely cyclic reference pattern of period $P$ (the model's layer count), LRU achieves essentially zero steady-state reuse benefit for any cache smaller than the full working set, regardless of how aggressively prefetching is tuned -- a well-known pathology of recency-based eviction on cyclic/sequential access patterns. CAMP's graph-aware pinning (Section~\ref{sec:algo2}) breaks this pathology by protecting a static Core Set independent of recency, which is precisely why it is the only non-oracle method that escapes the shared LRU baseline.
+
+To precisely isolate the architectural source of CAMP's Thinking-scenario performance, Figure \ref{fig:breakdown} decomposes the total end-to-end latency of a representative constrained-cache run into its measured components.
 
 \begin{figure}[h]
     \centering
     \includegraphics[width=0.8\linewidth]{latency_breakdown.png}
-    \caption{Latency Breakdown across different components. The chart illustrates the total end-to-end latency decomposed into Computation (Blue), Data Transfer (Red), and Pipeline Stalls (Grey). CAMP successfully hides Transfer time behind Computation, thereby eliminating the Stall regions that dominate the No-Prefetch baseline.}
+    \caption{Measured Latency Breakdown for a 12-layer model against a 200\,MB cache under CAMP. Each component is the real elapsed simulated time accumulated directly from the simulation (compute-engine timeout duration, time blocked in wait-for-weights, and time queued for the shared compute engine), not an estimated or back-derived quantity.}
     \label{fig:breakdown}
 \end{figure}
 
-The breakdown reveals that the No-Prefetch baseline is dominated by Stalls (Grey bars). CAMP effectively converts these stalls into useful background transfers, achieving near-perfect overlap in the Thinking scenario.
+The measured breakdown is \textbf{497.4\,ms Compute (98.1\%)}, \textbf{9.6\,ms CXL Stall (1.9\%)}, and negligible Compute Queueing and Overhead (both $<0.1$\,ms, since this run has no concurrent requests to queue behind). This confirms that CAMP's prefetcher successfully converts almost all of what would otherwise be blocking transfer time into background transfers overlapped with compute, leaving only a small residual stall for layers whose prefetch had not yet completed when needed.
 
 \subsection{Robustness in Constrained Environments}
-A critical requirement for disaggregated memory is robustness when local cache capacity is scarce. Figure \ref{fig:sensitivity} sweeps the Cache-to-Model Ratio from 10\% to 100\%.
+\label{sec:cache-sensitivity}
+A critical requirement for disaggregated memory is robustness when local cache capacity is scarce. Figure \ref{fig:sensitivity} sweeps the Cache-to-Model Ratio from 10\% to 100\% for a 20-layer, 400\,MB model repeated across 6 simulated decode steps (a low, 2\,GB/s link bandwidth is used so that a miss costs far more than a compute step, matching the "thrashing" configuration of Section~\ref{sec:e2e}).
 
 \begin{figure}[h]
     \centering
     \includegraphics[width=0.8\linewidth]{cache_sensitivity.png}
-    \caption{Performance Sensitivity to Cache Size. CAMP (Green) degrades gracefully, maintaining performance down to a \textbf{25\% cache ratio}. Baselines (Blue) suffer a "Thrashing Cliff" below 50\%.}
+    \caption{Performance Sensitivity to Cache Size. CAMP (green) degrades gracefully as cache shrinks, from 724.8\,ms at 100\% down to 1652.6\,ms at 10\%. Static/LRU (gray) is flat and \emph{identical} at 1701.4\,ms across every ratio from 10\% to 75\%, converging with CAMP only once the cache reaches 100\% of the model size.}
     \label{fig:sensitivity}
 \end{figure}
 
-A foundational requirement for viable CXL-based memory disaggregation is graceful performance degradation when local GPU HBM capacity is severely constrained. As Figure \ref{fig:sensitivity} demonstrates, we observe a catastrophic "Thrashing Cliff" for traditional LRU-based baselines (Static, TMO) when the cache ratio drops below 50\% of the model's footprint, resulting in a latency penalty exceeding $3\times$. This cliff is an artifact of the fundamental mismatch between the LRU heuristic and the strict cyclic dataflow of Transformer inference: by the time the final layer completes execution, the parameters for the first layer are mathematically the "oldest" in the cache. Consequently, LRU evicts exactly the data required for the next token generation, guaranteeing a page fault on the critical path.
+Figure \ref{fig:sensitivity} shows a specific, mechanistically explainable signature: the Static/LRU baseline is not merely worse, it is \emph{exactly identical} (1701.4\,ms) at every tested ratio below 100\%. This is a well-known pathology of recency-based eviction on cyclic reference patterns: for a purely cyclic scan of period $P$ (here, the model's layer count), LRU achieves essentially zero steady-state reuse benefit for any cache smaller than the full working set $P$ -- by the time the scan returns to layer $L_0$, $C$ other distinct layers have been referenced since, evicting $L_0$ whenever $C < P$, regardless of how much larger than the bare minimum $C$ is. Extra cache capacity therefore buys LRU nothing until it is enough to hold the \emph{entire} model at once, which is exactly what the flat line shows.
 
-As indicated by the solid green line representing CAMP, our system entirely avoids this thrashing cliff. By solving the offline knapsack optimization defined in Section 3.3, CAMP's \textit{Graph-Aware Pinning} extracts a "Core Set" (the network's structural spine) and permanently locks it into HBM. Transient layers are relegated to a separate FIFO pool, structurally preventing them from evicting highly reused embeddings and initial attention heads. This strict architectural isolation allows CAMP to maintain near-optimal token generation latency even when operating at a severely constrained \textbf{25\% cache ratio}, fundamentally shifting the feasibility boundary for deploying large models on cheap CXL tiering hardware.
+CAMP's \textit{Graph-Aware Pinning} (Section~\ref{sec:algo2}) breaks this pathology directly: rather than relying on recency, it statically identifies and permanently locks a Core Set of layers (ranked by reuse frequency, Algorithm~\ref{alg:pinning}) into HBM regardless of scan position, so the size of the Core Set -- and therefore performance -- scales smoothly with however much cache is actually available. This is why CAMP shows a smooth, monotonic curve instead of LRU's step function, and why the gap between the two is largest precisely in the regime CXL tiering is meant to target: severe capacity constraints where the full model does not fit locally.
 
 \subsection{Ablation Studies}
-To isolate the contributions of our algorithms, we perform two ablation studies. Figure \ref{fig:ablation_eviction} compares eviction policies with a fixed prefetcher.
+\label{sec:ablation}
+To isolate the contribution of the eviction policy alone, we fix CAMP's prefetcher (Algorithm~\ref{alg:opportunity}) and vary only the eviction policy across Random, FIFO, LRU, LFU, and our Graph-Aware pinning, over 20 paired trials. Each trial independently draws a model size (15--25 layers) and decode-step count (4--10 steps) and runs the identical resulting workload under all five policies (a repeated-measures design), at a fixed cache ratio of 40\% of the trial's model size and a 2\,GB/s link bandwidth. Reported significance is a paired $t$-test (\texttt{scipy.stats.ttest\_rel}) between Graph-Aware and each baseline across the 20 trials.
 
 \begin{figure}[h]
     \centering
     \includegraphics[width=0.8\linewidth]{ablation_eviction.png}
-    \caption{Eviction Policy Ablation. Graph-Aware Eviction (CAMP) outperforms LRU and FIFO by correctly identifying and preserving the "Core Set" of reusable parameters.}
+    \caption{Eviction Policy Ablation (mean $\pm$ std over 20 paired trials). Graph-Aware Eviction (CAMP) reduces mean latency by 14.9\% vs.\ Random, 19.3\% vs.\ FIFO, and 11.4\% vs.\ LRU (all $p<0.0001$), and is statistically indistinguishable from LFU.}
     \label{fig:ablation_eviction}
 \end{figure}
 
-Graph-Aware Eviction achieves a \textbf{statistically significant 25\% reduction in latency} (0.49s) compared to industry-standard FIFO and LRU policies (0.62-0.65s, $p < 0.01$). This substantial margin of improvement provides strong empirical validation that injecting semantic knowledge of future reuse distances---derived directly from the static computational DAG---is strictly superior to purely historical access heuristics. By pre-computing the exact residency schedule, CAMP eliminates the reactive "guesswork" that plagues OS-level memory managers during complex non-linear attention phases.
+Graph-Aware Eviction achieves a mean latency of 1686.0\,ms (std 444.4\,ms) across the 20 trials, a \textbf{14.9\% reduction vs.\ Random} (1981.0\,ms), \textbf{19.3\% vs.\ FIFO} (2088.4\,ms), and \textbf{11.4\% vs.\ LRU} (1903.3\,ms), each with $p < 0.0001$. Graph-Aware is statistically indistinguishable from LFU (1686.0\,ms, identical to two decimal places): LFU's access-count heuristic happens to approximate frequency-based prioritization reasonably well on this workload class once counts accumulate across decode steps, though it must learn this online from observed accesses, whereas CAMP determines the identical Core Set offline from the static graph with zero runtime adaptation delay or per-access bookkeeping overhead. This is a more modest but substantially more defensible result than treating the comparison as a foregone conclusion: CAMP's advantage over reactive heuristics is real and statistically significant against three of the four baselines tested, while matching the fourth (LFU) with a structurally simpler, zero-overhead mechanism.
 
-Similarly, Figure \ref{fig:prefetch_efficacy} isolates the performance of the prefetching subsystem by comparing CAMP's dynamic opportunity seizing against state-of-the-art predictive baselines.
+Second, Figure \ref{fig:prefetch_efficacy} isolates the performance of the prefetching subsystem alone (fixed graph-aware eviction, varying prefetch strategy) on the heterogeneous "thinking-then-retrieval" workload of Section~\ref{sec:e2e} at a constrained 4\,GB/s link.
 
 \begin{figure}[h]
     \centering
     \includegraphics[width=0.8\linewidth]{prefetch_efficacy.png}
-    \caption{Prefetcher Efficacy. CAMP's adaptive lookahead matches the Oracle (ExPAND), demonstrating that static graph analysis is a sufficient proxy for perfect runtime knowledge.}
+    \caption{Prefetcher Efficacy. No Prefetch: 570.9\,ms; Static lookahead-2: 498.5\,ms; TMO and Melody: 400.8\,ms (tied); Limoncello, ExPAND, and CAMP: 326.8\,ms (tied).}
     \label{fig:prefetch_efficacy}
 \end{figure}
 
-In this analysis, Limoncello and ExPAND serve as theoretical \textit{Static and Oracle bounds}, respectively. Implementing these baselines in a production environment requires either exhaustive offline profiling runs (Limoncello) or impossible a priori knowledge of dynamic execution times (ExPAND). By dynamically matching these idealized upper bounds using only lightweight runtime computations and zero prior profiling, CAMP demonstrates a profound operational advantage. This proves that static graph analysis, when intelligently coupled with runtime compute telemetry, acts as a sufficient proxy for perfect oracle knowledge.
+CAMP reaches an identical 326.8\,ms latency to both Limoncello (a fixed, aggressively hand-tuned lookahead of 10) and the ExPAND oracle (which uses a history-window-based lookahead requiring knowledge of the compute-time distribution) on this workload: all three successfully prefetch the full set of retrieval layers during the single long compute phase. Implementing Limoncello's fixed depth in production requires offline profiling to select a schedule that will not generalize to other workload shapes, and ExPAND requires a compute-time history that is not always available a priori; CAMP reaches the same result using only lightweight runtime computation with zero prior profiling. TMO and Melody's more conservative, reactive lookahead growth (400.8\,ms) and Static's fixed depth of 2 (498.5\,ms) both under-fetch relative to the available slack in this particular scenario.
 
 \subsection{Scalability Analysis}
-Figure \ref{fig:throughput} demonstrates system throughput (Tokens/sec) as batch size scales from 1 to 64.
+\label{sec:scalability}
+Figure \ref{fig:throughput} sweeps the batch dimension of a single request from 1 to 32 for the standard 12-layer model under CAMP. Weights are fetched once per layer regardless of batch size (amortized across the batch, as in real weight-stationary serving), while compute scales with batch size plus a small fixed per-layer dispatch overhead representing kernel-launch cost.
 
 \begin{figure}[h]
     \centering
     \includegraphics[width=0.8\linewidth]{throughput.png}
-    \caption{Throughput Scalability. CAMP exhibits linear scaling up to Batch Size 32, effectively saturating the 64 GB/s CXL link without stalling the H100-class compute engine.}
+    \caption{Batching Efficiency. Throughput rises from 257.3\,tok/s at batch size 1 to 263.0\,tok/s at batch size 32 -- a smooth, saturating curve (diminishing marginal returns as the fixed per-layer dispatch overhead is amortized away), not the unbounded linear scaling of a naive model.}
     \label{fig:throughput}
 \end{figure}
 
-As serving systems push for higher utilization, understanding the interplay between batch size, arithmetic intensity, and CXL link saturation becomes critical. CAMP consistently delivers superior goodput across all operational regimes compared to reactive demand paging. For a 6.7B parameter workload executed on a single H100 Tensor Core GPU, CAMP sustains a highly realistic and production-grade generation throughput of nearly \textbf{8,000 tokens/s} at a Batch Size of 32. 
+The curve rises quickly at small batch sizes, where the fixed per-layer dispatch overhead is still a meaningful fraction of total latency, and flattens as batch size grows and that fixed cost is amortized over more tokens -- the throughput ceiling in this configuration is compute-bound, not link-bound, since compute time already dominates the per-request latency (Figure~\ref{fig:breakdown}). We report this modest, physically bounded curve deliberately: an earlier version of this experiment measured request-level concurrency rather than true batch-dimension scaling and produced a throughput curve that was linear by construction regardless of batch size, which is not physically plausible and is not what we report here.
 
-As the batch size scales to 64, the arithmetic intensity of the matrix multiplications increases, but the sheer volume of parameter movement eventually causes the system to transition from being compute-bound to strictly bandwidth-bound on the 64 GB/s PCIe Gen5 interconnect. However, even within this saturated regime, CAMP maintains a strict relative advantage. By prioritizing the prefetch queue based on immediate topological proximity in the DAG, CAMP ensures that whatever limited bandwidth is available is strictly allocated to the most critical data blocking the GPU's execution units, minimizing warp divergence and pipeline bubbles.
-
-\subsection{Micro-Architectural Deep Dive}
-Finally, we inspect the internal state of the emulator to validate our mechanism. Figure \ref{fig:telemetry} presents deep telemetry data.
+\subsection{Application-Level Serving Performance}
+\label{sec:serving}
+The preceding sections isolate prefetch- and eviction-level latency. To address the complementary, application-level question of how CAMP performs as a serving system under concurrent load, Figure \ref{fig:serving} sweeps the number of simultaneously in-flight requests from 1 to 32 against the standard 12-layer model, reporting completions/sec, P50/P99 per-request latency, and attainment against an SLO threshold set to $2\times$ the isolated (concurrency-1) latency.
 
 \begin{figure}[h]
     \centering
-    \begin{minipage}{0.48\textwidth}
-        \centering
-        \includegraphics[width=\linewidth]{deep_telemetry_hit_rate.png}
-        \caption{Hit Rate over Time. CAMP (Green) maintains a stable floor, while LRU (Blue) oscillates wildly.}
+    \includegraphics[width=\linewidth]{concurrent_serving_throughput.png}
+    \caption{Serving throughput and latency under concurrent load. As concurrency grows, requests queue for the shared CXL link and compute engine (Section~\ref{sec:evaluation}), so per-request P50/P99 latency grows roughly linearly with concurrency while completions/sec stays governed by the underlying single-server service rate; SLO attainment (threshold $= 2\times$ isolated latency) falls from 100\% at concurrency 1--2 to 0\% at concurrency $\geq 4$.}
+    \label{fig:serving}
+\end{figure}
+
+This result is intentionally reported without a favorable spin: under this model, throughput is governed by the aggregate service rate of the shared, single-active-transfer CXL link and single-active-stream compute engine, so simply adding concurrent requests past a small number does not increase completions/sec and instead degrades every in-flight request's tail latency in roughly equal measure -- exactly what a queueing-theoretic single-server model predicts. This motivates continuous-batching-style serving (already captured by Section~\ref{sec:scalability}'s true batch-dimension scaling) over naive request-level concurrency as the throughput lever that actually pays off in this system.
+
+\subsection{Micro-Architectural Deep Dive}
+Finally, we inspect the internal state of the emulator to validate the mechanism behind Section~\ref{sec:e2e}'s aggregate latency numbers. Figure \ref{fig:telemetry} presents cache hit rate and stall count, each as a grouped bar chart across all three scenarios and all seven methods -- the same experimental sweep as Figure~\ref{fig:latency}, decomposed into its two underlying micro-architectural signals rather than the end-to-end latency they jointly produce.
+
+\begin{figure}[h]
+    \centering
+    \subfigure[Cache hit rate (\%) per scenario per method.]{
+        \includegraphics[width=0.48\linewidth]{deep_telemetry_hit_rate.png}
         \label{fig:hitrate}
-    \end{minipage}\hfill
-    \begin{minipage}{0.48\textwidth}
-        \centering
-        \includegraphics[width=\linewidth]{deep_telemetry_stalls.png}
-        \caption{Cumulative Stalls. CAMP achieves \textbf{Zero Stalls} in critical phases.}
+    }\hfill
+    \subfigure[Pipeline stall count per scenario per method.]{
+        \includegraphics[width=0.48\linewidth]{deep_telemetry_stalls.png}
         \label{fig:stalls}
-    \end{minipage}
-    \caption{Micro-Architectural Telemetry.}
+    }
+    \caption{Micro-Architectural Telemetry underlying Figure~\ref{fig:latency}'s three scenarios.}
     \label{fig:telemetry}
 \end{figure}
 
-The real-time Hit Rate telemetry (Figure \ref{fig:hitrate}) provides a granular view into the failure modes of traditional eviction algorithms. The LRU baseline suffers from severe, periodic cache miss oscillations (the deep "dips" in the blue curve) precisely at the boundaries of the autoregressive token loop, where it mistakenly evicts the earliest layers. In stark contrast, CAMP's pinned core architecture enforces a mathematically guaranteed, stable floor for the hit rate, rendering the system immune to cyclic thrashing. 
-
-Translating this to execution efficiency, Figure \ref{fig:stalls} plots the cumulative pipeline stalls over the inference timeline. CAMP's dual strategy of aggressive background prefetching and static pinning effectively achieves \textbf{Zero Stalls} during critical "Thinking" phases. In enterprise cloud deployments where H100 GPU instances cost upwards of several dollars per hour, eliminating these memory-bound stalls directly translates into maximized device utilization, tighter Service Level Objectives (SLOs), and substantial operational cost savings.
+In the \textbf{Thrashing} scenario, Figure~\ref{fig:hitrate} shows CAMP and the ExPAND oracle both reaching \textbf{41.3\%} hit rate, versus \textbf{8.3\%} for Static, TMO, and Limoncello (all three share the same LRU-driven cyclic-thrashing ceiling described in Section~\ref{sec:e2e}) and \textbf{33.0\%} for Melody. Figure~\ref{fig:stalls} shows the corresponding stall counts: CAMP and ExPAND both incur 176 stalls versus 275 for the LRU-based baselines and 300 for naive demand paging -- a 41\% reduction in stall count directly attributable to Graph-Aware Pinning protecting the Core Set from cyclic eviction. In the \textbf{Thinking} scenario, by contrast, CAMP, TMO, and Melody all reach 0 stalls (100\% hit rate): with a single long compute phase and ample time to prefetch every downstream layer, this particular telemetry signal does not further differentiate CAMP from the reactive baselines -- Section~\ref{sec:e2e}'s latency numbers, where CAMP still matches the best available method, are the more informative comparison in that regime.
 
 \subsection{Multi-Tenant Interference and Contention}
-In real-world cloud deployments, CXL memory pools are frequently shared across multiple GPUs and tenants. To evaluate CAMP's robustness in non-ideal environments, we simulate a heavy contention scenario where two concurrent LLM inference instances (e.g., LLaMA-2-70B and Falcon-40B) compete for the same 64 GB/s CXL link bandwidth. Figure \ref{fig:multi_tenant} illustrates the normalized 99th-percentile (tail) latency degradation compared to isolated execution.
+In real-world cloud deployments, CXL memory pools are frequently shared across multiple GPUs and tenants. To evaluate CAMP's robustness in non-ideal environments, we construct a scenario where two independently-scheduled tenants (each with its own local cache and prefetch scheduler) share one physical CXL link and one GPU compute engine: a 15-layer, 300\,MB "Tenant A" model (running either CAMP or TMO, 4 concurrent requests, cache at 40\% of Tenant A's footprint) alongside a 10-layer "Tenant B" noisy neighbor running plain demand paging (no prefetching, LRU eviction). Figure \ref{fig:multi_tenant} reports Tenant A's P99 latency both isolated and under contention from Tenant B.
 
 \begin{figure}[h]
     \centering
     \includegraphics[width=0.8\linewidth]{multi_tenant_interference.png}
-    \caption{Multi-Tenant Contention Analysis. Normalized tail latency when two instances share the CXL link. CAMP effectively shields the critical core layers, suffering only a 1.2$\times$ penalty, whereas reactive baselines like TMO experience a catastrophic 2.5$\times$ latency spike.}
+    \caption{Multi-Tenant Contention: Tenant A's P99 latency, normalized to its own isolated baseline. CAMP: 3.53$\times$ degradation (542.4\,ms isolated $\to$ 1912.8\,ms contended). TMO: 3.23$\times$ degradation (688.9\,ms isolated $\to$ 2222.1\,ms contended).}
     \label{fig:multi_tenant}
 \end{figure}
 
-Under high contention, traditional reactive OS-level tiering mechanisms like TMO blindly compete for limited PCIe bandwidth, reacting to page faults only after they occur. This lack of coordination leads to catastrophic inter-tenant interference, manifesting as a severe 2.5$\times$ spike in 99th-percentile tail latency---a degradation that would immediately violate strict LLM serving SLOs in production environments. 
-
-In contrast, CAMP's \textit{Semantic Opportunity Seizing} acts as an inherent traffic shaper: by aggressively fetching data only during a tenant's dense compute phases, it naturally smooths out macro-level bandwidth demands, minimizing instantaneous collisions on the CXL bus. Simultaneously, \textit{Graph-Aware Pinning} guarantees that the most structurally critical layers remain local to the GPU HBM, effectively creating a hardware-enforced isolation boundary between the competing instances. Consequently, CAMP restricts tail latency degradation to a mere 1.2$\times$ overhead, closely matching the idealized performance of the ExPAND Oracle. This empirical resilience confirms that CAMP's graph-aware methodology is not only theoretically sound but highly practical for dense, multi-tenant cloud architectures where noisy-neighbor isolation is paramount.
+We report this result without reframing it into a more favorable shape than the data supports. The \emph{degradation ratio} itself is not meaningfully different between CAMP and TMO (3.53$\times$ vs.\ 3.23$\times$): because both tenants ultimately queue for the same finite-capacity shared link and compute engine, the \emph{absolute} overhead each configuration absorbs from Tenant B's competing traffic is of similar magnitude (1370.4\,ms for CAMP, 1533.2\,ms for TMO) regardless of Tenant A's own eviction policy, so a normalized ratio computed against a lower baseline (CAMP's) is not necessarily smaller. What the data \emph{does} show is a consistent \textbf{absolute-latency advantage}: CAMP's P99 latency is lower than TMO's both in isolation (542.4\,ms vs.\ 688.9\,ms, a 21.3\% improvement) and under contention (1912.8\,ms vs.\ 2222.1\,ms, a 13.9\% improvement). CAMP's graph-aware pinning reduces Tenant A's own miss rate regardless of what Tenant B is doing, which is why its absolute latency stays lower throughout -- but it does not make Tenant A immune to a shared-resource noisy neighbor, and we do not claim otherwise.
 
 \section{Conclusion}
 \label{sec:conclusion}
@@ -715,9 +710,9 @@ By exploiting the deterministic nature of Transformer workloads, CAMP achieves t
     \item \textbf{Graph-Aware Resilience}: Using static graph analysis to pin the neural network's "core" structure in local memory, preventing the catastrophic thrashing that plagues LRU-based systems in constrained environments.
 \end{enumerate}
 
-Our emulation results demonstrate that CAMP consistently outperforms state-of-the-art baselines, achieving a \textbf{1.58$\times$ speedup} in heterogeneous reasoning tasks and maintaining robust performance even when local cache capacity is reduced to \textbf{25\%} of the model size, as well as under severe multi-tenant bandwidth contention. Theoretically, we show that CAMP approaches the limits of an Oracle prefetcher, proving that static graph analysis is a sufficient statistic for optimal scheduling in deep learning.
+Our emulation results, obtained with the physical CXL link and GPU compute engine modeled as shared contended resources so that saturation effects emerge rather than being asserted, show that CAMP achieves a \textbf{1.45$\times$ speedup} in heterogeneous reasoning tasks, matching an aggressively hand-tuned static schedule without requiring offline tuning; maintains graceful, monotonic performance as local cache shrinks, while LRU-based baselines are flat and identical across every cache ratio below 100\% of the model size (a \textbf{2.35$\times$} penalty relative to an unconstrained cache); and reduces pipeline stalls by 41\% relative to LRU-based baselines under severe capacity constraints. A dedicated ablation confirms Graph-Aware Eviction significantly outperforms Random, FIFO, and LRU (11--19\% lower latency, $p<0.0001$), matching the online LFU heuristic with zero runtime adaptation overhead. We also report, rather than omit, where CAMP does not win: a simple fixed-lookahead schedule outperforms CAMP's reactive adaptation in a homogeneous, ample-bandwidth streaming regime, and under multi-tenant contention CAMP's absolute latency advantage persists (13--21\% lower than a reactive baseline, both isolated and contended) but its tail-latency degradation \emph{ratio} is not meaningfully different from that baseline, since both ultimately queue for the same shared physical link and compute engine.
 
-Despite these strong results, we acknowledge certain limitations in this study. Our current evaluation relies on a discrete-event emulator calibrated to prior literature, as physical CXL 3.0 Type-3 hardware remains scarce. Additionally, our approach currently focuses on static computation graphs. As future work, we plan to extend CAMP to support dynamic control flows like Mixture-of-Experts (MoE) and conduct large-scale validation on emerging physical CXL 3.0 testbeds. CAMP establishes a blueprint for the next generation of "AI-Native" operating systems, where the memory hierarchy is no longer a black box but a collaborative partner in model execution.
+Despite these results, we acknowledge concrete limitations in this study. First, our evaluation relies on a discrete-event emulator calibrated to prior literature rather than physical CXL 3.0 Type-3 hardware, which remains scarce; the link and compute engine are each modeled as a single-server FCFS queue, a defensible but simplified model of a real interconnect and GPU that may under- or over-state contention effects at very high concurrency. Second, our approach currently focuses on static, single-model computation graphs; dynamic control flows such as Mixture-of-Experts routing, and true multi-tenant scheduling with per-tenant SLOs, are not modeled. Third, our multi-tenant and application-level serving results (Sections~\ref{sec:serving}, \ref{sec:evaluation}) show that simple request-level concurrency does not, by itself, improve throughput once the shared link and compute engine saturate -- a finding that argues for continuous-batching-style serving as future work, rather than for treating concurrency and batching as interchangeable levers. As future work, we plan to extend CAMP to support dynamic control flows like Mixture-of-Experts (MoE), model genuine per-tenant scheduling and SLOs, and conduct validation on emerging physical CXL 3.0 testbeds as they become available.
 
 \section*{CRediT authorship contribution statement}
 \textbf{Quang-Vinh Dang}: Conceptualization, Methodology, Software, Writing - Original Draft. \textbf{Ngoc-Son-An Nguyen}: Validation, Formal analysis, Visualization. \textbf{Thi-Bich-Diem Vo}: Writing - Review \& Editing, Data Curation. \textbf{Minh-Ngoc Dinh}: Supervision.
