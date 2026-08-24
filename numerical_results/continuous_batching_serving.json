@@ -1,0 +1,44 @@
+{
+  "decode_rounds_per_request": 5,
+  "n_requests": 40,
+  "isolated_total_ms": 150.21663999999998,
+  "slo_threshold_ms": 300.43327999999997,
+  "results": [
+    {
+      "arrival_rate_rps": 1,
+      "rounds_executed": 190,
+      "completions_per_sec": 1.1874308552202681,
+      "p50_latency_ms": 150.21663999999873,
+      "p99_latency_ms": 238.7810507249056,
+      "slo_threshold_ms": 300.43327999999997,
+      "slo_attainment_pct": 100.0
+    },
+    {
+      "arrival_rate_rps": 2,
+      "rounds_executed": 174,
+      "completions_per_sec": 2.364074948176306,
+      "p50_latency_ms": 150.21664000000044,
+      "p99_latency_ms": 394.41297469288037,
+      "slo_threshold_ms": 300.43327999999997,
+      "slo_attainment_pct": 87.5
+    },
+    {
+      "arrival_rate_rps": 4,
+      "rounds_executed": 112,
+      "completions_per_sec": 4.523220753273435,
+      "p50_latency_ms": 344.62036002237016,
+      "p99_latency_ms": 615.2644453801029,
+      "slo_threshold_ms": 300.43327999999997,
+      "slo_attainment_pct": 37.5
+    },
+    {
+      "arrival_rate_rps": 8,
+      "rounds_executed": 41,
+      "completions_per_sec": 6.31227688980121,
+      "p50_latency_ms": 1961.8345333000202,
+      "p99_latency_ms": 2667.714204615442,
+      "slo_threshold_ms": 300.43327999999997,
+      "slo_attainment_pct": 5.0
+    }
+  ]
+}

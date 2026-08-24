@@ -1,0 +1,27 @@
+[
+  {
+    "gamma": 0.5,
+    "latency_ms": 2009.020745,
+    "pinned_layer_count": 11
+  },
+  {
+    "gamma": 0.7,
+    "latency_ms": 1999.25492,
+    "pinned_layer_count": 16
+  },
+  {
+    "gamma": 0.8,
+    "latency_ms": 2009.020745,
+    "pinned_layer_count": 19
+  },
+  {
+    "gamma": 0.9,
+    "latency_ms": 1999.25492,
+    "pinned_layer_count": 21
+  },
+  {
+    "gamma": 0.95,
+    "latency_ms": 1989.489095,
+    "pinned_layer_count": 22
+  }
+]

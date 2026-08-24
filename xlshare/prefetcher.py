@@ -120,6 +120,12 @@ class ModelAwarePrefetcher:
         self.mode = "camp" # Options: no_prefetch, static, tmo, melody, limoncello, expand, camp
         self.debug = False
         self.history_window_ms = 300.0 # Window for history replay
+
+        # Graph-Aware Pinning reservation factor (gamma, Sect. 3.3 / Algorithm 2):
+        # fraction of local cache capacity reserved for the pinned Core Set,
+        # leaving (1-gamma) for the Transient Set. Configurable (was hardcoded
+        # inline) so it can be swept for a hyperparameter-sensitivity analysis.
+        self.pinning_reservation_factor = 0.90
     
     def register_model(self, layers: List[LayerInfo], weight_addresses: Dict[str, int]):
         """
@@ -158,8 +164,7 @@ class ModelAwarePrefetcher:
         for layer_name in candidates:
             layer = self.layers[layer_name]
             layer_size = layer.weight_size_bytes
-            # [TUNING] Increase reservation to 90% for constrained scenarios to maximizing pinning
-            if current_usage + layer_size < self.local_cache.capacity * 0.90: 
+            if current_usage + layer_size < self.local_cache.capacity * self.pinning_reservation_factor:
                 self.pinned_layers.add(layer_name)
                 current_usage += layer_size
             else:

@@ -136,16 +136,21 @@ class HFModelAdapter:
                     name=name,
                     layer_type=layer_type,
                     weight_shape=primary_weight.shape,
-                    weight_size_bytes=sum(w.nbytes for w in layer_weights),
+                    weight_size_bytes=primary_weight.nbytes,
                     computation_time_ms=comp_time * 1000,
                     reuse_frequency=reuse
                 )
-                
-                # Store aggregated "blob" of weights for this layer
-                # For the purpose of the simulation, we assume we fetch all params for the module
-                # contiguous.
-                flat_data = np.concatenate([w.flatten() for w in layer_weights])
-                weights[name] = flat_data
+
+                # Store only the primary weight as the blob for this layer.
+                # Previously this concatenated weight+bias into one blob while
+                # weight_size_bytes/weight_shape only accounted for the primary
+                # weight -- the simulator's _deserialize_weights() then failed
+                # to reshape the (larger) fetched blob back into weight_shape
+                # for any layer with a bias (LayerNorm always has one; many
+                # Linear/Conv1D layers do too). Matches this function's own
+                # documented intent: biases are small enough to be neglected
+                # for the transfer-size/prefetching simulation.
+                weights[name] = primary_weight.flatten()
                 
                 return info
 

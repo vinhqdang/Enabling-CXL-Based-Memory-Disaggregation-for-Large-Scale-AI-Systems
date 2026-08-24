@@ -1,0 +1,20 @@
+[
+  {
+    "tenant_count": 2,
+    "isolated_max_latency_ms": 539.57571,
+    "contended_max_latency_ms": 2049.065985,
+    "degradation_ratio": 3.79755045867428
+  },
+  {
+    "tenant_count": 4,
+    "isolated_max_latency_ms": 539.57571,
+    "contended_max_latency_ms": 3205.56396,
+    "degradation_ratio": 5.940897450702516
+  },
+  {
+    "tenant_count": 8,
+    "isolated_max_latency_ms": 539.57571,
+    "contended_max_latency_ms": 6760.51067,
+    "degradation_ratio": 12.52930876002554
+  }
+]

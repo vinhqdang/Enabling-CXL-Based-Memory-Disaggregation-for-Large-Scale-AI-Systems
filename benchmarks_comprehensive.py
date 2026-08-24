@@ -27,17 +27,23 @@ BASELINE_PROFILE = {
     "cxl_bandwidth": 64.0, "local_bandwidth": 400.0, "coherence_overhead_ns": 50
 }
 
-def create_engine(cache_size_mb=2048, emulation=True, bandwidth=None):
+def create_engine(cache_size_mb=2048, emulation=True, bandwidth=None, use_torch=False):
     profile = BASELINE_PROFILE.copy()
     if bandwidth:
         profile["cxl_bandwidth"] = bandwidth
-        
+
     eng = XLShareInferenceEngine(
         cxl_pool_size_gb=64.0,
         gpu_cache_size_mb=cache_size_mb,
         emulate_cxl=emulation,
         latency_profile=profile,
-        real_execution=False # PURE SIMULATION
+        use_torch=use_torch,   # when True, LINEAR/ATTENTION compute time is measured
+                                # via real CUDA matmul timing (xlshare/inference_engine.py
+                                # _execute_layer), not the synthetic formula. The CXL
+                                # link/latency model remains simulated regardless -- no
+                                # physical CXL 3.0 hardware exists to validate against.
+        real_execution=False # PURE SIMULATION (weight values are placeholders; only
+                              # shapes/sizes are real when using a real-model workload)
     )
     eng.local_cache.set_eviction_policy("graph_aware")
     return eng
@@ -90,6 +96,54 @@ def build_decode_workload(num_layers, layer_mb, decode_steps):
 
     model_bytes = sum(l.weight_size_bytes for l in [embed] + body)
     return sequence, model_bytes
+
+
+def build_decode_workload_from_hf(model_name, decode_steps, cache_dir=None):
+    """
+    Real-model counterpart to build_decode_workload(): loads an actual
+    pretrained model via HFModelAdapter (xlshare/model_adapter.py) and builds
+    a repeated full-model traversal trace across `decode_steps` simulated
+    decode steps, using the model's REAL layer names, shapes, and weight
+    sizes -- not synthetic uniform layers. The token-embedding layer is
+    revisited at both the start and end of each step, mirroring GPT-2/Llama/
+    Gemma-style tied input-embedding/output-projection weights
+    (config.tie_word_embeddings=True for these model families), the same
+    architecturally-grounded source of reuse-frequency heterogeneity used in
+    build_decode_workload(), now validated against a real model's actual
+    structure rather than only a synthetic stand-in.
+
+    Weight VALUES are not written into the simulated CXL pool (only shapes/
+    sizes, which is all the timing model needs); this is a structural/timing
+    validation, not a numerical-correctness check of the loaded model.
+
+    Returns (sequence, single_pass_model_size_bytes, model_config).
+    """
+    from xlshare.model_adapter import HFModelAdapter
+    model_config, _hf_weights = HFModelAdapter.load_model(model_name, cache_dir=cache_dir)
+    layers = model_config.layers
+
+    embed_names = ("wte", "transformer.wte", "model.embed_tokens", "embeddings.word_embeddings")
+    embed_matches = [l for l in layers if l.name in embed_names]
+    embed = embed_matches[0] if embed_matches else layers[0]
+    body = [l for l in layers if l.name != embed.name]
+
+    sequence = []
+    for _ in range(decode_steps):
+        sequence.append(embed)     # input token-embedding lookup
+        sequence.extend(body)
+        sequence.append(embed)     # tied output (lm_head) projection
+
+    occurrence_counts = {}
+    for l in sequence:
+        occurrence_counts[l.name] = occurrence_counts.get(l.name, 0) + 1
+    assigned = set()
+    for l in sequence:
+        if l.name not in assigned:
+            l.reuse_frequency = occurrence_counts[l.name]
+            assigned.add(l.name)
+
+    model_bytes = sum(l.weight_size_bytes for l in layers)
+    return sequence, model_bytes, model_config
 
 
 def register_sequence(engine, sequence, name):
@@ -451,6 +505,404 @@ def run_cache_sensitivity():
     plt.savefig(f"{FIG_DIR}/cache_sensitivity.png")
     plt.close()
 
+
+def run_real_model_validation():
+    """
+    Real-model counterpart to run_cache_sensitivity(): the same cache-ratio
+    sweep (CAMP vs. Static/LRU), but on distilgpt2's actual architecture
+    (real layer names/shapes/sizes via HFModelAdapter, xlshare/model_adapter.py)
+    with compute timing for LINEAR/ATTENTION-classified layers measured via
+    real CUDA execution (use_torch=True) rather than the synthetic formula
+    used everywhere else in this file. What remains simulated: the CXL
+    link/latency model (no physical CXL 3.0 Type-3 hardware exists to
+    validate against) and the weight VALUES in the pool (placeholders; only
+    shapes/sizes are real, which is all the compute-timing path needs).
+    """
+    print("--- Running Exp 9: Real-Model Validation (distilgpt2) ---", flush=True)
+    MODEL_NAME = "distilgpt2"
+    DECODE_STEPS = 6
+    LOW_BANDWIDTH_GBPS = 2.0
+    N_REPEATS = 5  # real CUDA timing has genuine run-to-run jitter (kernel launch
+                   # overhead, scheduling); a single run per point was noisy enough
+                   # to be misleading (an initial single-run pass showed CAMP
+                   # slightly *worse* than Static at one ratio) -- repeat and
+                   # report mean +/- std, matching the rigor used elsewhere in
+                   # this file (e.g. the N=20 paired-trial ablation).
+    ratios = [0.1, 0.25, 0.5, 0.75, 1.0]
+
+    modes_to_test = [
+        {"name": "CAMP (Ours)", "mode": "camp", "eviction": "graph_aware"},
+        {"name": "Static (Baseline)", "mode": "static", "eviction": "lru"}
+    ]
+
+    sequence, model_bytes, model_config = build_decode_workload_from_hf(MODEL_NAME, DECODE_STEPS)
+    model_size_mb = model_bytes / 1024 / 1024
+    print(f"  Loaded {MODEL_NAME}: {len(model_config.layers)} unique layers, {model_size_mb:.1f}MB", flush=True)
+
+    all_results = []
+    for mode_cfg in modes_to_test:
+        print(f"Testing Mode: {mode_cfg['name']}", flush=True)
+        mode_results = []
+        for r in ratios:
+            cache_size = max(20, int(model_size_mb * r))
+            print(f"  Ratio: {r*100}% ({cache_size}MB)", flush=True)
+
+            repeat_latencies = []
+            for rep in range(N_REPEATS):
+                engine = create_engine(cache_size_mb=cache_size, bandwidth=LOW_BANDWIDTH_GBPS, use_torch=True)
+
+                engine.prefetcher.mode = mode_cfg["mode"]
+                engine.local_cache.set_eviction_policy(mode_cfg["eviction"])
+                if mode_cfg["mode"] == "static":
+                    engine.prefetcher.current_lookahead = 2
+                elif mode_cfg["mode"] == "camp":
+                    engine.prefetcher.current_lookahead = 5
+                    engine.prefetcher.max_lookahead = 20
+
+                register_sequence(engine, sequence, f"{MODEL_NAME}_decode_loop")
+                gc.collect()
+
+                req = InferenceRequest(f"real_model_run_{rep}", np.random.randn(1, 128), f"{MODEL_NAME}_decode_loop", 0)
+                p = engine.inference(req)
+                engine.env.run(until=p)
+                repeat_latencies.append(float(p.value.latency_ms))
+
+            mean_lat = float(np.mean(repeat_latencies))
+            std_lat = float(np.std(repeat_latencies))
+            mode_results.append({
+                "ratio": r, "latency_ms": mean_lat, "latency_ms_std": std_lat,
+                "n_repeats": N_REPEATS, "repeat_latencies_ms": repeat_latencies,
+            })
+            print(f"    -> {mean_lat:.2f}ms (std {std_lat:.2f}, n={N_REPEATS})", flush=True)
+
+        all_results.append({"name": mode_cfg["name"], "data": mode_results})
+
+    with open(f"{NUM_DIR}/real_model_validation.json", "w") as f:
+        json.dump({
+            "model": MODEL_NAME, "model_size_mb": model_size_mb, "decode_steps": DECODE_STEPS,
+            "results": all_results,
+        }, f, indent=2)
+
+    plt.figure(figsize=(8, 6))
+    colors = ['green', 'gray']
+    markers = ['o', 's']
+    for i, series in enumerate(all_results):
+        x = [d["ratio"] * 100 for d in series["data"]]
+        y = [d["latency_ms"] for d in series["data"]]
+        yerr = [d["latency_ms_std"] for d in series["data"]]
+        plt.errorbar(x, y, yerr=yerr, label=series["name"], marker=markers[i],
+                     linewidth=2, color=colors[i], capsize=4)
+    plt.xlabel("Local Cache Ratio (%)")
+    plt.ylabel("Inference Latency (ms)")
+    plt.ylim(bottom=0)
+    plt.title(f"Real-Model Validation: {MODEL_NAME} (GPU-timed, mean $\\pm$ std, n={N_REPEATS})")
+    plt.legend()
+    plt.grid(True)
+    plt.savefig(f"{FIG_DIR}/real_model_validation.png")
+    plt.close()
+    print("Real-Model Validation Generated.", flush=True)
+
+
+def run_model_scale_sensitivity():
+    """
+    Fixes cache ratio and bandwidth, sweeps model depth across realistic
+    points spanning GPT-2 (12 layers) up to GPT-2-XL/GPT-J-class (48) and
+    LLaMA-70B-class (80) decoder depths -- addressing the review finding that
+    every prior experiment used synthetic 12-25-layer models, far below real
+    deployment scale. Reuses build_decode_workload() unchanged; only the
+    depth varies.
+    """
+    print("--- Running Exp 10: Model-Scale Sensitivity ---", flush=True)
+    LAYER_MB = 20
+    DECODE_STEPS = 6
+    CACHE_RATIO = 0.4
+    LOW_BANDWIDTH_GBPS = 2.0
+    depths = [12, 24, 48, 80]
+
+    modes_to_test = [
+        {"name": "CAMP (Ours)", "mode": "camp", "eviction": "graph_aware"},
+        {"name": "Static (Baseline)", "mode": "static", "eviction": "lru"}
+    ]
+
+    all_results = []
+    for mode_cfg in modes_to_test:
+        print(f"Testing Mode: {mode_cfg['name']}", flush=True)
+        mode_results = []
+        for depth in depths:
+            sequence, model_bytes = build_decode_workload(depth, LAYER_MB, DECODE_STEPS)
+            model_size_mb = model_bytes / 1024 / 1024
+            cache_size = max(20, int(model_size_mb * CACHE_RATIO))
+            print(f"  Depth: {depth} layers ({model_size_mb:.0f}MB model, {cache_size}MB cache)", flush=True)
+
+            engine = create_engine(cache_size_mb=cache_size, bandwidth=LOW_BANDWIDTH_GBPS)
+            engine.prefetcher.mode = mode_cfg["mode"]
+            engine.local_cache.set_eviction_policy(mode_cfg["eviction"])
+            if mode_cfg["mode"] == "static":
+                engine.prefetcher.current_lookahead = 2
+            elif mode_cfg["mode"] == "camp":
+                engine.prefetcher.current_lookahead = 5
+                engine.prefetcher.max_lookahead = 20
+
+            register_sequence(engine, sequence, f"scale_{depth}")
+            gc.collect()
+
+            req = InferenceRequest("scale_run", np.random.randn(1, 128), f"scale_{depth}", 0)
+            p = engine.inference(req)
+            engine.env.run(until=p)
+            result_lat = float(p.value.latency_ms)
+            mode_results.append({"depth": depth, "model_size_mb": model_size_mb, "latency_ms": result_lat})
+            print(f"    -> {result_lat:.2f}ms", flush=True)
+
+        all_results.append({"name": mode_cfg["name"], "data": mode_results})
+
+    with open(f"{NUM_DIR}/model_scale_sensitivity.json", "w") as f:
+        json.dump(all_results, f, indent=2)
+
+    plt.figure(figsize=(8, 6))
+    colors = ['green', 'gray']
+    markers = ['o', 's']
+    for i, series in enumerate(all_results):
+        x = [d["depth"] for d in series["data"]]
+        y = [d["latency_ms"] for d in series["data"]]
+        plt.plot(x, y, label=series["name"], marker=markers[i], linewidth=2, color=colors[i])
+    plt.xlabel("Model Depth (layers)")
+    plt.ylabel("Inference Latency (ms)")
+    plt.ylim(bottom=0)
+    plt.title(f"Model-Scale Sensitivity (cache ratio fixed at {int(CACHE_RATIO*100)}%)")
+    plt.legend()
+    plt.grid(True)
+    plt.savefig(f"{FIG_DIR}/model_scale_sensitivity.png")
+    plt.close()
+    print("Model-Scale Sensitivity Generated.", flush=True)
+
+
+def run_gamma_sensitivity():
+    """
+    Sweeps the Graph-Aware Pinning reservation factor gamma (Sect. 3.3) at a
+    fixed cache ratio and model size, showing the Core Set size vs. Transient
+    headroom tradeoff the paper asserts but never previously measured (gamma
+    was hardcoded, not swept).
+    """
+    print("--- Running Exp 11: Gamma Sensitivity ---", flush=True)
+    # NUM_LAYERS=60 (loop period 61) deliberately exceeds CAMP's eviction
+    # lookahead horizon (<=40, see ModelAwarePrefetcher._adapt_strategy /
+    # eviction_horizon): with a shorter loop, the bounded-lookahead transient
+    # policy alone can already "see" every layer's next reuse, making the
+    # separately-pinned Core Set redundant and gamma a no-op (verified: at
+    # NUM_LAYERS=20 all five gamma values produced bit-identical latency).
+    # At this longer period, only genuinely pinned layers survive across
+    # loop iterations, so gamma has a real, measurable effect.
+    NUM_LAYERS = 60
+    LAYER_MB = 20
+    DECODE_STEPS = 3
+    CACHE_RATIO = 0.4
+    LOW_BANDWIDTH_GBPS = 2.0
+    gammas = [0.5, 0.7, 0.8, 0.9, 0.95]
+
+    sequence, model_bytes = build_decode_workload(NUM_LAYERS, LAYER_MB, DECODE_STEPS)
+    model_size_mb = model_bytes / 1024 / 1024
+    cache_size = max(20, int(model_size_mb * CACHE_RATIO))
+
+    results = []
+    for gamma in gammas:
+        print(f"  Gamma: {gamma}", flush=True)
+        engine = create_engine(cache_size_mb=cache_size, bandwidth=LOW_BANDWIDTH_GBPS)
+        engine.prefetcher.mode = "camp"
+        engine.local_cache.set_eviction_policy("graph_aware")
+        engine.prefetcher.current_lookahead = 5
+        engine.prefetcher.max_lookahead = 20
+        engine.prefetcher.pinning_reservation_factor = gamma
+
+        register_sequence(engine, sequence, f"gamma_{gamma}")
+        gc.collect()
+
+        req = InferenceRequest("gamma_run", np.random.randn(1, 128), f"gamma_{gamma}", 0)
+        p = engine.inference(req)
+        engine.env.run(until=p)
+        result_lat = float(p.value.latency_ms)
+        results.append({
+            "gamma": gamma, "latency_ms": result_lat,
+            "pinned_layer_count": len(engine.prefetcher.pinned_layers),
+        })
+        print(f"    -> {result_lat:.2f}ms ({len(engine.prefetcher.pinned_layers)} layers pinned)", flush=True)
+
+    with open(f"{NUM_DIR}/gamma_sensitivity.json", "w") as f:
+        json.dump(results, f, indent=2)
+
+    fig, ax1 = plt.subplots(figsize=(8, 6))
+    x = [r["gamma"] for r in results]
+    ax1.plot(x, [r["latency_ms"] for r in results], marker='o', color='green', label="Latency (ms)")
+    ax1.set_xlabel("Pinning Reservation Factor $\\gamma$")
+    ax1.set_ylabel("Inference Latency (ms)", color='green')
+    ax2 = ax1.twinx()
+    ax2.plot(x, [r["pinned_layer_count"] for r in results], marker='s', color='purple', linestyle='--', label="Pinned Layers")
+    ax2.set_ylabel("Pinned Layer Count", color='purple')
+    plt.title("Gamma (Pinning Reservation Factor) Sensitivity")
+    fig.tight_layout()
+    plt.savefig(f"{FIG_DIR}/gamma_sensitivity.png")
+    plt.close()
+    print("Gamma Sensitivity Generated.", flush=True)
+
+
+def run_bandwidth_sensitivity():
+    """
+    Sweeps link bandwidth for the thrashing-style regime, showing how the
+    CAMP-vs-baseline latency gap scales with the severity of the bandwidth
+    constraint (previously only a single bandwidth point was tested per
+    scenario).
+    """
+    print("--- Running Exp 12: Bandwidth Sensitivity ---", flush=True)
+    NUM_LAYERS = 20
+    LAYER_MB = 20
+    DECODE_STEPS = 6
+    CACHE_RATIO = 0.4
+    bandwidths = [1.0, 2.0, 4.0, 8.0, 16.0]
+
+    sequence, model_bytes = build_decode_workload(NUM_LAYERS, LAYER_MB, DECODE_STEPS)
+    model_size_mb = model_bytes / 1024 / 1024
+    cache_size = max(20, int(model_size_mb * CACHE_RATIO))
+
+    modes_to_test = [
+        {"name": "CAMP (Ours)", "mode": "camp", "eviction": "graph_aware"},
+        {"name": "Static (Baseline)", "mode": "static", "eviction": "lru"}
+    ]
+
+    all_results = []
+    for mode_cfg in modes_to_test:
+        print(f"Testing Mode: {mode_cfg['name']}", flush=True)
+        mode_results = []
+        for bw in bandwidths:
+            print(f"  Bandwidth: {bw} GB/s", flush=True)
+            engine = create_engine(cache_size_mb=cache_size, bandwidth=bw)
+            engine.prefetcher.mode = mode_cfg["mode"]
+            engine.local_cache.set_eviction_policy(mode_cfg["eviction"])
+            if mode_cfg["mode"] == "static":
+                engine.prefetcher.current_lookahead = 2
+            elif mode_cfg["mode"] == "camp":
+                engine.prefetcher.current_lookahead = 5
+                engine.prefetcher.max_lookahead = 20
+
+            register_sequence(engine, sequence, f"bw_{bw}")
+            gc.collect()
+
+            req = InferenceRequest("bw_run", np.random.randn(1, 128), f"bw_{bw}", 0)
+            p = engine.inference(req)
+            engine.env.run(until=p)
+            result_lat = float(p.value.latency_ms)
+            mode_results.append({"bandwidth_gbps": bw, "latency_ms": result_lat})
+            print(f"    -> {result_lat:.2f}ms", flush=True)
+
+        all_results.append({"name": mode_cfg["name"], "data": mode_results})
+
+    with open(f"{NUM_DIR}/bandwidth_sensitivity.json", "w") as f:
+        json.dump(all_results, f, indent=2)
+
+    plt.figure(figsize=(8, 6))
+    colors = ['green', 'gray']
+    markers = ['o', 's']
+    for i, series in enumerate(all_results):
+        x = [d["bandwidth_gbps"] for d in series["data"]]
+        y = [d["latency_ms"] for d in series["data"]]
+        plt.plot(x, y, label=series["name"], marker=markers[i], linewidth=2, color=colors[i])
+    plt.xlabel("Link Bandwidth (GB/s)")
+    plt.ylabel("Inference Latency (ms)")
+    plt.ylim(bottom=0)
+    plt.title(f"Bandwidth Sensitivity (cache ratio fixed at {int(CACHE_RATIO*100)}%)")
+    plt.legend()
+    plt.grid(True)
+    plt.savefig(f"{FIG_DIR}/bandwidth_sensitivity.png")
+    plt.close()
+    print("Bandwidth Sensitivity Generated.", flush=True)
+
+
+def run_multi_tenant_scaling():
+    """
+    Extends the fixed 2-tenant multi-tenant experiment to a sweep over
+    tenant count sharing one physical link/compute engine: Tenant A (running
+    CAMP) plus (N-1) "noisy neighbor" tenants running plain demand paging.
+    Shows how Tenant A's degradation scales with contention breadth, not
+    just one arbitrarily-chosen 2-tenant point.
+    """
+    print("--- Running Exp 13: Multi-Tenant Scaling ---", flush=True)
+    N_REQUESTS = 4
+    LOW_BANDWIDTH_GBPS = 2.0
+    TENANT_A_CACHE_MB = 120
+    tenant_counts = [2, 4, 8]
+
+    seq_a, _ = build_decode_workload(num_layers=15, layer_mb=20, decode_steps=3)
+
+    # Isolated baseline (measured once; independent of neighbor count)
+    engine_iso = create_engine(cache_size_mb=TENANT_A_CACHE_MB, bandwidth=LOW_BANDWIDTH_GBPS)
+    engine_iso.prefetcher.mode = "camp"
+    engine_iso.local_cache.set_eviction_policy("graph_aware")
+    register_sequence(engine_iso, seq_a, "tenant_a_isolated_scaling")
+    gc.collect()
+    isolated_latencies = []
+    for i in range(N_REQUESTS):
+        req = InferenceRequest(f"isolated_{i}", np.random.randn(1, 128), "tenant_a_isolated_scaling", engine_iso.env.now)
+        p = engine_iso.inference(req)
+        engine_iso.env.run(until=p)
+        isolated_latencies.append(p.value.latency_ms)
+    isolated_max = float(np.max(isolated_latencies))
+    print(f"  Isolated (near-max, n={N_REQUESTS}): {isolated_max:.2f}ms", flush=True)
+
+    results = []
+    for n_tenants in tenant_counts:
+        print(f"Testing Tenant Count: {n_tenants}", flush=True)
+        engine_a = create_engine(cache_size_mb=TENANT_A_CACHE_MB, bandwidth=LOW_BANDWIDTH_GBPS)
+        engine_a.prefetcher.mode = "camp"
+        engine_a.local_cache.set_eviction_policy("graph_aware")
+        register_sequence(engine_a, seq_a, f"tenant_a_scaling_{n_tenants}")
+        gc.collect()
+
+        neighbor_engines = []
+        for j in range(n_tenants - 1):
+            eng_b = XLShareInferenceEngine(
+                gpu_cache_size_mb=TENANT_A_CACHE_MB,
+                shared_env=engine_a.env,
+                shared_memory_manager=engine_a.memory_manager,
+                shared_compute_engine=engine_a.compute_engine,
+            )
+            eng_b.prefetcher.mode = "no_prefetch"
+            eng_b.local_cache.set_eviction_policy("lru")
+            seq_b, _ = build_decode_workload(num_layers=10, layer_mb=20, decode_steps=3)
+            register_sequence(eng_b, seq_b, f"tenant_b{j}_scaling_{n_tenants}")
+            neighbor_engines.append((eng_b, seq_b, f"tenant_b{j}_scaling_{n_tenants}"))
+        gc.collect()
+
+        start_time = engine_a.env.now
+        procs_a = [engine_a.inference(InferenceRequest(f"a_{i}", np.random.randn(1, 128), f"tenant_a_scaling_{n_tenants}", start_time))
+                   for i in range(N_REQUESTS)]
+        procs_b = []
+        for eng_b, seq_b, name_b in neighbor_engines:
+            procs_b.extend([eng_b.inference(InferenceRequest(f"{name_b}_{i}", np.random.randn(1, 128), name_b, start_time))
+                             for i in range(N_REQUESTS)])
+        engine_a.env.run(until=simpy.events.AllOf(engine_a.env, procs_a + procs_b))
+
+        contended_max = float(np.max([p.value.latency_ms for p in procs_a]))
+        degradation_ratio = contended_max / isolated_max
+        results.append({
+            "tenant_count": n_tenants, "isolated_max_latency_ms": isolated_max,
+            "contended_max_latency_ms": contended_max, "degradation_ratio": degradation_ratio,
+        })
+        print(f"  -> contended {contended_max:.2f}ms, ratio={degradation_ratio:.2f}x", flush=True)
+
+    with open(f"{NUM_DIR}/multi_tenant_scaling.json", "w") as f:
+        json.dump(results, f, indent=2)
+
+    plt.figure(figsize=(8, 6))
+    x = [r["tenant_count"] for r in results]
+    y = [r["degradation_ratio"] for r in results]
+    plt.plot(x, y, marker='o', color='firebrick', linewidth=2)
+    plt.xlabel("Tenant Count (sharing one link/compute engine)")
+    plt.ylabel("Tenant A Degradation Ratio (contended / isolated)")
+    plt.title("Multi-Tenant Scaling: Degradation vs. Tenant Count")
+    plt.grid(True)
+    plt.savefig(f"{FIG_DIR}/multi_tenant_scaling.png")
+    plt.close()
+    print("Multi-Tenant Scaling Generated.", flush=True)
+
+
 def run_batching_efficiency():
     """
     True batch-size scaling: ONE request per point, with the batch dimension
@@ -587,6 +1039,152 @@ def run_concurrent_serving_throughput():
     plt.tight_layout()
     plt.savefig(f"{FIG_DIR}/concurrent_serving_throughput.png", dpi=300)
     plt.close()
+
+def run_continuous_batching_serving():
+    """
+    Open-loop, iteration-level-batched serving evaluation (Orca terminology),
+    addressing the reviewer critique that run_concurrent_serving_throughput()
+    above is a closed-loop synchronized burst of independent single-item
+    traversals -- not how real serving systems (vLLM/Orca) schedule concurrent
+    requests, which continuously rebatch all in-flight requests together at
+    every decode step.
+
+    Model: a Poisson-process arrival stream of requests, each needing
+    DECODE_ROUNDS_PER_REQUEST sequential rounds to complete (e.g. generated
+    tokens). At each round, ALL currently-admitted-but-unfinished requests are
+    rebatched into a single InferenceRequest with input_data shaped
+    (active_batch_size, 128) -- reusing the true batch-dimension path already
+    validated in run_batching_efficiency() (weights fetched once per layer per
+    round; compute scales with batch size and queues on the shared
+    compute_engine resource). The wall-clock cost of that round is whatever
+    the engine actually measures, so round latency grows with batch size
+    exactly like a real iteration-batched server. Per-request end-to-end
+    latency is measured from that request's own Poisson arrival time to the
+    round at which its Kth round completes -- not from when it happened to be
+    admitted into a batch.
+    """
+    print("--- Running Exp 14: Continuous-Batching (Open-Loop) Serving ---", flush=True)
+    # A small model is used deliberately: run_batching_efficiency() (Exp 5a)
+    # already established that this engine's compute model is *compute-bound*
+    # with cost scaling ~linearly in batch size (throughput_tps flat at
+    # ~257-263 tok/s from batch 1 to 32) -- there is little fixed per-round
+    # overhead left to amortize once the model fits in cache. Rather than
+    # overclaim a large batching-efficiency multiplier this engine cannot
+    # produce, this experiment targets the queueing behavior continuous
+    # batching is actually responsible for: keeping per-request latency low
+    # as Poisson arrival rate approaches the compute-bound serving ceiling.
+    # A 2-layer model keeps that ceiling in a range where sub-capacity and
+    # near-capacity arrival rates are both reachable in a smoke-testable run.
+    DECODE_ROUNDS_PER_REQUEST = 5
+    N_REQUESTS = 40
+    arrival_rates_rps = [1, 2, 4, 8]
+
+    engine = create_engine(cache_size_mb=1024)
+    model_config, weights = engine.create_sample_transformer_model(num_layers=2, hidden_size=512, vocab_size=8000)
+    engine.register_model(model_config, weights)
+    warmup = InferenceRequest("warmup", np.random.randn(1, 128), model_config.name, 0)
+    engine.env.run(until=engine.inference(warmup))
+
+    # Isolated per-request baseline: one request, alone, run through all of
+    # its DECODE_ROUNDS_PER_REQUEST rounds back-to-back, batch size always 1.
+    isolated_total_ms = 0.0
+    for _ in range(DECODE_ROUNDS_PER_REQUEST):
+        req = InferenceRequest("isolated_round", np.random.randn(1, 128), model_config.name, 0)
+        p = engine.inference(req)
+        engine.env.run(until=p)
+        isolated_total_ms += p.value.latency_ms
+    slo_threshold_ms = 2.0 * isolated_total_ms
+    print(f"  Isolated end-to-end (K={DECODE_ROUNDS_PER_REQUEST} rounds, bs=1): "
+          f"{isolated_total_ms:.2f}ms -> SLO threshold {slo_threshold_ms:.2f}ms", flush=True)
+
+    results = []
+    for rate in arrival_rates_rps:
+        print(f"Testing Arrival Rate: {rate} req/s", flush=True)
+        rng = np.random.default_rng(42)
+        inter_arrival_s = rng.exponential(1.0 / rate, size=N_REQUESTS)
+        arrival_times_ms = np.cumsum(inter_arrival_s) * 1000.0
+
+        remaining_rounds = {i: DECODE_ROUNDS_PER_REQUEST for i in range(N_REQUESTS)}
+        finish_time_ms = {}
+        admitted = set()
+        t_ms = 0.0
+        n_rounds_run = 0
+
+        while len(finish_time_ms) < N_REQUESTS:
+            newly_arrived = [i for i in range(N_REQUESTS) if i not in admitted and arrival_times_ms[i] <= t_ms]
+            admitted.update(newly_arrived)
+            active = [i for i in admitted if i not in finish_time_ms]
+
+            if not active:
+                # No admitted work outstanding; jump the clock to the next arrival.
+                not_yet = [i for i in range(N_REQUESTS) if i not in admitted]
+                t_ms = float(arrival_times_ms[min(not_yet, key=lambda i: arrival_times_ms[i])])
+                continue
+
+            bs = len(active)
+            req = InferenceRequest(f"round_{rate}_{n_rounds_run}", np.random.randn(bs, 128), model_config.name, t_ms)
+            p = engine.inference(req)
+            engine.env.run(until=p)
+            round_latency_ms = p.value.latency_ms
+            n_rounds_run += 1
+            t_ms += round_latency_ms
+
+            for i in active:
+                remaining_rounds[i] -= 1
+                if remaining_rounds[i] == 0:
+                    finish_time_ms[i] = t_ms
+
+        e2e_latencies_ms = sorted(finish_time_ms[i] - arrival_times_ms[i] for i in range(N_REQUESTS))
+        total_span_s = max(finish_time_ms.values()) / 1000.0
+        completions_per_sec = N_REQUESTS / total_span_s
+        p50 = float(np.percentile(e2e_latencies_ms, 50))
+        p99 = float(np.percentile(e2e_latencies_ms, 99))
+        slo_attainment_pct = float(np.mean([1.0 if lat <= slo_threshold_ms else 0.0 for lat in e2e_latencies_ms]) * 100.0)
+
+        results.append({
+            "arrival_rate_rps": rate,
+            "rounds_executed": n_rounds_run,
+            "completions_per_sec": float(completions_per_sec),
+            "p50_latency_ms": p50,
+            "p99_latency_ms": p99,
+            "slo_threshold_ms": float(slo_threshold_ms),
+            "slo_attainment_pct": slo_attainment_pct,
+        })
+        print(f"  -> {completions_per_sec:.2f} completions/sec, P50={p50:.2f}ms, P99={p99:.2f}ms, "
+              f"SLO attainment={slo_attainment_pct:.1f}% ({n_rounds_run} batched rounds)", flush=True)
+
+    with open(f"{NUM_DIR}/continuous_batching_serving.json", "w") as f:
+        json.dump({
+            "decode_rounds_per_request": DECODE_ROUNDS_PER_REQUEST,
+            "n_requests": N_REQUESTS,
+            "isolated_total_ms": isolated_total_ms,
+            "slo_threshold_ms": slo_threshold_ms,
+            "results": results,
+        }, f, indent=2)
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(13, 5))
+    x = [r["arrival_rate_rps"] for r in results]
+
+    ax1.plot(x, [r["completions_per_sec"] for r in results], marker='o', color='darkorange', label="Completions/sec")
+    ax1.set_xlabel("Poisson Arrival Rate (req/s)")
+    ax1.set_ylabel("Completions/sec")
+    ax1.set_title("Continuous-Batching Throughput (Open-Loop)")
+    ax1.grid(True)
+
+    ax2.plot(x, [r["p50_latency_ms"] for r in results], marker='o', color='steelblue', label="P50")
+    ax2.plot(x, [r["p99_latency_ms"] for r in results], marker='s', color='firebrick', label="P99")
+    ax2.axhline(slo_threshold_ms, color='gray', linestyle='--', label=f"SLO ({slo_threshold_ms:.1f}ms)")
+    ax2.set_xlabel("Poisson Arrival Rate (req/s)")
+    ax2.set_ylabel("End-to-End Latency (ms)")
+    ax2.set_title("Continuous-Batching Latency (Open-Loop)")
+    ax2.legend()
+    ax2.grid(True)
+
+    plt.tight_layout()
+    plt.savefig(f"{FIG_DIR}/continuous_batching_serving.png", dpi=300)
+    plt.close()
+    print("Continuous-Batching Serving Generated.", flush=True)
+
 
 def run_latency_breakdown():
     """
@@ -933,10 +1531,16 @@ if __name__ == "__main__":
         run_prefetch_efficacy()
         run_comprehensive_scenarios()
         run_cache_sensitivity()
+        run_real_model_validation()
+        run_model_scale_sensitivity()
+        run_gamma_sensitivity()
+        run_bandwidth_sensitivity()
         run_batching_efficiency()
         run_concurrent_serving_throughput()
+        run_continuous_batching_serving()
         run_latency_breakdown()
         run_multi_tenant_interference()
+        run_multi_tenant_scaling()
         print("\nAll Comprehensive Experiments Completed.", flush=True)
     except Exception as e:
         print(f"Error: {e}", flush=True)

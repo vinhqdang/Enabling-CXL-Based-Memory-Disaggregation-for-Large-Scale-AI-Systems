@@ -1,0 +1,52 @@
+[
+  {
+    "name": "CAMP (Ours)",
+    "data": [
+      {
+        "bandwidth_gbps": 1.0,
+        "latency_ms": 2237.12118
+      },
+      {
+        "bandwidth_gbps": 2.0,
+        "latency_ms": 1397.27743
+      },
+      {
+        "bandwidth_gbps": 4.0,
+        "latency_ms": 1003.8822075
+      },
+      {
+        "bandwidth_gbps": 8.0,
+        "latency_ms": 835.42557625
+      },
+      {
+        "bandwidth_gbps": 16.0,
+        "latency_ms": 747.393345
+      }
+    ]
+  },
+  {
+    "name": "Static (Baseline)",
+    "data": [
+      {
+        "bandwidth_gbps": 1.0,
+        "latency_ms": 2920.72193
+      },
+      {
+        "bandwidth_gbps": 2.0,
+        "latency_ms": 1739.081305
+      },
+      {
+        "bandwidth_gbps": 4.0,
+        "latency_ms": 1160.1386075
+      },
+      {
+        "bandwidth_gbps": 8.0,
+        "latency_ms": 908.67376375
+      },
+      {
+        "bandwidth_gbps": 16.0,
+        "latency_ms": 784.02043875
+      }
+    ]
+  }
+]

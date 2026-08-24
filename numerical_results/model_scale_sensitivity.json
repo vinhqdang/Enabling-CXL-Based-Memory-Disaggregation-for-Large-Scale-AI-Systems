@@ -1,0 +1,52 @@
+[
+  {
+    "name": "CAMP (Ours)",
+    "data": [
+      {
+        "depth": 12,
+        "model_size_mb": 240.0,
+        "latency_ms": 902.11913
+      },
+      {
+        "depth": 24,
+        "model_size_mb": 480.0,
+        "latency_ms": 1693.685705
+      },
+      {
+        "depth": 48,
+        "model_size_mb": 960.0,
+        "latency_ms": 3267.05303
+      },
+      {
+        "depth": 80,
+        "model_size_mb": 1600.0,
+        "latency_ms": 5452.768555
+      }
+    ]
+  },
+  {
+    "name": "Static (Baseline)",
+    "data": [
+      {
+        "depth": 12,
+        "model_size_mb": 240.0,
+        "latency_ms": 1048.606505
+      },
+      {
+        "depth": 24,
+        "model_size_mb": 480.0,
+        "latency_ms": 2084.318705
+      },
+      {
+        "depth": 48,
+        "model_size_mb": 960.0,
+        "latency_ms": 4155.743105
+      },
+      {
+        "depth": 80,
+        "model_size_mb": 1600.0,
+        "latency_ms": 6917.642305
+      }
+    ]
+  }
+]
