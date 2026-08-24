@@ -18,7 +18,11 @@ def plot_comprehensive_results():
     scenario_labels = ["Thinking (Generative)", "Streaming (Throughput)", "Thrashing (Constrained)"]
     
     modes = ["no_prefetch", "static", "tmo", "melody", "limoncello", "camp", "expand"]
-    mode_labels = ["No Prefetch", "Static (N=2)", "TMO '22", "Melody '25", "Limoncello '24", "CAMP (Ours)", "Oracle"]
+    # "Melody '25" previously implied this baseline reproduces the Melody paper's
+    # own algorithm; Melody is a CXL characterization study with no prefetching
+    # algorithm of its own, and this mode is our own bandwidth-threshold
+    # heuristic motivated by (not derived from) Melody's findings.
+    mode_labels = ["No Prefetch", "Static (N=2)", "TMO '22", "BW-Thresh (Melody-insp.)", "Limoncello '24", "CAMP (Ours)", "Oracle"]
     colors = ['#9E9E9E', '#FFC107', '#2196F3', '#03A9F4', '#FF5722', '#4CAF50', '#673AB7']
     
     # 1. Plot Latency (Grouped Bar Chart)

@@ -4,23 +4,23 @@
     "data": [
       {
         "ratio": 0.1,
-        "latency_ms": 1682.900755
+        "latency_ms": 1690.25218
       },
       {
         "ratio": 0.25,
-        "latency_ms": 1536.41338
+        "latency_ms": 1543.764805
       },
       {
         "ratio": 0.5,
-        "latency_ms": 1292.267755
+        "latency_ms": 1299.61918
       },
       {
         "ratio": 0.75,
-        "latency_ms": 1048.12213
+        "latency_ms": 1045.70773
       },
       {
         "ratio": 1.0,
-        "latency_ms": 755.14738
+        "latency_ms": 752.73298
       }
     ]
   },
@@ -29,23 +29,23 @@
     "data": [
       {
         "ratio": 0.1,
-        "latency_ms": 1731.72988
+        "latency_ms": 1739.081305
       },
       {
         "ratio": 0.25,
-        "latency_ms": 1731.72988
+        "latency_ms": 1739.081305
       },
       {
         "ratio": 0.5,
-        "latency_ms": 1731.72988
+        "latency_ms": 1739.081305
       },
       {
         "ratio": 0.75,
-        "latency_ms": 1731.72988
+        "latency_ms": 1739.081305
       },
       {
         "ratio": 1.0,
-        "latency_ms": 755.14738
+        "latency_ms": 752.73298
       }
     ]
   }

@@ -46,26 +46,50 @@ def create_engine(cache_size_mb=2048, emulation=True, bandwidth=None):
 def build_decode_workload(num_layers, layer_mb, decode_steps):
     """
     Build a repeated full-model traversal trace simulating `decode_steps`
-    autoregressive decode steps: every layer of an num_layers-layer model is
-    revisited once per step, in the same order each time. This directly
-    operationalizes the paper's own stated failure mode for naive LRU (Sect.
-    3.3: "the parameters for the first layer are the oldest by the time the
-    last layer finishes, causing it to be evicted exactly when it is needed
-    for the next token generation") -- unlike the prior "Core (reused) + Gap
-    (one-time transient)" pattern used here and in run_cache_sensitivity(),
-    which (a) depended on _topological_sort() preserving repeat order
-    correctly (a bug fixed separately) and (b) let one-time Gap traffic
-    dominate the trace, which can make pinning a net loss for one-time items
-    while under-representing the actual cyclic-thrashing mechanism the paper
-    targets. Returns (sequence, single_pass_model_size_bytes).
+    autoregressive decode steps. This directly operationalizes the paper's
+    own stated failure mode for naive LRU (Sect. 3.3: "the parameters for the
+    first layer are the oldest by the time the last layer finishes, causing
+    it to be evicted exactly when it is needed for the next token
+    generation").
+
+    layer_0 ("embed_tied") models a weight-tied embedding/LM-head matrix -- a
+    real architectural pattern (GPT-2/Llama/Gemma-style weight tying): the
+    SAME weight is genuinely used twice per decode step, once for the input
+    embedding lookup and once for the output logits projection, while every
+    other layer is used once per step. reuse_frequency is DERIVED from each
+    layer's actual occurrence count in the built sequence, not asserted
+    uniformly. This gives Algorithm 2's frequency ranking a real,
+    architecturally-grounded signal to discriminate on -- previously every
+    layer shared an identical hand-set reuse_frequency, making the ranking
+    step a structural no-op tie in every flagship result (a review finding:
+    Graph-Aware Eviction and LFU landed on an exact zero-variance tie because
+    neither had any per-layer signal to differentiate on).
+
+    Returns (sequence, single_pass_model_size_bytes).
     """
-    base = []
-    for i in range(num_layers):
+    body = []
+    for i in range(1, num_layers):
         li = LayerInfo(f"layer_{i}", LayerType.LINEAR, (1024, 5120), layer_mb * 1024 * 1024, 2.0)
-        li.reuse_frequency = decode_steps
-        base.append(li)
-    model_bytes = sum(l.weight_size_bytes for l in base)
-    return base * decode_steps, model_bytes
+        body.append(li)
+    embed = LayerInfo("embed_tied", LayerType.EMBEDDING, (1024, 5120), layer_mb * 1024 * 1024, 2.0)
+
+    sequence = []
+    for _ in range(decode_steps):
+        sequence.append(embed)     # input embedding lookup
+        sequence.extend(body)
+        sequence.append(embed)     # tied output (lm_head) projection
+
+    occurrence_counts = {}
+    for l in sequence:
+        occurrence_counts[l.name] = occurrence_counts.get(l.name, 0) + 1
+    assigned = set()
+    for l in sequence:
+        if l.name not in assigned:
+            l.reuse_frequency = occurrence_counts[l.name]
+            assigned.add(l.name)
+
+    model_bytes = sum(l.weight_size_bytes for l in [embed] + body)
+    return sequence, model_bytes
 
 
 def register_sequence(engine, sequence, name):
@@ -159,10 +183,16 @@ def run_ablation_study():
             "n_trials": N_TRIALS,
         }
         if label != baseline_label:
+            diffs = vals - baseline_vals
             pct_reduction = (np.mean(vals) - np.mean(baseline_vals)) / np.mean(vals) * 100.0
             tstat, pval = scipy_stats.ttest_rel(vals, baseline_vals)
             entry["pct_reduction_vs_graph_aware"] = float(pct_reduction)
             entry["paired_ttest_p_value"] = float(pval)
+            # Cohen's d_z (paired effect size): mean paired difference / std of
+            # paired differences. Undefined (reported as null) when the
+            # differences have zero variance (e.g. an exact tie, as with LFU).
+            diff_std = np.std(diffs, ddof=1) if len(diffs) > 1 else 0.0
+            entry["cohens_d_z"] = float(np.mean(diffs) / diff_std) if diff_std > 0 else None
         results.append(entry)
 
     with open(f"{NUM_DIR}/ablation_eviction.json", "w") as f:
@@ -329,8 +359,13 @@ def run_prefetch_efficacy():
     with open(f"{NUM_DIR}/prefetch_efficacy.json", "w") as f:
         json.dump(results, f, indent=2)
         
+    display_label = {
+        "no_prefetch": "no_prefetch", "static": "static", "tmo": "tmo",
+        "melody": "bw_threshold", "limoncello": "limoncello",
+        "expand": "expand", "camp": "camp",
+    }
     plt.figure(figsize=(8,6))
-    x = [r["mode"] for r in results]
+    x = [display_label.get(r["mode"], r["mode"]) for r in results]
     y = [r["latency_ms"] for r in results]
     plt.bar(x, y, color=['red', 'orange', 'green'])
     plt.ylabel("Inference Latency (ms)")

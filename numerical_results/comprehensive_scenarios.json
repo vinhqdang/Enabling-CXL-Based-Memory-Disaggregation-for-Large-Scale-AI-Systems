@@ -104,52 +104,52 @@
   "thrashing": [
     {
       "mode": "no_prefetch",
-      "latency": 2296.30575,
-      "hit_rate_pct": 0.0,
+      "latency": 2290.64847,
+      "hit_rate_pct": 3.5256410256410255,
       "prefetch_accuracy_pct": 0.0,
-      "stall_count": 300
+      "stall_count": 301
     },
     {
       "mode": "static",
-      "latency": 2296.30575,
-      "hit_rate_pct": 8.333333333333332,
-      "prefetch_accuracy_pct": 100.0,
-      "stall_count": 275
+      "latency": 2290.64847,
+      "hit_rate_pct": 11.538461538461538,
+      "prefetch_accuracy_pct": 144.0,
+      "stall_count": 276
     },
     {
       "mode": "tmo",
-      "latency": 2296.30575,
-      "hit_rate_pct": 8.333333333333332,
-      "prefetch_accuracy_pct": 100.0,
-      "stall_count": 275
+      "latency": 2290.64847,
+      "hit_rate_pct": 11.538461538461538,
+      "prefetch_accuracy_pct": 144.0,
+      "stall_count": 276
     },
     {
       "mode": "melody",
-      "latency": 1886.1411,
-      "hit_rate_pct": 33.0,
-      "prefetch_accuracy_pct": 396.0,
-      "stall_count": 201
+      "latency": 1919.54712,
+      "hit_rate_pct": 33.33333333333333,
+      "prefetch_accuracy_pct": 416.0,
+      "stall_count": 208
     },
     {
       "mode": "limoncello",
-      "latency": 2296.30575,
-      "hit_rate_pct": 8.333333333333332,
-      "prefetch_accuracy_pct": 100.0,
-      "stall_count": 275
+      "latency": 2290.64847,
+      "hit_rate_pct": 11.538461538461538,
+      "prefetch_accuracy_pct": 144.0,
+      "stall_count": 276
     },
     {
       "mode": "camp",
-      "latency": 1768.9512,
-      "hit_rate_pct": 41.333333333333336,
-      "prefetch_accuracy_pct": 496.0,
-      "stall_count": 176
+      "latency": 1763.29392,
+      "hit_rate_pct": 43.269230769230774,
+      "prefetch_accuracy_pct": 540.0,
+      "stall_count": 177
     },
     {
       "mode": "expand",
-      "latency": 1768.9512,
-      "hit_rate_pct": 41.333333333333336,
-      "prefetch_accuracy_pct": 496.0,
-      "stall_count": 176
+      "latency": 1763.29392,
+      "hit_rate_pct": 43.269230769230774,
+      "prefetch_accuracy_pct": 540.0,
+      "stall_count": 177
     }
   ]
 }

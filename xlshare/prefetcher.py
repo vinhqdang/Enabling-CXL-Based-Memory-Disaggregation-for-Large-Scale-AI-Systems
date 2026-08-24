@@ -145,9 +145,16 @@ class ModelAwarePrefetcher:
         self.pinned_layers = set()
         print(f"Cache Capacity: {self.local_cache.capacity} bytes")
         
-        # Sort layers by importance (Frequency DESC, then original order)
-        candidates = sorted(self.execution_order, key=lambda x: self.layers[x].reuse_frequency, reverse=True)
-        
+        # Sort layers by importance (Frequency DESC, then original order).
+        # Deduplicated over unique layer names: self.execution_order may contain
+        # repeats (a layer revisited across multiple decode steps), and iterating
+        # the raw repeated trace here previously double-counted a layer's size
+        # into current_usage on every repeat occurrence -- inflating usage well
+        # beyond the true unique-layer footprint. Algorithm 2's pseudocode is a
+        # single pass over the vertex set V (unique layers), which this matches.
+        unique_names = list(dict.fromkeys(self.execution_order))
+        candidates = sorted(unique_names, key=lambda x: self.layers[x].reuse_frequency, reverse=True)
+
         for layer_name in candidates:
             layer = self.layers[layer_name]
             layer_size = layer.weight_size_bytes
