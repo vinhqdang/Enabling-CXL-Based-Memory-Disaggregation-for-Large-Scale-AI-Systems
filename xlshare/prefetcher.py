@@ -166,10 +166,19 @@ class ModelAwarePrefetcher:
     
     def _topological_sort(self, layers: List[LayerInfo]) -> List[str]:
         """
-        Topological sort of layers based on dependencies
+        Determine execution order from the caller-supplied layer sequence.
+
+        This previously re-sorted layers alphabetically by name, which (a)
+        scrambles numeric layer order for any model with >= 10 numbered
+        layers -- e.g. "layer_10_..." sorts lexicographically before
+        "layer_1_...", since '0' < '_' in ASCII -- and (b) silently collapses
+        any intentionally repeated layer visits (used to simulate reuse over
+        time, e.g. a "Core" set revisited across multiple loops) into
+        grouped-by-name blocks, destroying the intended access trace. The
+        caller already declares layers in their intended execution sequence
+        (including repeats), so that sequence is preserved verbatim here.
         """
-        # Simple implementation - assume sequential order for now
-        return [layer.name for layer in sorted(layers, key=lambda x: x.name)]
+        return [layer.name for layer in layers]
     
     def _analyze_access_patterns(self):
         """Analyze model access patterns for optimization"""

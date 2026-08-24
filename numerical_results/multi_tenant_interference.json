@@ -1,0 +1,14 @@
+[
+  {
+    "mode": "CAMP (Ours)",
+    "isolated_p99_latency_ms": 542.40435,
+    "contended_p99_latency_ms": 1912.77310525,
+    "tail_latency_ratio": 3.526470805866509
+  },
+  {
+    "mode": "TMO (Reactive Baseline)",
+    "isolated_p99_latency_ms": 688.891725,
+    "contended_p99_latency_ms": 2222.0964152499996,
+    "tail_latency_ratio": 3.225610548958183
+  }
+]

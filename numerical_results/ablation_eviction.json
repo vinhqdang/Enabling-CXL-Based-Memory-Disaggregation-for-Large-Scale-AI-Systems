@@ -1,27 +1,40 @@
 [
   {
     "policy": "CAMP+Random",
-    "latency_ms": 498.1540795455627,
-    "hit_rate": 0.08593208593208593
+    "latency_ms_mean": 1982.4238225000001,
+    "latency_ms_std": 527.4678761144143,
+    "n_trials": 20,
+    "pct_reduction_vs_graph_aware": 14.951030419732566,
+    "paired_ttest_p_value": 5.78639856339788e-12
   },
   {
     "policy": "CAMP+FIFO",
-    "latency_ms": 498.1908964020996,
-    "hit_rate": 0.07740152038700761
+    "latency_ms_mean": 2088.38302375,
+    "latency_ms_std": 569.6353245190593,
+    "n_trials": 20,
+    "pct_reduction_vs_graph_aware": 19.266197121135264,
+    "paired_ttest_p_value": 2.257602321647673e-11
   },
   {
     "policy": "CAMP+LRU",
-    "latency_ms": 498.1908964020996,
-    "hit_rate": 0.07740152038700761
+    "latency_ms_mean": 1903.32064,
+    "latency_ms_std": 483.82282463147914,
+    "n_trials": 20,
+    "pct_reduction_vs_graph_aware": 11.416342663630228,
+    "paired_ttest_p_value": 2.921172216294678e-07
   },
   {
     "policy": "CAMP+LFU",
-    "latency_ms": 497.2124954835205,
-    "hit_rate": 0.15810419681620838
+    "latency_ms_mean": 1686.03103375,
+    "latency_ms_std": 444.3576149167295,
+    "n_trials": 20,
+    "pct_reduction_vs_graph_aware": 0.0,
+    "paired_ttest_p_value": NaN
   },
   {
     "policy": "CAMP+Graph-Aware(Ours)",
-    "latency_ms": 497.33386274487304,
-    "hit_rate": 0.19669777458722182
+    "latency_ms_mean": 1686.03103375,
+    "latency_ms_std": 444.3576149167295,
+    "n_trials": 20
   }
 ]

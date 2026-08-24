@@ -1,0 +1,50 @@
+[
+  {
+    "concurrency": 1,
+    "completions_per_sec": 2.0104312107961895,
+    "p50_latency_ms": 497.405728,
+    "p99_latency_ms": 497.405728,
+    "slo_threshold_ms": 994.811456,
+    "slo_attainment_pct": 100.0
+  },
+  {
+    "concurrency": 2,
+    "completions_per_sec": 2.0104312107961895,
+    "p50_latency_ms": 990.661456,
+    "p99_latency_ms": 994.728456,
+    "slo_threshold_ms": 994.811456,
+    "slo_attainment_pct": 100.0
+  },
+  {
+    "concurrency": 4,
+    "completions_per_sec": 2.0104312107961895,
+    "p50_latency_ms": 1977.172912,
+    "p99_latency_ms": 1989.373912,
+    "slo_threshold_ms": 994.811456,
+    "slo_attainment_pct": 0.0
+  },
+  {
+    "concurrency": 8,
+    "completions_per_sec": 2.0104312107961895,
+    "p50_latency_ms": 3950.195824,
+    "p99_latency_ms": 3978.664824,
+    "slo_threshold_ms": 994.811456,
+    "slo_attainment_pct": 0.0
+  },
+  {
+    "concurrency": 16,
+    "completions_per_sec": 2.0104312107961895,
+    "p50_latency_ms": 7896.241647999999,
+    "p99_latency_ms": 7957.246648,
+    "slo_threshold_ms": 994.811456,
+    "slo_attainment_pct": 0.0
+  },
+  {
+    "concurrency": 32,
+    "completions_per_sec": 2.0104312107961895,
+    "p50_latency_ms": 15788.333296,
+    "p99_latency_ms": 15914.410296,
+    "slo_threshold_ms": 994.811456,
+    "slo_attainment_pct": 0.0
+  }
+]

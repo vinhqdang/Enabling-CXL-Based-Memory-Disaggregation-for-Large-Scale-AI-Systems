@@ -1,5 +1,6 @@
 {
-  "Compute": 6.4208896,
-  "CXL Stall": 4.540109222056248,
-  "Overhead": 0.11071715981874998
+  "Compute": 497.405728,
+  "CXL Stall": 9.596687934997558,
+  "Compute Queueing": 0.0,
+  "Overhead": 0.0
 }

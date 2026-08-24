@@ -7,6 +7,7 @@ Implements CXL memory management with local caching and coherence support.
 import time
 import threading
 import numpy as np
+import simpy
 from typing import Dict, List, Optional, Tuple, Any
 from collections import OrderedDict
 from dataclasses import dataclass
@@ -49,7 +50,11 @@ class CXLMemoryManager:
         self.bandwidth_gbps = bandwidth_gbps
         self.bandwidth_bytes_per_ns = (bandwidth_gbps * 1024**3) / 1e9
         self.env = env
-        
+        # Shared CXL link modeled as a single-server FCFS queue: the physical
+        # interconnect has one finite bandwidth budget, so concurrent transfers
+        # must queue for it rather than each independently assuming full bandwidth.
+        self.link = simpy.Resource(env, capacity=1) if env else None
+
         # Memory pool storage (simulated as dict)
         self.memory_pool: Dict[int, MemoryRegion] = {}
         self.next_address = 0x10000000  # Start at 256MB offset
@@ -143,9 +148,11 @@ class CXLMemoryManager:
         """
         # Simulate CXL access latency + Transfer Time
         transfer_time_ns = self.latency_ns + (size / self.bandwidth_bytes_per_ns)
-        
+
         if self.env:
-            yield self.env.timeout(transfer_time_ns)
+            with self.link.request() as link_req:
+                yield link_req
+                yield self.env.timeout(transfer_time_ns)
         else:
             time.sleep(transfer_time_ns / 1e9)
         
@@ -173,11 +180,16 @@ class CXLMemoryManager:
         Returns:
             True if write successful
         """
-        # Simulate CXL access latency
+        # Simulate CXL access latency + Transfer Time (previously omitted transfer
+        # time entirely, undercounting write cost relative to read())
+        transfer_time_ns = self.latency_ns + (len(data) / self.bandwidth_bytes_per_ns)
+
         if self.env:
-            yield self.env.timeout(self.latency_ns)
+            with self.link.request() as link_req:
+                yield link_req
+                yield self.env.timeout(transfer_time_ns)
         else:
-            time.sleep(self.latency_ns / 1e9)
+            time.sleep(transfer_time_ns / 1e9)
         
         with self.coherence_lock:
             if address not in self.memory_pool:

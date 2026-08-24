@@ -8,12 +8,20 @@ and model execution for CXL-based memory disaggregation.
 import time
 import threading
 import numpy as np
+import simpy
 from typing import Dict, List, Optional, Tuple, Any, Callable
 from dataclasses import dataclass
 
 from .memory_manager import CXLMemoryManager, LocalCache
 from .prefetcher import ModelAwarePrefetcher, LayerInfo, LayerType
 from .emulator import CXLEmulator
+
+# Fixed per-layer kernel-launch/dispatch overhead (seconds-of-ms scale, amortized
+# across the batch dimension). Without this, a manually-annotated per-layer
+# compute time scales exactly linearly with batch size, producing a perfectly
+# flat throughput-vs-batch curve with no batching benefit at all -- itself as
+# unrealistic as the batch-independent behavior it replaced.
+KERNEL_LAUNCH_OVERHEAD_MS = 0.3
 
 
 @dataclass
@@ -53,23 +61,40 @@ class XLShareInferenceEngine:
     CXL-based memory disaggregation with intelligent prefetching.
     """
     
-    def __init__(self, 
+    def __init__(self,
                  cxl_pool_size_gb: float = 64.0,
                  gpu_cache_size_mb: int = 8192,
                  emulate_cxl: bool = True,
                  latency_profile: Optional[Dict[str, Any]] = None,
                  use_torch: bool = False,
-                 real_execution: bool = False):
+                 real_execution: bool = False,
+                 shared_env: Optional[Any] = None,
+                 shared_memory_manager: Optional[CXLMemoryManager] = None,
+                 shared_compute_engine: Optional[Any] = None):
         """
         Initialize XL-Share inference engine
-        
+
         Args:
             cxl_pool_size_gb: Size of CXL memory pool in GB
             gpu_cache_size_mb: Size of local GPU cache in MB
             emulate_cxl: Whether to use CXL emulator or real hardware
+            shared_env, shared_memory_manager, shared_compute_engine: when
+                provided (all three together), this engine reuses another
+                engine's simpy environment, CXL link, and GPU compute engine
+                instead of creating its own -- for multi-tenant experiments
+                where multiple independently-scheduled/cached tenants
+                genuinely contend for the same physical CXL link and GPU,
+                while each still gets its own LocalCache and
+                ModelAwarePrefetcher (which hold single-model mutable state
+                and cannot be shared across tenants running different models).
         """
+        multi_tenant = shared_env is not None and shared_memory_manager is not None and shared_compute_engine is not None
         # Initialize memory subsystem
-        if emulate_cxl:
+        if multi_tenant:
+            self.env = shared_env
+            self.memory_manager = shared_memory_manager
+            self.cxl_emulator = None
+        elif emulate_cxl:
             if latency_profile is not None:
                 self.cxl_emulator = CXLEmulator.from_profile_dict(latency_profile)
                 mem_latency = int(latency_profile.get('cxl_near_ns', 300))
@@ -85,10 +110,17 @@ class XLShareInferenceEngine:
             self.memory_manager = CXLMemoryManager(cxl_pool_size_gb)
             self.cxl_emulator = None
             self.env = None
-        
+
         self.local_cache = LocalCache(gpu_cache_size_mb)
         # [TUNING] Increase prefetch threads to 8 for high concurrency
         self.prefetcher = ModelAwarePrefetcher(self.memory_manager, self.local_cache, prefetch_threads=8, env=self.env)
+        # Shared GPU compute engine: a single H100 (per Table 1) has one active
+        # compute stream, so concurrent requests must queue for compute time
+        # instead of each getting the GPU's full throughput for free.
+        if multi_tenant:
+            self.compute_engine = shared_compute_engine
+        else:
+            self.compute_engine = simpy.Resource(self.env, capacity=1) if self.env else None
         self.use_torch = use_torch
         self._torch_available = False
         if self.use_torch:
@@ -202,8 +234,8 @@ class XLShareInferenceEngine:
         
         # Execute model layers with prefetching
         if self.env:
-            output = yield self.env.process(self._execute_model(
-                model_config, 
+            output, breakdown_ns = yield self.env.process(self._execute_model(
+                model_config,
                 request.input_data,
                 request.request_id
             ))
@@ -211,7 +243,7 @@ class XLShareInferenceEngine:
             # This path is broken. Calling a generator without `yield`
             # will just return the generator object, causing errors downstream.
             output_gen = self._execute_model(
-                model_config, 
+                model_config,
                 request.input_data,
                 request.request_id
             )
@@ -220,7 +252,7 @@ class XLShareInferenceEngine:
                 while True:
                     next(output_gen)
             except StopIteration as e:
-                output = e.value
+                output, breakdown_ns = e.value
 
         # Calculate performance metrics
         end_time = self.env.now if self.env else time.time()
@@ -254,7 +286,18 @@ class XLShareInferenceEngine:
             memory_stats={
                 'cache': cache_stats,
                 'prefetch': prefetch_stats,
-                'memory': memory_stats
+                'memory': memory_stats,
+                # Real measured (not fudge-factored) time breakdown: stall_ms is
+                # actual elapsed simulated time blocked in wait_for_weights
+                # (near-zero when a prefetch already hid the fetch, equal to the
+                # real fetch time on a genuine miss); compute_ms is the actual
+                # timeout duration granted by the compute engine; compute_queue_ms
+                # is time spent waiting for the shared compute engine under load.
+                'breakdown_ms': {
+                    'compute_ms': breakdown_ns['compute_ns'] / 1e6,
+                    'stall_ms': breakdown_ns['stall_ns'] / 1e6,
+                    'compute_queue_ms': breakdown_ns['compute_queue_ns'] / 1e6,
+                } if self.env else {}
             }
         )
         
@@ -275,39 +318,54 @@ class XLShareInferenceEngine:
         """
         current_input = input_data
         execution_order = self.prefetcher.execution_order
-        
+
         print(f"Executing model '{model_config.name}' (request: {request_id})")
-        
+
+        # Real (not fudge-factored) time breakdown, accumulated in simulated ns.
+        # stall_ns: elapsed time actually blocked in wait_for_weights (~0 when a
+        #   prefetch already hid the fetch; equal to the real fetch time on a miss).
+        # compute_ns: the actual compute-engine timeout duration granted.
+        # compute_queue_ns: time spent waiting to acquire the shared compute
+        #   engine under concurrent load.
+        breakdown = {"compute_ns": 0.0, "stall_ns": 0.0, "compute_queue_ns": 0.0}
+
         # [OPTIMIZATION] Kickstart prefetcher for Layer 0 (idx -1 + 1 = 0)
         self.prefetcher.smart_prefetch_pipeline(-1, lookahead=None)
 
         for layer_idx, layer_name in enumerate(execution_order):
             layer_info = self.prefetcher.layers[layer_name]
-            
+
             # Start prefetching for upcoming layers (Use internal adaptive lookahead)
             self.prefetcher.smart_prefetch_pipeline(layer_idx, lookahead=None)
-            
+
             # Wait for current layer weights
             if self.env:
+                t_wait_start = self.env.now
                 weights = yield self.env.process(self.prefetcher.wait_for_weights(layer_name))
+                breakdown["stall_ns"] += self.env.now - t_wait_start
             else:
                 weights = self.prefetcher.wait_for_weights(layer_name)
-            
+
             # Execute layer computation
             output, compute_time = self._execute_layer(layer_info, current_input, weights)
-            
+
             if self.env:
-                yield self.env.timeout(compute_time * 1e9)  # Convert seconds to nanoseconds
+                t_queue_start = self.env.now
+                with self.compute_engine.request() as compute_req:
+                    yield compute_req
+                    breakdown["compute_queue_ns"] += self.env.now - t_queue_start
+                    yield self.env.timeout(compute_time * 1e9)  # Convert seconds to nanoseconds
+                    breakdown["compute_ns"] += compute_time * 1e9
             else:
                 time.sleep(compute_time)
-            
+
             current_input = output
-            
+
             # Mark weights for eviction if not frequently reused
             if layer_info.reuse_frequency <= 1:
                 self.local_cache.mark_for_eviction(layer_name)
-            
-        return current_input
+
+        return current_input, breakdown
     
     def _execute_layer(self, layer_info: LayerInfo, input_data: np.ndarray, 
                       weights: np.ndarray) -> Tuple[np.ndarray, float]:
@@ -354,8 +412,22 @@ class XLShareInferenceEngine:
         bs = input_data.shape[0] if len(input_data.shape) > 1 else 1
         
         # [MANUAL OVERRIDE] Respect manually configured compute times (for heterogenous benchmarks)
+        # This previously ignored `bs` entirely, so any experiment using a manually
+        # annotated compute time (including the standard sample transformer model's
+        # per-layer estimates, e.g. attention=10ms/ff=5ms, both > 1.0) got a
+        # batch-size-independent compute cost -- making batch-scaling experiments
+        # (e.g. throughput vs. batch size) structurally near-linear regardless of
+        # what the underlying system would actually do, since only the tiny number
+        # of sub-1ms layers ever scaled with batch size at all.
         if layer_info.computation_time_ms > 1.0: # If > 1ms, assume manual override (default defaults are usually <1ms for these shapes)
-             compute_time = layer_info.computation_time_ms / 1000.0 # Convert ms to s
+             # A pure `* bs` scaling makes compute exactly proportional to batch
+             # size with zero fixed cost, which produces a perfectly FLAT
+             # throughput-vs-batch curve (no batching benefit at all) -- equally
+             # unrealistic as the previous batch-independent version, just in
+             # the opposite direction. Real batching efficiency comes from
+             # amortizing a fixed per-kernel-launch/dispatch cost across the
+             # batch; KERNEL_LAUNCH_OVERHEAD_MS models that fixed component.
+             compute_time = (KERNEL_LAUNCH_OVERHEAD_MS + layer_info.computation_time_ms * bs) / 1000.0
              # Dummy output
              output_dim = layer_info.weight_shape[0] if len(layer_info.weight_shape) > 0 else 1
              output = np.random.randn(bs, output_dim).astype(np.float32)
@@ -393,10 +465,14 @@ class XLShareInferenceEngine:
             # Embedding lookup
             compute_time = layer_info.weight_size_bytes * bs * 1e-12
             
-            # Dummy embedding output
+            # Dummy embedding output. Batch dim was previously hardcoded to 1
+            # here, which reset `bs` to 1 for every downstream layer regardless
+            # of the actual request batch size (embedding always executes
+            # first in the standard sample transformer model), silently
+            # defeating batch-size scaling for the rest of the forward pass.
             embed_dim = weights.shape[1] if len(weights.shape) > 1 else weights.shape[0]
             seq_len = input_data.shape[1] if len(input_data.shape) > 1 else input_data.shape[0]
-            output = np.random.randn(1, seq_len, embed_dim).astype(np.float32)
+            output = np.random.randn(bs, seq_len, embed_dim).astype(np.float32)
             
         else:
             # Default case - minimal computation
