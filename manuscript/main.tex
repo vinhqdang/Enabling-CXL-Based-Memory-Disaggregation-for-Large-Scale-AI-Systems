@@ -186,28 +186,15 @@
 \title{CAMP: Content-Aware Memory Prefetching for High-Performance CXL-Based Inference}
 
 
-%% use optional labels to link authors explicitly to addresses:
 %% Author information
-\author[First]{Quang\mbox{-}Vinh Dang\corref{cor1}}
+\author{Quang\mbox{-}Vinh Dang\corref{cor1}}
 \ead{vinh.dq4@buv.edu.vn}
-
-\author[Second]{Ngoc\mbox{-}Son\mbox{-}An Nguyen}
-\ead{annns25871@pgr.iuh.edu.vn}
-
-\author[Third]{Thi\mbox{-}Bich\mbox{-}Diem Vo}
-\ead{misdiem@gmail.com}
-
-\author[Fourth]{Minh\mbox{-}Ngoc Dinh}
-\ead{minh.dinh@maeducation.com}
 
 %% Corresponding author note
 \cortext[cor1]{Corresponding author.}
 
-%% Addresses
-\address[First]{British University Vietnam, Hung Yen, Vietnam}
-\address[Second]{Industrial University of Ho Chi Minh City, Ho Chi Minh City, Vietnam}
-\address[Third]{GiaoHangNhanh, Ho Chi Minh City, Vietnam}
-\address[Fourth]{Millennia University, Ho Chi Minh City, Vietnam}
+%% Address
+\address{British University Vietnam, Hung Yen, Vietnam}
 
 \begin{abstract}
 
@@ -802,7 +789,7 @@ Our emulation results, obtained with the physical CXL link and GPU compute engin
 Despite these results, we acknowledge concrete limitations in this study. First, our evaluation relies on a discrete-event emulator calibrated to prior literature rather than physical CXL 3.0 Type-3 hardware, which remains scarce; the link and compute engine are each modeled as a single-server FCFS queue, a defensible but simplified model of a real interconnect and GPU that may under- or over-state contention effects at very high concurrency. Section~\ref{sec:real-model}'s real-model validation closes part of this gap -- real layer structure and real GPU-timed compute rather than a synthetic formula -- but the CXL link itself remains simulated throughout, since no physical CXL 3.0 testbed was available to us. Second, our approach currently focuses on static, single-model computation graphs where per-layer reuse frequency is either uniform (ordinary transformer blocks) or a known architectural constant (weight-tied embeddings); dynamic control flows such as Mixture-of-Experts routing -- where activation frequency is data-dependent and only observable online, not statically known -- are not modeled, and remain a genuine open problem for graph-aware pinning as presented here. Third, our earlier multi-tenant and application-level serving results (Sections~\ref{sec:multi-tenant-full}, \ref{sec:serving}) used a synchronized-burst arrival model rather than a sustained open-loop/Poisson arrival process; Section~\ref{sec:continuous-batching} now closes this gap directly with a genuine open-loop, iteration-batched evaluation, though it uses a small, purpose-built model (chosen so that tested arrival rates span below- and above-capacity regimes within a tractable run) and stylized 5-round decode length rather than a full production token budget, and its finding that continuous batching provides only marginal (${\sim}2\%$) throughput amortization is itself contingent on this engine's compute-bound cost model (Section~\ref{sec:scalability}) and may not generalize to memory-bound serving configurations where batching's fixed-cost amortization is more consequential. Fourth, Section~\ref{sec:sensitivity}'s hyperparameter and scale sweeps remain on synthetic workloads, not the real-model configuration of Section~\ref{sec:real-model}; combining the two -- sweeping $\gamma$, bandwidth, or tenant count on a real pretrained model -- is a natural next step we have not yet taken. As future work, we plan to extend CAMP to support dynamic control flows like Mixture-of-Experts (MoE), model genuine per-tenant scheduling and SLOs, combine the real-model and sensitivity-sweep evaluations, and conduct validation on emerging physical CXL 3.0 testbeds as they become available.
 
 \section*{CRediT authorship contribution statement}
-\textbf{Quang-Vinh Dang}: Conceptualization, Methodology, Software, Writing - Original Draft. \textbf{Ngoc-Son-An Nguyen}: Validation, Formal analysis, Visualization. \textbf{Thi-Bich-Diem Vo}: Writing - Review \& Editing, Data Curation. \textbf{Minh-Ngoc Dinh}: Supervision.
+\textbf{Quang-Vinh Dang}: Conceptualization, Methodology, Software, Validation, Formal analysis, Investigation, Data Curation, Writing - Original Draft, Writing - Review \& Editing, Visualization, Supervision.
 
 \section*{Data availability}
 Data and code are available at \url{https://github.com/vinhqdang/Enabling-CXL-Based-Memory-Disaggregation-for-Large-Scale-AI-Systems}.
