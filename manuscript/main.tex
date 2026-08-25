@@ -32,7 +32,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% The '5p' and 'times' class options of elsarticle are used for Elsevier CRC
-\documentclass[1p,times,authoryear]{elsarticle}
+\documentclass[1p,times]{elsarticle}
 
 %% The `ecrc' package must be called to make the CRC functionality available
 %% ecrc_RIAI es el paquete ecrc de Elsevier con modificaciones para la revista RIAI
@@ -211,9 +211,7 @@
 
 \begin{abstract}
 
-Large Language Models (LLMs) continue to outpace the capacity of High Bandwidth Memory (HBM), necessitating memory disaggregation via Compute Express Link (CXL). While CXL enables access to terabytes of capacity, its higher latency and limited bandwidth create a "Memory Wall" that severely degrades inference performance. Existing prefetching solutions often rely on reactive pressure metrics or simple heuristics that fail to capture the complex, layer-wise semantic dependencies of modern Transformer workloads.
-In this paper, we propose \textbf{CAMP} (Content-Aware Memory Prefetching), a novel memory management system designed specifically for CXL-disaggregated inference. CAMP introduces two key innovations: (1) \textit{Semantic Opportunity Seizing}, which exploits "thinking phases" (long compute layers) to aggressively prefetch data, and (2) \textit{Graph-Aware Eviction}, a pinning strategy that leverages the static computation graph to protect critical, frequently reused layers in constrained memory environments.
-We evaluate CAMP using a discrete-event emulation framework, with the physical CXL link and GPU compute engine modeled as shared, contended resources so that bandwidth- and compute-saturation effects emerge from the simulation rather than being asserted, against state-of-the-art baselines including TMO and a Melody-inspired bandwidth-threshold heuristic. Our results demonstrate that CAMP achieves a \textbf{1.45$\times$ speedup} over demand-paging baselines in heterogeneous compute regimes, matching an aggressively hand-tuned static schedule without requiring offline tuning. In memory-constrained scenarios, CAMP maintains graceful, monotonic performance degradation as cache shrinks, while LRU-based policies exhibit a flat, exactly-identical latency across every cache ratio below 100\% of the model size -- a well-known pathology of recency-based eviction on cyclic access patterns -- resulting in a 2.31$\times$ latency penalty relative to an unconstrained cache. A dedicated ablation study confirms CAMP's graph-aware eviction significantly outperforms Random, FIFO, and LRU eviction (8--19\% lower latency, $p<0.0001$) with zero runtime adaptation overhead. We also report where CAMP's adaptive prefetching does \emph{not} help: in a homogeneous, ample-bandwidth streaming regime, a simple fixed-lookahead schedule outperforms CAMP's reactive adaptation, and at severely constrained cache ratios on a real pretrained model CAMP is marginally slower than a static schedule, delineating CAMP's actual operating envelope rather than overstating its generality. Beyond the synthetic-workload evaluation, we validate CAMP's qualitative behavior on a real pretrained model (\texttt{distilgpt2}) with real GPU-timed compute, show that its advantage over static scheduling is stable as model depth scales from 12 to 80 layers and shrinks predictably as link bandwidth increases, show its one hyperparameter is robust across a wide sweep (0.5--0.95, latency varying under 1\%), and replace a synchronized closed-loop serving stress test with a genuine open-loop, iteration-batched evaluation under Poisson arrivals that reproduces textbook single-server queueing behavior as load approaches capacity.
+Large Language Models (LLMs) continue to outpace High Bandwidth Memory (HBM) capacity, necessitating memory disaggregation via Compute Express Link (CXL). CXL enables terabytes of capacity, but its higher latency and limited bandwidth create a "Memory Wall" degrading inference performance. Existing prefetching heuristics miss Transformer workloads' layer-wise semantic dependencies. We propose \textbf{CAMP} (Content-Aware Memory Prefetching), a memory management system for CXL-disaggregated inference built on two innovations: \textit{Semantic Opportunity Seizing}, which exploits long compute "thinking phases" to prefetch data aggressively, and \textit{Graph-Aware Eviction}, which uses the static computation graph to pin critical, frequently reused layers under constrained memory. We evaluate CAMP in a discrete-event emulation framework with the CXL link and compute engine modeled as shared, contended resources so saturation emerges from simulation, against TMO and a Melody-inspired bandwidth-threshold heuristic. CAMP achieves a \textbf{1.45$\times$ speedup} over demand-paging in heterogeneous regimes, matching a hand-tuned static schedule without offline tuning, and degrades gracefully under memory pressure where LRU-based policies stay flat below 100\% cache ratio (a 2.31$\times$ penalty). A dedicated ablation confirms Graph-Aware Eviction beats Random, FIFO, and LRU (8--19\% lower latency, $p<0.0001$). We also report honestly where CAMP does \emph{not} win: a homogeneous streaming regime favors fixed-lookahead scheduling, and a real pretrained model shows CAMP marginally slower at severe cache constraints. We further validate CAMP on a real model (\texttt{distilgpt2}) with real GPU-timed compute, confirm its advantage is stable from 12 to 80 layers, and replace a closed-loop serving test with an open-loop, Poisson-arrival evaluation reproducing textbook queueing behavior.
 \end{abstract}
 
 \begin{keyword}
@@ -812,9 +810,12 @@ Data and code are available at \url{https://github.com/vinhqdang/Enabling-CXL-Ba
 \section*{Declaration of competing interest}
 The authors declare that they have no known competing financial interests or personal relationships that could have appeared to influence the work reported in this paper.
 
+\section*{Declaration of generative AI and AI-assisted technologies in the manuscript preparation process}
+During the preparation of this work, the authors used AI-assisted coding and writing tools to support software implementation, experiment scripting, and drafting of text. After using these tools, the authors reviewed, verified, and edited all content as needed and take full responsibility for the content of the published article.
+
 %% References with BibTeX database:
 
-\bibliographystyle{elsarticle-harv}
+\bibliographystyle{elsarticle-num}
 \bibliography{ref}
 
 %% Authors are advised to use a BibTeX database file for their reference list.

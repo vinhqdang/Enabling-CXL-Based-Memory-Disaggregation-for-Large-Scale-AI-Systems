@@ -1,0 +1,5 @@
+CAMP achieves 1.45x speedup via semantic-aware CXL prefetching, no offline tuning.
+Graph-aware eviction cuts latency 8-19% vs Random/FIFO/LRU (p<0.0001).
+Validated on a real pretrained model (distilgpt2) with real GPU-timed compute.
+CAMP's speed advantage stays stable across model depths from 12 to 80 layers.
+Open-loop, Poisson-arrival serving evaluation replaces a closed-loop stress test.
