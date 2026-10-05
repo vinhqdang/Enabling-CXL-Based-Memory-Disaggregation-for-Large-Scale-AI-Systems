@@ -1,0 +1,18 @@
+\begin{table}[t]
+\centering
+\caption{Eviction policies on a uniform dense decode loop (Llama-2-13B, $B{=}16$, 2k context, 40\% cached, 18~GB/s, no pinning). On a cyclic access pattern with equal frequencies, LRU, FIFO and LFU are indistinguishable (zero hits); only next-use eviction with the known layer order retains useful layers.}
+\label{tab:evict}
+\small
+\begin{tabular}{lrrrr}
+\toprule
+ & \multicolumn{2}{c}{\textbf{demand paging}} & \multicolumn{2}{c}{\textbf{prefetch, depth 2}}\\
+\textbf{Eviction} & latency (ms) & hit (\%) & latency (ms) & hit (\%)\\
+\midrule
+LRU & 1\,431 & 0.0 & 1\,410 & 0.2\\
+FIFO & 1\,431 & 0.0 & 1\,410 & 0.2\\
+LFU & 1\,431 & 0.0 & 1\,410 & 0.2\\
+Random & 1\,302 & 7.3 & 1\,264 & 9.3\\
+Next-use (graph-aware) & 873 & 32.5 & 861 & 32.7\\
+\bottomrule
+\end{tabular}
+\end{table}

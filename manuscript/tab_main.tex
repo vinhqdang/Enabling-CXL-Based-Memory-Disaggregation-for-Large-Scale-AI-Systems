@@ -1,0 +1,30 @@
+\begin{table}[t]
+\centering
+\caption{Iteration latency (ms, mean of 10 seeds) of CAMP-v2 and the baselines. ``Cache'' is the share of weight bytes that fit in the HBM weight cache. Speed-up is relative to the best baseline in the row; ``/LB'' is CAMP-v2 latency divided by the lower bound of Section~\ref{sec:method-lb}. Static-$k$ uses the best $k\in\{1,2,4,8\}$ per configuration. 95\% confidence half-widths are $<3\%$ of the mean for every entry (Fig.~\ref{fig:main}).}
+\label{tab:main}
+\scriptsize
+\setlength{\tabcolsep}{3.2pt}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{llrrrrrrrrrrr}
+\toprule
+\textbf{Model} & \textbf{Workload} & \textbf{Cache} & \textbf{GB/s} & \textbf{Demand} & \textbf{Static-$k$} & \textbf{FlexGen} & \textbf{Hot/Cold} & \textbf{CAMP-v1} & \textbf{CAMP-v2} & \textbf{LB} & \textbf{Speed-up} & \textbf{/LB}\\
+\midrule
+Llama-2-13B & dec. $B{=}$16,2k & 40\% & 18 & 1\,425 & 1\,403 & 915 & 905 & 898 & \textbf{873} & 873 & 1.03$\times$ & 1.00\\
+ & dec. $B{=}$16,2k & 40\% & 45 & 587 & 566 & 374 & 370 & 363 & \textbf{353} & 349 & 1.03$\times$ & 1.01\\
+ & mixed 64+512 & 40\% & 18 & 1\,468 & 1\,403 & 931 & 920 & 898 & \textbf{877} & 873 & 1.02$\times$ & 1.00\\
+ & mixed 64+512 & 40\% & 45 & 630 & 566 & 389 & 384 & 364 & \textbf{356} & 349 & 1.02$\times$ & 1.02\\
+ & pre. $B{=}$1 $S{=}$2k & 40\% & 18 & 1\,494 & 1\,403 & 942 & 933 & 903 & \textbf{884} & 873 & 1.02$\times$ & 1.01\\
+ & pre. $B{=}$1 $S{=}$2k & 40\% & 45 & 658 & 568 & 399 & 395 & 375 & \textbf{359} & 349 & 1.05$\times$ & 1.03\\
+ & pre. $B{=}$4 $S{=}$4k & 40\% & 18 & 2\,160 & 1\,410 & 1\,167 & 1\,157 & 1\,129 & \textbf{920} & 873 & 1.23$\times$ & 1.05\\
+ & pre. $B{=}$4 $S{=}$4k & 40\% & 45 & 1\,314 & 757 & 750 & 970 & 750 & \textbf{750} & 746 & 1.00$\times$ & 1.01\\
+Llama-3-70B & dec. $B{=}$16,2k & 39\% & 18 & 7\,895 & 7\,837 & 5\,124 & 5\,092 & 5\,074 & \textbf{4\,880} & 4\,772 & 1.04$\times$ & 1.02\\
+ & dec. $B{=}$16,2k & 39\% & 45 & 3\,145 & 3\,084 & 2\,012 & 1\,999 & 1\,980 & \textbf{1\,908} & 1\,909 & 1.04$\times$ & 1.00\\
+ & pre. $B{=}$4 $S{=}$2k & 52\% & 18 & 9\,757 & 7\,836 & 5\,027 & 4\,996 & 4\,676 & \textbf{3\,807} & 3\,728 & 1.23$\times$ & 1.02\\
+ & pre. $B{=}$4 $S{=}$2k & 52\% & 45 & 5\,015 & 3\,060 & 2\,500 & 2\,488 & 2\,390 & \textbf{1\,905} & 1\,887 & 1.25$\times$ & 1.01\\
+ & pre. $B{=}$4 $S{=}$4k & 50\% & 18 & 11\,731 & 7\,844 & 6\,036 & 6\,036 & 5\,725 & \textbf{4\,103} & 3\,877 & 1.40$\times$ & 1.06\\
+ & pre. $B{=}$4 $S{=}$4k & 50\% & 45 & 7\,033 & 3\,907 & 3\,879 & 3\,879 & 3\,879 & \textbf{3\,880} & 3\,874 & 1.00$\times$ & 1.00\\
+Gemma-2-9B & dec. $B{=}$32,2k & 40\% & 18 & 1\,022 & 1\,012 & 816 & 816 & 813 & \textbf{631} & 633 & 1.29$\times$ & 1.00\\
+ & dec. $B{=}$32,2k & 40\% & 45 & 423 & 409 & 332 & 332 & 329 & \textbf{254} & 253 & 1.29$\times$ & 1.00\\
+\bottomrule
+\end{tabular}}
+\end{table}

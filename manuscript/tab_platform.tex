@@ -1,0 +1,20 @@
+\begin{table}[t]
+\centering
+\caption{Simulated platform. ``Measured'' entries are anchored on published device measurements or on our own T4 micro-benchmarks (Section~\ref{sec:validation}); all values are exposed as parameters of the simulator.}
+\label{tab:platform}
+\footnotesize
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{L{3.4cm}L{4.2cm}L{6.4cm}}
+\toprule
+\textbf{Component} & \textbf{Value} & \textbf{Basis}\\
+\midrule
+GPU & H100-class: 989~TFLOP/s FP16 dense, 3.35~TB/s HBM, 80~GB & vendor data sheet; true efficiencies (GEMM 0.62, memory 0.86, attention 0.42) are hidden from CAMP\\
+Host-to-GPU path & pinned DMA via root complex (``direct''); optional bounce-buffer path (``staged'') & \cite{yoon2025tract}; staged/pinned ratio $0.37$ measured on T4\\
+Effective CXL$\to$GPU bandwidth & 18~GB/s (default, ``measured''); 45~GB/s (``expected'', x16 Gen5); sweep 8--64~GB/s & $\approx$10~GB/s device-level \cite{yoon2025tract}, $\approx$18~GB/s DMA to GPU \cite{jang2026itme}; PCIe Gen5 pinned copies are the upper bound\\
+Per-copy fixed cost & $12~\mu$s API/driver/first-byte $+\,6~\mu$s event sync $+\,3~\mu$s per 32~MB chunk & T4: $10$--$19~\mu$s fit of copy time vs.\ size; CXL.mem load latency $\approx$0.3--0.6~$\mu$s \cite{melody2025,yoon2025tract}\\
+Staging hop (staged mode) & 8~GB/s CPU copy, serial with DMA & T4 pageable-copy measurement ($4.6$ vs.\ $12.4$~GB/s)\\
+Noise & per-copy log-normal $\sigma=0.06$; slow AR(1) bandwidth drift $\sigma=0.05$ ($\tau\approx2.5$~s); per-layer compute $\sigma=0.03$ & varied up to $8\times$ in Section~\ref{sec:res-robust}\\
+Host sampling gap & 150~$\mu$s between decode iterations (link keeps working) & typical scheduler/sampler cost\\
+\bottomrule
+\end{tabular}}
+\end{table}

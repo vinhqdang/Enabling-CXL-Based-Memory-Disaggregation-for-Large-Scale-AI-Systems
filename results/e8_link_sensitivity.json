@@ -1,0 +1,360 @@
+{
+ "bw": [
+  {
+   "workload": "decode B=16",
+   "bw": 8,
+   "lb": 1.96450304,
+   "ideal": 0.02020050090940646,
+   "Demand+LRU": 3.2221754918893817,
+   "Hot/Cold (PowerInfer-style)": 2.02843353335318,
+   "CAMP-v2": 1.955755517876837
+  },
+  {
+   "workload": "decode B=16",
+   "bw": 10,
+   "lb": 1.571602432,
+   "ideal": 0.02020050090940646,
+   "Demand+LRU": 2.55268934646131,
+   "Hot/Cold (PowerInfer-style)": 1.6197427024077724,
+   "CAMP-v2": 1.5596633709616083
+  },
+  {
+   "workload": "decode B=16",
+   "bw": 12,
+   "lb": 1.3096686933333332,
+   "ideal": 0.02020050090940646,
+   "Demand+LRU": 2.1359818485369573,
+   "Hot/Cold (PowerInfer-style)": 1.3551661628476865,
+   "CAMP-v2": 1.3053910821359802
+  },
+  {
+   "workload": "decode B=16",
+   "bw": 18,
+   "lb": 0.8731124622222223,
+   "ideal": 0.02020050090940646,
+   "Demand+LRU": 1.4306731132548063,
+   "Hot/Cold (PowerInfer-style)": 0.9063129104079742,
+   "CAMP-v2": 0.874877448866816
+  },
+  {
+   "workload": "decode B=16",
+   "bw": 24,
+   "lb": 0.6548343466666666,
+   "ideal": 0.02020050090940646,
+   "Demand+LRU": 1.0772974823164914,
+   "Hot/Cold (PowerInfer-style)": 0.6816790280485994,
+   "CAMP-v2": 0.6560566104532525
+  },
+  {
+   "workload": "decode B=16",
+   "bw": 32,
+   "lb": 0.49112576,
+   "ideal": 0.02020050090940646,
+   "Demand+LRU": 0.8143585770171267,
+   "Hot/Cold (PowerInfer-style)": 0.5143925036839274,
+   "CAMP-v2": 0.49626706011857763
+  },
+  {
+   "workload": "decode B=16",
+   "bw": 45,
+   "lb": 0.3492449848888889,
+   "ideal": 0.02020050090940646,
+   "Demand+LRU": 0.587414926584045,
+   "Hot/Cold (PowerInfer-style)": 0.3706124837876884,
+   "CAMP-v2": 0.35478364973846677
+  },
+  {
+   "workload": "decode B=16",
+   "bw": 64,
+   "lb": 0.24556288,
+   "ideal": 0.02020050090940646,
+   "Demand+LRU": 0.42144252606242005,
+   "Hot/Cold (PowerInfer-style)": 0.26299372207161115,
+   "CAMP-v2": 0.25099366004413587
+  },
+  {
+   "workload": "prefill B=4 S=4k",
+   "bw": 8,
+   "lb": 1.96450304,
+   "ideal": 0.7463966860944022,
+   "Demand+LRU": 3.9495068217445364,
+   "Hot/Cold (PowerInfer-style)": 2.2907292617235693,
+   "CAMP-v2": 2.0188904179940037
+  },
+  {
+   "workload": "prefill B=4 S=4k",
+   "bw": 10,
+   "lb": 1.571602432,
+   "ideal": 0.7463966860944022,
+   "Demand+LRU": 3.296991020743486,
+   "Hot/Cold (PowerInfer-style)": 1.8913457085273484,
+   "CAMP-v2": 1.6254333074746818
+  },
+  {
+   "workload": "prefill B=4 S=4k",
+   "bw": 12,
+   "lb": 1.3096686933333332,
+   "ideal": 0.7463966860944022,
+   "Demand+LRU": 2.876750826475949,
+   "Hot/Cold (PowerInfer-style)": 1.6154058512620235,
+   "CAMP-v2": 1.3463593423079228
+  },
+  {
+   "workload": "prefill B=4 S=4k",
+   "bw": 18,
+   "lb": 0.8731124622222223,
+   "ideal": 0.7463966860944022,
+   "Demand+LRU": 2.1649833510404255,
+   "Hot/Cold (PowerInfer-style)": 1.1569237884690287,
+   "CAMP-v2": 0.9202368724300272
+  },
+  {
+   "workload": "prefill B=4 S=4k",
+   "bw": 24,
+   "lb": 0.7462466860944023,
+   "ideal": 0.7463966860944022,
+   "Demand+LRU": 1.8147789562046805,
+   "Hot/Cold (PowerInfer-style)": 0.9320251902463084,
+   "CAMP-v2": 0.7562375135078533
+  },
+  {
+   "workload": "prefill B=4 S=4k",
+   "bw": 32,
+   "lb": 0.7462466860944023,
+   "ideal": 0.7463966860944022,
+   "Demand+LRU": 1.5468491838834544,
+   "Hot/Cold (PowerInfer-style)": 0.8054002698848353,
+   "CAMP-v2": 0.752349013807498
+  },
+  {
+   "workload": "prefill B=4 S=4k",
+   "bw": 45,
+   "lb": 0.7462466860944023,
+   "ideal": 0.7463966860944022,
+   "Demand+LRU": 1.3155315913955177,
+   "Hot/Cold (PowerInfer-style)": 0.9671628462988232,
+   "CAMP-v2": 0.7504831241226306
+  },
+  {
+   "workload": "prefill B=4 S=4k",
+   "bw": 64,
+   "lb": 0.7462466860944023,
+   "ideal": 0.7463966860944022,
+   "Demand+LRU": 1.1477462677645356,
+   "Hot/Cold (PowerInfer-style)": 0.8120790482675169,
+   "CAMP-v2": 0.7491923428003018
+  }
+ ],
+ "path": [
+  {
+   "workload": "decode B=16",
+   "link": "cxl_x8_measured",
+   "mode": "direct",
+   "eff_bw": 18.0,
+   "Demand+LRU": 1.4306731132548063,
+   "CAMP-v2": 0.874877448866816
+  },
+  {
+   "workload": "decode B=16",
+   "link": "cxl_x8_staged",
+   "mode": "staged",
+   "eff_bw": 5.538461538461538,
+   "Demand+LRU": 4.713964600723284,
+   "CAMP-v2": 2.8161283419588603
+  },
+  {
+   "workload": "decode B=16",
+   "link": "cxl_x16_expected",
+   "mode": "direct",
+   "eff_bw": 45.0,
+   "Demand+LRU": 0.587414926584045,
+   "CAMP-v2": 0.35478364973846677
+  },
+  {
+   "workload": "decode B=16",
+   "link": "x16_staged",
+   "mode": "staged",
+   "eff_bw": 6.792452830188679,
+   "Demand+LRU": 3.813255501588245,
+   "CAMP-v2": 2.2955851773054343
+  },
+  {
+   "workload": "prefill B=4 S=4k",
+   "link": "cxl_x8_measured",
+   "mode": "direct",
+   "eff_bw": 18.0,
+   "Demand+LRU": 2.1649833510404255,
+   "CAMP-v2": 0.9202368724300272
+  },
+  {
+   "workload": "prefill B=4 S=4k",
+   "link": "cxl_x8_staged",
+   "mode": "staged",
+   "eff_bw": 5.538461538461538,
+   "Demand+LRU": 5.457090684101847,
+   "CAMP-v2": 2.9222095530867027
+  },
+  {
+   "workload": "prefill B=4 S=4k",
+   "link": "cxl_x16_expected",
+   "mode": "direct",
+   "eff_bw": 45.0,
+   "Demand+LRU": 1.3155315913955177,
+   "CAMP-v2": 0.7504831241226306
+  },
+  {
+   "workload": "prefill B=4 S=4k",
+   "link": "x16_staged",
+   "mode": "staged",
+   "eff_bw": 6.792452830188679,
+   "Demand+LRU": 4.553956602183305,
+   "CAMP-v2": 2.3825770730709714
+  }
+ ],
+ "cache": [
+  {
+   "workload": "decode B=16",
+   "ratio": 0.1,
+   "lb": 1.3069744355555555,
+   "ideal": 0.02020050090940646,
+   "Demand+LRU": 1.4306731132548063,
+   "Hot/Cold (PowerInfer-style)": 1.3178313760268132,
+   "CAMP-v2": 1.3078816889834517
+  },
+  {
+   "workload": "decode B=16",
+   "ratio": 0.2,
+   "lb": 1.1623537777777777,
+   "ideal": 0.02020050090940646,
+   "Demand+LRU": 1.4306731132548063,
+   "Hot/Cold (PowerInfer-style)": 1.1807360146566812,
+   "CAMP-v2": 1.1587433925101518
+  },
+  {
+   "workload": "decode B=16",
+   "ratio": 0.3,
+   "lb": 1.01773312,
+   "ideal": 0.02020050090940646,
+   "Demand+LRU": 1.4306731132548063,
+   "Hot/Cold (PowerInfer-style)": 1.0423277064866718,
+   "CAMP-v2": 1.0120768659342954
+  },
+  {
+   "workload": "decode B=16",
+   "ratio": 0.4,
+   "lb": 0.8731124622222223,
+   "ideal": 0.02020050090940646,
+   "Demand+LRU": 1.4306731132548063,
+   "Hot/Cold (PowerInfer-style)": 0.9063129104079742,
+   "CAMP-v2": 0.874877448866816
+  },
+  {
+   "workload": "decode B=16",
+   "ratio": 0.5,
+   "lb": 0.7284918044444444,
+   "ideal": 0.02020050090940646,
+   "Demand+LRU": 1.4306731132548063,
+   "Hot/Cold (PowerInfer-style)": 0.7795671356496923,
+   "CAMP-v2": 0.7250830214364584
+  },
+  {
+   "workload": "decode B=16",
+   "ratio": 0.6,
+   "lb": 0.5838711466666666,
+   "ideal": 0.02020050090940646,
+   "Demand+LRU": 1.4306731132548063,
+   "Hot/Cold (PowerInfer-style)": 0.6536945527839821,
+   "CAMP-v2": 0.5812443559404696
+  },
+  {
+   "workload": "decode B=16",
+   "ratio": 0.8,
+   "lb": 0.2826888533333333,
+   "ideal": 0.02020050090940646,
+   "Demand+LRU": 1.4306731132548063,
+   "Hot/Cold (PowerInfer-style)": 0.4046931117203134,
+   "CAMP-v2": 0.3062558696445961
+  },
+  {
+   "workload": "decode B=16",
+   "ratio": 1.0,
+   "lb": 0.02005050090940646,
+   "ideal": 0.02020050090940646,
+   "Demand+LRU": 0.020091009222091505,
+   "Hot/Cold (PowerInfer-style)": 0.02011092796169574,
+   "CAMP-v2": 0.020112966982641516
+  },
+  {
+   "workload": "prefill B=4 S=4k",
+   "ratio": 0.1,
+   "lb": 1.3069744355555555,
+   "ideal": 0.7463966860944022,
+   "Demand+LRU": 2.1649833510404255,
+   "Hot/Cold (PowerInfer-style)": 1.792520010030731,
+   "CAMP-v2": 1.331787753416465
+  },
+  {
+   "workload": "prefill B=4 S=4k",
+   "ratio": 0.2,
+   "lb": 1.1623537777777777,
+   "ideal": 0.7463966860944022,
+   "Demand+LRU": 2.1649833510404255,
+   "Hot/Cold (PowerInfer-style)": 1.6257191620000333,
+   "CAMP-v2": 1.1847217568447777
+  },
+  {
+   "workload": "prefill B=4 S=4k",
+   "ratio": 0.3,
+   "lb": 1.01773312,
+   "ideal": 0.7463966860944022,
+   "Demand+LRU": 2.1649833510404255,
+   "Hot/Cold (PowerInfer-style)": 1.5258071613882187,
+   "CAMP-v2": 1.0413375372163183
+  },
+  {
+   "workload": "prefill B=4 S=4k",
+   "ratio": 0.4,
+   "lb": 0.8731124622222223,
+   "ideal": 0.7463966860944022,
+   "Demand+LRU": 2.1649833510404255,
+   "Hot/Cold (PowerInfer-style)": 1.1569237884690287,
+   "CAMP-v2": 0.9202368724300272
+  },
+  {
+   "workload": "prefill B=4 S=4k",
+   "ratio": 0.5,
+   "lb": 0.7462466860944023,
+   "ideal": 0.7463966860944022,
+   "Demand+LRU": 2.1649833510404255,
+   "Hot/Cold (PowerInfer-style)": 1.1027825095947565,
+   "CAMP-v2": 0.8085962825085002
+  },
+  {
+   "workload": "prefill B=4 S=4k",
+   "ratio": 0.6,
+   "lb": 0.7462466860944023,
+   "ideal": 0.7463966860944022,
+   "Demand+LRU": 2.1649833510404255,
+   "Hot/Cold (PowerInfer-style)": 1.0410196366686746,
+   "CAMP-v2": 0.7774119505268028
+  },
+  {
+   "workload": "prefill B=4 S=4k",
+   "ratio": 0.8,
+   "lb": 0.7462466860944023,
+   "ideal": 0.7463966860944022,
+   "Demand+LRU": 2.1649833510404255,
+   "Hot/Cold (PowerInfer-style)": 0.9266914734192007,
+   "CAMP-v2": 0.7641334824551199
+  },
+  {
+   "workload": "prefill B=4 S=4k",
+   "ratio": 1.0,
+   "lb": 0.7462466860944023,
+   "ideal": 0.7463966860944022,
+   "Demand+LRU": 0.7561917837309965,
+   "Hot/Cold (PowerInfer-style)": 0.7568986642233833,
+   "CAMP-v2": 0.7566029614546325
+  }
+ ]
+}

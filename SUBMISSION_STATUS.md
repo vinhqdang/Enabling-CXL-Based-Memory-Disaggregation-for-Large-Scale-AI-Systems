@@ -1,23 +1,23 @@
-# Submission Status
+# Submission status
 
-Tracks the submission history of "CAMP: Content-Aware Memory Prefetching for
-High-Performance CXL-Based Inference".
-
-## History
+Manuscript: "CAMP: Graph-Aware Prefetching and Pinning for LLM Inference over Host-Mediated CXL
+Memory" (first submitted as "CAMP: Content-Aware Memory Prefetching for High-Performance
+CXL-Based Inference").
 
 | Date | Venue | Outcome |
 |------|-------|---------|
-| ~2026-Q1 | Array (Elsevier), Ms. No. ARRAY-D-26-00328 | **Rejected** after two review rounds (2026-05-09). Reviewer #1 suspected fabricated/unreliable experiments; Reviewer #2 flagged untraceable claims and an implausible perfectly-linear throughput curve. See `manuscript/response_r1.txt` for the round-1 response letter. |
-| 2026-08-25 | **Journal of Systems Architecture (JSA)**, Elsevier | **Submitted.** |
+| 2026-Q1 | Array (Elsevier), ARRAY-D-26-00328 | Rejected after two review rounds (2026-05-09). |
+| 2026-08-25 | Journal of Systems Architecture (Elsevier), JSA-D-26-01708 | Rejected (decision 2026-10). Two reviewers; comments are answered in `submission/response_to_reviewers.pdf`. |
+| 2026-10 | Journal of Parallel and Distributed Computing (Elsevier) | Revised manuscript prepared for submission through the Elsevier transfer offer; see `submission/README.md`. |
 
-## What changed before the JSA submission
+## What changed after the JSA reviews
 
-- Hardened the discrete-event simulator: modeled the CXL link and GPU compute engine as genuinely shared, contended resources (`simpy.Resource`) so bandwidth/compute saturation effects emerge from simulation instead of being asserted; fixed a topological-sort bug that scrambled execution order; fixed batch-size-ignoring compute formulas.
-- Regenerated every reported number from the hardened simulator; rewrote the manuscript so every claim traces to a specific figure/JSON value.
-- Ran an independent 5-seat simulated peer-review panel (Journal-Fit, Methodology, Domain, Perspective, Devil's Advocate) and remediated every corroborated finding (a structural reuse-frequency tie in the ablation study, a mislabeled baseline, an arithmetic error, overclaiming language, an undisclosed workload-iteration decision).
-- Broadened the evaluation for an engineering-practice venue: real-model validation on `distilgpt2` with real GPU-timed compute, model-scale sensitivity (12-80 layers), hyperparameter sensitivity ($\gamma$, bandwidth, tenant count), and a genuine open-loop/Poisson-arrival continuous-batching evaluation replacing a synchronized closed-loop stress test.
-- Reformatted for JSA: numbered citation style, single-author byline (Quang-Vinh Dang, British University Vietnam), abstract trimmed to fit JSA's submission-form 200-word limit, added a Highlights file, added the mandatory Generative AI declaration.
-
-## Full technical history
-
-See project memory `project_camp_array_rejection.md` (Claude Code session memory) for the complete bug-by-bug and reviewer-finding-by-finding remediation log.
+* The simulator was rebuilt (`camp_sim/`): host-mediated CXL path with explicit initiator,
+  bandwidth bound, per-copy and synchronisation costs and a staged variant; roofline compute
+  model for prefill, decode and mixed batches; measurement noise; real model configurations from
+  7B to 405B parameters.
+* The pipeline logic was validated on a real GPU (`results/hw/`, `validation/hw_validate.py`).
+* The pinning algorithm was reformulated and its relation to the 0-1 knapsack stated exactly;
+  frequency/LFU/hot-cold baselines and exhaustive-optimum comparisons were added.
+* The compute-time estimate is obtained at runtime and its sensitivity is quantified.
+* Related work was cut to the directly relevant material.

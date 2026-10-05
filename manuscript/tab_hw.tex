@@ -1,0 +1,17 @@
+\begin{table}[t]
+\centering
+\caption{Simulator versus a real GPU (Tesla T4, PCIe Gen3 x16, 24 weight tensors of 64~MiB streamed from pinned host memory). The simulator is composed from separately measured compute-only and copy parameters and asked to predict the measured composite iteration time; no parameter is fitted to the composites.}
+\label{tab:hw}
+\small
+\begin{tabular}{lrrrr}
+\toprule
+\textbf{Regime} & \textbf{Configs} & \textbf{MAPE (\%)} & \textbf{Mean signed (\%)} & \textbf{Max $|$err$|$ (\%)}\\
+\midrule
+link-bound (compute $<0.3\times$ copy) & 10 & 4.0 & +4.0 & 24.1\\
+balanced ($0.3$--$1.2\times$) & 10 & 8.9 & -2.8 & 15.5\\
+compute-bound ($>1.2\times$) & 5 & 5.6 & -5.6 & 6.3\\
+demand paging & 5 & 14.6 & +14.3 & 25.5\\
+\midrule all configurations & 30 & 7.6 & +1.8 & 25.5\\
+\bottomrule
+\end{tabular}
+\end{table}

@@ -1,0 +1,199 @@
+{
+ "eviction_uniform": [
+  {
+   "evict": "lru",
+   "prefetch": "demand",
+   "mean": 1.4306870978976263,
+   "ci": 0.018253485913803606,
+   "hit_rate": 0.0
+  },
+  {
+   "evict": "lru",
+   "prefetch": "static-2",
+   "mean": 1.40969617106443,
+   "ci": 0.01684296955858309,
+   "hit_rate": 0.0020325203252032522
+  },
+  {
+   "evict": "fifo",
+   "prefetch": "demand",
+   "mean": 1.4306870978976263,
+   "ci": 0.018253485913803606,
+   "hit_rate": 0.0
+  },
+  {
+   "evict": "fifo",
+   "prefetch": "static-2",
+   "mean": 1.40969617106443,
+   "ci": 0.01684296955858309,
+   "hit_rate": 0.0020325203252032522
+  },
+  {
+   "evict": "lfu",
+   "prefetch": "demand",
+   "mean": 1.4306870978976263,
+   "ci": 0.018253485913803606,
+   "hit_rate": 0.0
+  },
+  {
+   "evict": "lfu",
+   "prefetch": "static-2",
+   "mean": 1.40969617106443,
+   "ci": 0.01684296955858309,
+   "hit_rate": 0.0020325203252032522
+  },
+  {
+   "evict": "random",
+   "prefetch": "demand",
+   "mean": 1.3017927431835377,
+   "ci": 0.01912035246998633,
+   "hit_rate": 0.07317073170731707
+  },
+  {
+   "evict": "random",
+   "prefetch": "static-2",
+   "mean": 1.2639999884355886,
+   "ci": 0.021095772692690168,
+   "hit_rate": 0.09349593495934959
+  },
+  {
+   "evict": "belady",
+   "prefetch": "demand",
+   "mean": 0.8731195010899552,
+   "ci": 0.01863869153348192,
+   "hit_rate": 0.3252032520325203
+  },
+  {
+   "evict": "belady",
+   "prefetch": "static-2",
+   "mean": 0.8609158596334274,
+   "ci": 0.01841735449153099,
+   "hit_rate": 0.32723577235772355
+  }
+ ],
+ "heterogeneous": [
+  {
+   "case": "gemma2-9b tied decode",
+   "cache_ratio": 0.4,
+   "res": {
+    "CAMP prefetch + none pins": {
+     "mean": 1.014208223576825,
+     "ci": 0.016688647361856053,
+     "pin_gb": 0.0
+    },
+    "CAMP prefetch + prefix pins": {
+     "mean": 0.8148139700946918,
+     "ci": 0.01945064441834612,
+     "pin_gb": 3.655479296
+    },
+    "CAMP prefetch + frequency pins": {
+     "mean": 0.8148139700946918,
+     "ci": 0.01945064441834612,
+     "pin_gb": 3.655479296
+    },
+    "CAMP prefetch + knapsack-DP pins": {
+     "mean": 0.8136741355192939,
+     "ci": 0.019273332662938868,
+     "pin_gb": 3.69947648
+    },
+    "CAMP prefetch + SCP pins": {
+     "mean": 0.6330829611702891,
+     "ci": 0.019392213029267753,
+     "pin_gb": 6.987997184
+    },
+    "demand + LRU": {
+     "mean": 1.0269181550397724,
+     "ci": 0.018623117744277835,
+     "pin_gb": 0.0
+    },
+    "demand + LFU": {
+     "mean": 0.9307277763021343,
+     "ci": 0.016995133232689186,
+     "pin_gb": 0.0
+    }
+   }
+  },
+  {
+   "case": "spec. decoding (13B target + 1B draft, k=4)",
+   "cache_ratio": 0.35,
+   "res": {
+    "CAMP prefetch + none pins": {
+     "mean": 1.5076653709118515,
+     "ci": 0.031214944325777212,
+     "pin_gb": 0.0
+    },
+    "CAMP prefetch + prefix pins": {
+     "mean": 1.0293843184263833,
+     "ci": 0.03134780619222201,
+     "pin_gb": 8.7538688
+    },
+    "CAMP prefetch + frequency pins": {
+     "mean": 1.0293843184263833,
+     "ci": 0.03134780619222201,
+     "pin_gb": 8.7538688
+    },
+    "CAMP prefetch + knapsack-DP pins": {
+     "mean": 1.0188450872135875,
+     "ci": 0.02958127107329603,
+     "pin_gb": 8.92719104
+    },
+    "CAMP prefetch + SCP pins": {
+     "mean": 1.009766967720317,
+     "ci": 0.031089712317951528,
+     "pin_gb": 9.33105664
+    },
+    "demand + LRU": {
+     "mean": 1.5313724045054533,
+     "ci": 0.02606001100243691,
+     "pin_gb": 0.0
+    },
+    "demand + LFU": {
+     "mean": 1.4319069844871213,
+     "ci": 0.03306717919501218,
+     "pin_gb": 0.0
+    }
+   }
+  },
+  {
+   "case": "encoder-decoder (24+24 layers, 64 output tokens)",
+   "cache_ratio": 0.35,
+   "res": {
+    "CAMP prefetch + none pins": {
+     "mean": 27.178368696587313,
+     "ci": 0.32414605024702325,
+     "pin_gb": 0.0
+    },
+    "CAMP prefetch + prefix pins": {
+     "mean": 27.01813080000416,
+     "ci": 0.3289082635478734,
+     "pin_gb": 4.832100352
+    },
+    "CAMP prefetch + frequency pins": {
+     "mean": 10.208543287031855,
+     "ci": 0.13911161254794893,
+     "pin_gb": 4.832100352
+    },
+    "CAMP prefetch + knapsack-DP pins": {
+     "mean": 9.151946205727295,
+     "ci": 0.1450507488846928,
+     "pin_gb": 5.134188544
+    },
+    "CAMP prefetch + SCP pins": {
+     "mean": 9.138343769324734,
+     "ci": 0.1576999256607313,
+     "pin_gb": 5.134106624
+    },
+    "demand + LRU": {
+     "mean": 27.804830819552382,
+     "ci": 0.36146416054788416,
+     "pin_gb": 0.0
+    },
+    "demand + LFU": {
+     "mean": 27.804830819552382,
+     "ci": 0.36146416054788416,
+     "pin_gb": 0.0
+    }
+   }
+  }
+ ]
+}

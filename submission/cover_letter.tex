@@ -1,0 +1,26 @@
+\documentclass[11pt]{article}
+\usepackage[margin=2.5cm]{geometry}
+\setlength{\parskip}{6pt}\setlength{\parindent}{0pt}
+\begin{document}
+\begin{flushright}5 October 2026\end{flushright}
+
+Dear Editor-in-Chief and Editors,
+
+Please find enclosed the manuscript \textbf{``CAMP: Graph-Aware Prefetching and Pinning for LLM Inference over Host-Mediated CXL Memory''} for consideration in the \emph{Journal of Parallel and Distributed Computing}. The manuscript was previously submitted to the Journal of Systems Architecture (JSA-D-26-01708) and is submitted here through the Elsevier transfer offer; the reviews received there are answered point by point in the attached \emph{Response to Reviewers}, and the manuscript has been substantially rewritten in response.
+
+\textbf{Problem.} Models such as Llama-3-70B (141~GB in FP16) exceed GPU memory. CXL Type-3 memory expanders offer cheap host-attached capacity, but a GPU cannot address them: weights reach HBM through host-initiated DMA at roughly 10--20~GB/s on published prototypes. We ask when streaming weights over this path is viable and which runtime policy minimises the stalls.
+
+\textbf{Contributions.} (1) A host-mediated transfer model and a closed-form arithmetic-intensity threshold, with a regime map showing that streaming is nearly free only above about 16k tokens per iteration and tens of times slower than resident weights for small-batch decode. (2) CAMP, a runtime policy with an online-calibrated roofline cost model (no offline profiling), a work-conserving prefetcher with next-use admission, and stall-cost-aware pinning, a plan-and-verify choice of resident layers whose problem statement and relation to the 0--1 knapsack are given exactly. (3) An evaluation on Llama-2/3 and Gemma-2 configurations from 9B to 405B parameters in prefill, decode and mixed iterations, within 6\% of an implementation-independent lower bound and up to 1.47$\times$ faster than the best static baseline; the gain over frequency-based pinning is small in link-bound decode and large when compute and transfer are comparable, because contiguous pinned sets idle the link. (4) A simulator whose copy-and-overlap logic is validated on a real GPU (30 configurations, 7.6\% mean error, 4.0\% when link-bound).
+
+\textbf{Fit with the journal.} The work concerns resource management for memory-disaggregated parallel systems and the scheduling of data movement against computation, which falls within the scope of JPDC.
+
+\textbf{Limitations are stated in the paper.} No CXL hardware was measured; the CXL link is simulated with parameters anchored in published measurements and the pipeline logic is validated on a PCIe-attached GPU with pinned host memory standing in for the pool. Mixture-of-Experts models, multi-GPU or multi-tenant pools and CXL switches are not evaluated. Code, raw results and the hardware micro-benchmark are publicly available (see the Data availability statement).
+
+The manuscript is original, is not under consideration elsewhere, and the author declares no competing interests. The generative-AI declaration required by the journal is included in the manuscript.
+
+Sincerely,
+
+Quang-Vinh Dang\\
+British University Vietnam, Hung Yen, Vietnam\\
+vinh.dq4@buv.edu.vn \quad ORCID 0000-0002-3877-8024
+\end{document}

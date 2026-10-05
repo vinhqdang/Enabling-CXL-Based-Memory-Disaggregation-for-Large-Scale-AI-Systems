@@ -1,0 +1,19 @@
+\begin{table}[t]
+\centering
+\caption{Model configurations used in the evaluation (public model-card hyper-parameters; FP16 weights). Layer units are one attention block, one feed-forward block, the embedding table and the output head.}
+\label{tab:models}
+\small
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lrrrrrrlr}
+\toprule
+\textbf{Model} & \textbf{Params (B)} & \textbf{Layers} & $d$ & \textbf{Heads/KV} & $d_{ff}$ & \textbf{Vocab} & \textbf{Embed.} & \textbf{Weights (GB)}\\
+\midrule
+llama2-7b & 6.74 & 32 & 4096 & 32/32 & 11008 & 32k & untied & 13.5\\
+llama2-13b & 13.02 & 40 & 5120 & 40/40 & 13824 & 32k & untied & 26.0\\
+llama3-8b & 8.03 & 32 & 4096 & 32/8 & 14336 & 128k & untied & 16.1\\
+llama3-70b & 70.55 & 80 & 8192 & 64/8 & 28672 & 128k & untied & 141.1\\
+llama3-405b & 405.85 & 126 & 16384 & 128/8 & 53248 & 128k & untied & 811.7\\
+gemma2-9b & 9.24 & 42 & 3584 & 16/8 & 14336 & 256k & tied & 18.5\\
+\bottomrule
+\end{tabular}}
+\end{table}
