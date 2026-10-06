@@ -6,7 +6,7 @@
 
 Dear Editor-in-Chief and Editors,
 
-Please find enclosed the manuscript \textbf{``Streaming LLM Weights from CXL Memory: Regimes, Placement and Pipeline-Aware Pinning''} for consideration in the \emph{Journal of Parallel and Distributed Computing}. The manuscript was previously submitted, under the title ``CAMP: Content-Aware Memory Prefetching for High-Performance CXL-Based Inference'', to the Journal of Systems Architecture (JSA-D-26-01708) and is submitted here through the Elsevier transfer offer; the reviews received there are answered point by point in the attached \emph{Response to Reviewers}, and the manuscript has been rebuilt and substantially rewritten in response.
+Please find enclosed the manuscript \textbf{``Streaming LLM Weights from CXL Memory: Regimes, Placement and Pipeline-Aware Pinning''} for consideration in the \emph{Journal of Parallel and Distributed Computing}. A previous version of this work was declined by another journal; the study has since been rebuilt (new simulator, stronger baselines, new experiments), and this is a new submission.
 
 \textbf{Problem.} Models such as Llama-3-70B (141~GB in FP16) exceed GPU memory. CXL Type-3 memory expanders offer cheap host-attached capacity, but a GPU cannot address them: weights reach HBM through host-initiated DMA at roughly 10--20~GB/s on published prototypes. We ask when streaming weights over this path is viable and what a runtime policy can still gain.
 

@@ -21,7 +21,7 @@ non-uniform ones (the paper reports the negative results too).
 | `results/` | Raw JSON results of every experiment and the measured T4 data (`results/hw/`) |
 | `tests/test_engine.py` | Closed-form checks of the event engine |
 | `manuscript/` | LaTeX source, figures, generated tables, compiled `main.pdf` |
-| `submission/` | Cover letter, response to reviewers, highlights |
+| `submission/` | Cover letter, highlights, submission checklist |
 | `legacy/` | First implementation and manuscript version, superseded (not used in the paper) |
 
 ## Reproducing the results

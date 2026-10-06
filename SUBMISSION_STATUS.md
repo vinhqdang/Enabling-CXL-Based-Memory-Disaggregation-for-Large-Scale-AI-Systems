@@ -6,8 +6,8 @@ Manuscript: "Streaming LLM Weights from CXL Memory: Regimes, Placement and Pipel
 | Date | Venue | Outcome |
 |------|-------|---------|
 | 2026-Q1 | Array (Elsevier), ARRAY-D-26-00328 | Rejected after two review rounds (2026-05-09). |
-| 2026-08-25 | Journal of Systems Architecture (Elsevier), JSA-D-26-01708 | Rejected (decision 2026-10). Two reviewers; comments are answered in `submission/response_to_reviewers.pdf`. |
-| 2026-10 | Journal of Parallel and Distributed Computing (Elsevier) | Revised manuscript prepared for submission through the Elsevier transfer offer; see `submission/README.md`. |
+| 2026-08-25 | Journal of Systems Architecture (Elsevier), JSA-D-26-01708 | Rejected (decision 2026-10). Two reviewers; the points were addressed by rebuilding the study, not by a rebuttal. |
+| 2026-10 | Journal of Parallel and Distributed Computing (Elsevier) | New manuscript prepared for submission through the Elsevier transfer offer; see `submission/README.md`. |
 
 ## What changed after the JSA reviews
 
