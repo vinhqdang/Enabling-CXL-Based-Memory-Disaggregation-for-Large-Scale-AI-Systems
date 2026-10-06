@@ -81,8 +81,8 @@ def e1():
             md, cd, _ = run_many(tr, GPU_, link, cap, lambda s: NoPrefetch(), seeds=range(4))
             P = pins_stride(seq, cap, gamma=1.0, slots=1.0)
             ms_, cs_, _ = run_many(tr, GPU_, link, cap, lambda s: CAMPPrefetch(cm=make_cm(GPU_), pins=P), seeds=range(4))
-            tfg, cfg_, phi = flexgen_split(tr, cap)
-            mf, cf, _ = run_many(tfg, GPU_, link, cfg_, lambda s: StaticK(2, wrap=True, evict="fifo"), seeds=range(4))
+            tfg, cfg_, phi, kfg, sfg = flexgen_best(tr, cap, link, GPU_)
+            mf, cf, _ = run_many(tfg, GPU_, link, cfg_, lambda s: StaticK(kfg, wrap=True, evict="fifo"), seeds=range(4))
             cells.append(dict(T=T, bw=bw, ideal=ideal, camp=mc, demand=md, stride=ms_, flexgen=mf,
                               lb=lower_bound(tr, cap, link, GPU_), stall_frac=r.steady_stall() / mc))
         print("e1 T", T, flush=True)
@@ -262,8 +262,8 @@ def e4():
             vals = [per_unit(Engine(tr, GPU_, link, cap, NoPrefetch(evict=ev), seed=s).run()) for s in range(6)]
             row["res"][f"demand + {ev.upper()}"] = dict(mean=statistics.mean(vals), ci=ci95(vals), pin_gb=0.0)
         # FlexGen-style layer split on the same trace
-        trs, caps, phi = flexgen_split(tr, cap)
-        vals = [per_unit(Engine(trs, GPU_, link, caps, StaticK(2, wrap=True, evict="fifo"), seed=s).run()) for s in range(6)]
+        trs, caps, phi, kfg, sfg = flexgen_best(tr, cap, link, GPU_)
+        vals = [per_unit(Engine(trs, GPU_, link, caps, StaticK(kfg, wrap=True, evict="fifo"), seed=s).run()) for s in range(6)]
         row["res"]["FlexGen-style layer split"] = dict(mean=statistics.mean(vals), ci=ci95(vals), pin_gb=phi * sum(
             tr.units[u].nbytes for u in tr.full_fetch_uids()) / 1e9)
         het.append(row)
@@ -459,10 +459,10 @@ def e9():
             P = pins_scp_verified(tr, cap, link, GPU_, calibrated_cm(tr, cap, link, GPU_))
             seq = build_plan_seq(tr, 0, make_cm(GPU_))
             Pst = pins_stride(seq, cap, gamma=1.0, slots=1.0)
-            tfg, cfg_, _ = flexgen_split(tr, cap)
+            tfg, cfg_, _, kfg, sfg = flexgen_best(tr, cap, link, GPU_)
             row = dict(workload=wl, jitter=js, drift=ds, compute=cs)
             for nm, trx, capx, mk in (("CAMP-v2", tr, cap, lambda s: CAMPPrefetch(cm=make_cm(GPU_), pins=P)),
-                                      ("FlexGen-style", tfg, cfg_, lambda s: StaticK(2, wrap=True, evict="fifo")),
+                                      ("FlexGen-style", tfg, cfg_, lambda s: StaticK(kfg, wrap=True, evict="fifo")),
                                       ("Stride", tr, cap, lambda s: CAMPPrefetch(cm=make_cm(GPU_), pins=Pst)),
                                       ("Demand+LRU", tr, cap, lambda s: NoPrefetch())):
                 vals = [Engine(trx, GPU_, link, capx, mk(s), seed=s, compute_sigma=cs).run().steady() for s in range(12)]
@@ -536,8 +536,8 @@ def e10():
                 "6 + SCP pins (planner, dry-run verification, calibrated cost model)":
                     (tr, cap, lambda s, P=pins_scp_verified(tr, cap, link, GPU_, cm_cal): CAMPPrefetch(cm=make_cm(GPU_), pins=P)),
             }
-            tfg, cfg_, phi = flexgen_split(tr, cap)
-            steps["ref FlexGen-style per-layer split (double-buffered)"] = (tfg, cfg_, lambda s: StaticK(2, wrap=True, evict="fifo"))
+            tfg, cfg_, phi, kfg, sfg = flexgen_best(tr, cap, link, GPU_)
+            steps["ref FlexGen-style per-layer split (tuned buffers)"] = (tfg, cfg_, lambda s: StaticK(kfg, wrap=True, evict="fifo"))
             row = dict(model=mn, workload=wl, bw=link.bw_gbs, lb=lower_bound(tr, cap, link, GPU_), steps={})
             for k, (trx, capx, mk) in steps.items():
                 vals = [Engine(trx, GPU_, link, capx, mk(s), seed=s).run().steady() for s in SEEDS]

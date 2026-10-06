@@ -101,9 +101,9 @@ def calibrated_cm(trace, cap, link, gpu, seed=10_001, **cm_kw):
 from camp_sim.models import Unit, Trace as _Trace
 
 
-def flexgen_split(trace, cap):
+def flexgen_split(trace, cap, slots=2.0):
     """FlexGen-style placement: a uniform fraction ``phi`` of *every* layer stays resident and the remaining
-    (1-phi) of each layer is streamed through two slots (double buffering).  Returns (trace', cap', phi).
+    (1-phi) of each layer is streamed through ``slots`` buffers of the largest unit.  Returns (trace', cap', phi).
 
     The resident part is charged to the cache, so the streamed pieces see cap' = cap - phi * W.  This is the
     per-layer percentage split of FlexGen's policy, modelled at fractional granularity."""
@@ -112,13 +112,28 @@ def flexgen_split(trace, cap):
     smax = max(trace.units[u].nbytes for u in full)
     if W <= cap:
         return trace, cap, 1.0
-    if cap >= 2 * smax:
-        phi = (cap - 2 * smax) / (W - 2 * smax)
+    if cap >= slots * smax:
+        phi = (cap - slots * smax) / (W - slots * smax)
     else:
         phi = max(0.0, (cap - smax) / (W - smax))
     phi = min(max(phi, 0.0), 0.999)
     units2 = {u: Unit(u, un.name, un.kind, (1 - phi) * un.nbytes if u in full else un.nbytes) for u, un in trace.units.items()}
     return _Trace(units2, trace.acc, trace.iter_starts, trace.meta), cap - phi * W, phi
+
+
+FG_GRID = [(2, 1), (3, 1), (3, 2), (4, 1), (4, 2), (4, 3), (6, 1), (6, 2), (6, 3), (6, 5)]
+
+
+def flexgen_best(trace, cap, link, gpu, seeds=(100, 101, 102)):
+    """FlexGen-style split with the number of streaming buffers and the lookahead tuned by simulation
+    (a stand-in for FlexGen's policy search).  Returns (trace', cap', phi, k, slots)."""
+    best = None
+    for slots, k in FG_GRID:
+        tr2, cap2, phi = flexgen_split(trace, cap, slots)
+        v = statistics.mean(Engine(tr2, gpu, link, cap2, StaticK(k, wrap=True, evict="fifo"), seed=s).run().steady() for s in seeds)
+        if best is None or v < best[0]:
+            best = (v, tr2, cap2, phi, k, slots)
+    return best[1:]
 
 
 def tuned_k(trace, cap, link, gpu, make, ks=(1, 2, 4, 8), seeds=(100, 101, 102)):
@@ -146,8 +161,7 @@ def build_suite(trace, cap, link, gpu, tune_seeds=(100, 101, 102), which=None):
     p_scp_x = pins_scp_verified(trace, cap, link, gpu, exact_cm(gpu))
     k_static = tuned_k(trace, cap, link, gpu, lambda k: StaticK(k))
     k_hot = tuned_k(trace, cap, link, gpu, lambda k: StaticK(k, wrap=True, pins=p_hot, evict="fifo"))
-    tr_fg, cap_fg, phi = flexgen_split(trace, cap)
-    k_fg = tuned_k(tr_fg, cap_fg, link, gpu, lambda k: StaticK(k, wrap=True, evict="fifo"))
+    tr_fg, cap_fg, phi, k_fg, slots_fg = flexgen_best(trace, cap, link, gpu)
 
     suite = {
         "Demand+LRU": lambda s: NoPrefetch(),
@@ -162,7 +176,7 @@ def build_suite(trace, cap, link, gpu, tune_seeds=(100, 101, 102), which=None):
         "CAMP-v2 (uncalibrated)": lambda s: CAMPPrefetch(cm=make_cm(gpu), pins=p_scp_nom),
         "CAMP-v2 (exact constants)": lambda s: CAMPPrefetch(cm=exact_cm(gpu), pins=p_scp_x),
     }
-    suite["_info"] = dict(k_static=k_static, k_hot=k_hot, k_fg=k_fg, phi_fg=phi, scp=info, n_pin=len(p_scp),
+    suite["_info"] = dict(k_static=k_static, k_hot=k_hot, k_fg=k_fg, slots_fg=slots_fg, phi_fg=phi, scp=info, n_pin=len(p_scp),
                           pin_gb=sum(trace.units[u].nbytes for u in p_scp) / 1e9, split=(tr_fg, cap_fg))
     return suite
 
