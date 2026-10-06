@@ -212,7 +212,7 @@ def trace_decode(m: ModelSpec, gpu, B: int, ctx: int, steps: int) -> Trace:
     return Trace(units, acc, starts, dict(kind="decode", B=B, ctx=ctx, steps=steps, tokens_per_iter=B))
 
 
-def trace_prefill(m: ModelSpec, gpu, B: int, S: int, reps: int = 3) -> Trace:
+def trace_prefill(m: ModelSpec, gpu, B: int, S: int, reps: int = 5) -> Trace:
     units, idx = build_units(m)
     acc: List[Access] = []
     starts = []

@@ -58,6 +58,10 @@ class Result:
     prefetch_wasted: int
     iter_stall: List[float] = field(default_factory=list)
 
+    @property
+    def link_util(self) -> float:
+        return self.link_busy / self.total_time if self.total_time > 0 else 0.0
+
     def steady(self, skip: int = 1) -> float:
         xs = self.iter_times[skip:] if len(self.iter_times) > skip else self.iter_times
         return sum(xs) / len(xs)
@@ -76,6 +80,8 @@ class Engine:
         self.cap = float(cache_bytes)
         self.policy = policy
         self.rng = random.Random(seed)
+        self.seed = seed
+        self._fcount: Dict[int, int] = {}
         self.det = deterministic
         self.compute_sigma = compute_sigma
         self.units = trace.units
@@ -113,8 +119,15 @@ class Engine:
         self.comp = 0.0
 
     # ------------------------------------------------------------------ link
-    def _noise(self, sigma):
-        return 1.0 if self.det or sigma == 0 else self.rng.lognormvariate(0.0, sigma)
+    def _noise(self, sigma, key=None):
+        """Log-normal multiplicative noise.  With a ``key`` the draw depends only on (seed, key), so two
+        policies run with the same seed see identical noise for the same layer execution / the same
+        k-th fetch of a unit (common random numbers); without a key a sequential stream is used."""
+        if self.det or sigma == 0:
+            return 1.0
+        if key is None:
+            return self.rng.lognormvariate(0.0, sigma)
+        return random.Random(self.seed * 1_000_003 + key).lognormvariate(0.0, sigma)
 
     def _drift_at(self, t: float) -> float:
         """Slow AR(1) log-bandwidth drift, indexed by *time* so that every policy run with the
@@ -131,7 +144,9 @@ class Engine:
     def _service(self, job: Job) -> float:
         L = self.link
         if not self.det:
-            f = math.exp(self._drift_at(job.t_start)) * self._noise(L.jitter_sigma)
+            k = self._fcount.get(job.uid, 0)
+            self._fcount[job.uid] = k + 1
+            f = math.exp(self._drift_at(job.t_start)) * self._noise(L.jitter_sigma, key=job.uid * 7919 + k * 104729 + 3)
         else:
             f = 1.0
         base = L.nominal_time(job.nbytes)
@@ -324,7 +339,7 @@ class Engine:
             self.now = t
             self.advance_link(t)
             self.policy.tick(self, t, "compute")
-            d = a.t_true * self._noise(self.compute_sigma)
+            d = a.t_true * self._noise(self.compute_sigma, key=i * 97 + 11)
             self.advance_link(t + d)
             t += d
             self.comp += d

@@ -7,15 +7,25 @@ from camp_sim.sim import Engine
 from camp_sim.policies import (NoPrefetch, StaticK, Reactive, CAMPPrefetch, camp_pins, make_cm, build_plan_seq,
                                pins_first, pins_freq, pins_scp, pins_knapsack_dp, pins_none, plan_time, _unique_units)
 
-T95 = {1: 12.71, 2: 4.30, 3: 3.18, 4: 2.78, 5: 2.57, 6: 2.45, 7: 2.36, 8: 2.31, 9: 2.26, 10: 2.23, 15: 2.13, 20: 2.09, 30: 2.05}
+def _t95(df):
+    try:
+        from scipy import stats
+        return float(stats.t.ppf(0.975, df))
+    except Exception:  # pragma: no cover
+        tab = {1: 12.706, 2: 4.303, 3: 3.182, 4: 2.776, 5: 2.571, 6: 2.447, 7: 2.365, 8: 2.306, 9: 2.262, 10: 2.228,
+               11: 2.201, 12: 2.179, 15: 2.131, 19: 2.093, 29: 2.045}
+        keys = sorted(tab)
+        for k in keys:
+            if df <= k:
+                return tab[k]
+        return 1.96
 
 
 def ci95(xs):
     n = len(xs)
     if n < 2:
         return 0.0
-    t = T95.get(n - 1, 1.96)
-    return t * statistics.stdev(xs) / math.sqrt(n)
+    return _t95(n - 1) * statistics.stdev(xs) / math.sqrt(n)
 
 
 def run_many(trace, gpu, link, cap, make_policy, seeds=range(8), skip=1, **ekw):
@@ -79,7 +89,7 @@ def trace_slice(tr, n_iters):
     return Trace(tr.units, tr.acc[:end], tr.iter_starts[:n_iters], tr.meta)
 
 
-def calibrated_cm(trace, cap, link, gpu, seed=0, **cm_kw):
+def calibrated_cm(trace, cap, link, gpu, seed=10_001, **cm_kw):
     """Runtime cost model after ONE probe iteration (the first iteration of the workload, executed with the
     generic roofline estimate and no pinning): per-layer-kind correction factors are learned online from the
     observed layer durations.  No offline profiling is involved."""
@@ -88,55 +98,102 @@ def calibrated_cm(trace, cap, link, gpu, seed=0, **cm_kw):
     return cm
 
 
+from camp_sim.models import Unit, Trace as _Trace
+
+
+def flexgen_split(trace, cap):
+    """FlexGen-style placement: a uniform fraction ``phi`` of *every* layer stays resident and the remaining
+    (1-phi) of each layer is streamed through two slots (double buffering).  Returns (trace', cap', phi).
+
+    The resident part is charged to the cache, so the streamed pieces see cap' = cap - phi * W.  This is the
+    per-layer percentage split of FlexGen's policy, modelled at fractional granularity."""
+    full = {a.uid for a in trace.acc if a.fetch_bytes is None}
+    W = sum(trace.units[u].nbytes for u in full)
+    smax = max(trace.units[u].nbytes for u in full)
+    if W <= cap:
+        return trace, cap, 1.0
+    if cap >= 2 * smax:
+        phi = (cap - 2 * smax) / (W - 2 * smax)
+    else:
+        phi = max(0.0, (cap - smax) / (W - smax))
+    phi = min(max(phi, 0.0), 0.999)
+    units2 = {u: Unit(u, un.name, un.kind, (1 - phi) * un.nbytes if u in full else un.nbytes) for u, un in trace.units.items()}
+    return _Trace(units2, trace.acc, trace.iter_starts, trace.meta), cap - phi * W, phi
+
+
+def tuned_k(trace, cap, link, gpu, make, ks=(1, 2, 4, 8), seeds=(100, 101, 102)):
+    best_k, best_v = None, float("inf")
+    for k in ks:
+        v = statistics.mean(Engine(trace, gpu, link, cap, make(k), seed=s).run().steady() for s in seeds)
+        if v < best_v:
+            best_k, best_v = k, v
+    return best_k
+
+
 def build_suite(trace, cap, link, gpu, tune_seeds=(100, 101, 102), which=None):
-    """Policy factories (seed -> fresh Policy) for one (trace, cache, link) configuration."""
-    gap = gpu.sampling_gap_us * 1e-6
+    """Policy factories (seed -> fresh Policy) for one (trace, cache, link) configuration.
+
+    All pinning baselines use the *equal budget* rule (pin up to cap - 1 streaming slot) and a tuned lookahead;
+    the conventional 2-slot / position-tie-break rules appear only in the attribution experiment."""
     cm0 = make_cm(gpu)
     seq = build_plan_seq(trace, 0, cm0)
-    p_first = pins_first(seq, cap)
-    p_freq = pins_freq(seq, cap)
+    p_hot = pins_freq(seq, cap, gamma=1.0, slots=1.0, tiebreak="random", seed=0)
+    p_stride = pins_stride(seq, cap, gamma=1.0, slots=1.0)
+    p_freq1 = pins_freq(seq, cap)                          # CAMP-v1 pinning rule (conventional budget)
     p_scp_nom, info = pins_scp_verified(trace, cap, link, gpu, cm0, return_info=True)
     cm_cal = calibrated_cm(trace, cap, link, gpu)
     p_scp = pins_scp_verified(trace, cap, link, gpu, cm_cal)
-    seq_x = build_plan_seq(trace, 0, exact_cm(gpu))
     p_scp_x = pins_scp_verified(trace, cap, link, gpu, exact_cm(gpu))
+    k_static = tuned_k(trace, cap, link, gpu, lambda k: StaticK(k))
+    k_hot = tuned_k(trace, cap, link, gpu, lambda k: StaticK(k, wrap=True, pins=p_hot, evict="fifo"))
+    tr_fg, cap_fg, phi = flexgen_split(trace, cap)
+    k_fg = tuned_k(tr_fg, cap_fg, link, gpu, lambda k: StaticK(k, wrap=True, evict="fifo"))
 
     suite = {
         "Demand+LRU": lambda s: NoPrefetch(),
+        f"Static-k tuned (k={k_static})": lambda s: StaticK(k_static),
         "Reactive (TMO-like)": lambda s: Reactive(),
         "Aggressive-10 (Limoncello-like)": lambda s: StaticK(10),
-        "FlexGen-style": lambda s: StaticK(2, wrap=True, pins=p_first, evict="fifo"),
-        "Hot/Cold (PowerInfer-style)": lambda s: StaticK(2, pins=p_freq),
-        "CAMP-v1 (orig.)": lambda s: CAMPPrefetch(cm=make_cm(gpu), mode="horizon", wrap=False, pins=p_freq),
+        "FlexGen-style (layer split)": ("split", lambda s: StaticK(k_fg, wrap=True, evict="fifo")),
+        f"Hot/Cold (equal budget, k={k_hot})": lambda s: StaticK(k_hot, wrap=True, pins=p_hot, evict="fifo"),
+        "Stride pins + CAMP prefetch": lambda s: CAMPPrefetch(cm=make_cm(gpu), pins=p_stride),
+        "CAMP-v1 (orig.)": lambda s: CAMPPrefetch(cm=make_cm(gpu), mode="horizon", wrap=False, pins=p_freq1),
         "CAMP-v2": lambda s: CAMPPrefetch(cm=make_cm(gpu), pins=p_scp),
         "CAMP-v2 (uncalibrated)": lambda s: CAMPPrefetch(cm=make_cm(gpu), pins=p_scp_nom),
-        "CAMP-v2 (exact cost model)": lambda s: CAMPPrefetch(cm=exact_cm(gpu), pins=p_scp_x),
+        "CAMP-v2 (exact constants)": lambda s: CAMPPrefetch(cm=exact_cm(gpu), pins=p_scp_x),
     }
-    # best fixed lookahead (oracle-tuned per configuration, strongest static baseline)
-    best_k, best_v = None, float("inf")
-    for k in (1, 2, 4, 8):
-        v = statistics.mean(Engine(trace, gpu, link, cap, StaticK(k), seed=s).run().steady() for s in tune_seeds)
-        if v < best_v:
-            best_k, best_v = k, v
-    suite[f"Static-k tuned (k={best_k})"] = lambda s, k=best_k: StaticK(k)
-    suite["_info"] = dict(best_k=best_k, scp=info, n_pin=len(p_scp),
-                          pin_gb=sum(trace.units[u].nbytes for u in p_scp) / 1e9)
+    suite["_info"] = dict(k_static=k_static, k_hot=k_hot, k_fg=k_fg, phi_fg=phi, scp=info, n_pin=len(p_scp),
+                          pin_gb=sum(trace.units[u].nbytes for u in p_scp) / 1e9, split=(tr_fg, cap_fg))
     return suite
 
 
 def eval_suite(trace, cap, link, gpu, seeds=range(10), names=None, **ekw):
     suite = build_suite(trace, cap, link, gpu)
     info = suite.pop("_info")
+    tr_fg, cap_fg = info.pop("split")
     out = {}
     for n, f in suite.items():
-        if names and n not in names:
+        if names and not any(n.startswith(x) for x in names):
             continue
-        vals, stalls = [], []
-        for s in seeds:
-            r = Engine(trace, gpu, link, cap, f(s), seed=s, **ekw).run()
+        tr_use, cap_use = trace, cap
+        if isinstance(f, tuple):
+            tr_use, cap_use, f = tr_fg, cap_fg, f[1]
+        vals, stalls, utils = [], [], []
+        for s_ in seeds:
+            r = Engine(tr_use, gpu, link, cap_use, f(s_), seed=s_, **ekw).run()
             vals.append(r.steady())
             stalls.append(r.steady_stall())
-        out[n] = dict(vals=vals, mean=statistics.mean(vals), ci=ci95(vals), stall=statistics.mean(stalls))
+            utils.append(r.link_util)
+        out[n] = dict(vals=vals, mean=statistics.mean(vals), ci=ci95(vals), stall=statistics.mean(stalls),
+                      util=statistics.mean(utils))
     out["_lb"] = lower_bound(trace, cap, link, gpu)
     out["_info"] = info
     return out
+
+
+def det_ratio_to_lb(trace, cap, link, gpu, pins, cm=None):
+    """Deterministic (noise-free) CAMP latency divided by the lower bound (max with the compute-only time)."""
+    n0 = trace.iter_starts[1] if len(trace.iter_starts) > 1 else len(trace.acc)
+    ideal = sum(a.t_true for a in trace.acc[:n0]) + gpu.sampling_gap_us * 1e-6
+    r = Engine(trace, gpu, link, cap, CAMPPrefetch(cm=cm or make_cm(gpu), pins=pins), seed=0, deterministic=True).run()
+    return r.steady() / max(lower_bound(trace, cap, link, gpu), ideal)

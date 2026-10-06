@@ -42,4 +42,32 @@ check("pin 8/20 link-bound", run(tr, (8 + 3) * nb, CAMPPrefetch(pins=pins)).stea
 # 4. compute-bound with pins: pinned units do not extend iteration => N*c
 tr = uniform(N, nb, 30e-3, 6)
 check("compute-bound", run(tr, 7 * nb, CAMPPrefetch(pins=set(range(4)))).steady(2), N * 30e-3, 0.02)
+
+# 5. non-uniform sizes: alternating big/small units, link-bound, prefetch ring large enough => sum of copy times
+units = {0: Unit(0, "big", "mlp", 200e6), 1: Unit(1, "small", "mlp", 50e6)}
+acc = [Access(u, "mlp", None, 1e-3, (0, 0, 0, 0, 0), r) for r in range(6) for u in (0, 1, 0, 1, 0, 1)]
+tr = Trace(units, acc, [r * 6 for r in range(6)])
+# cache of 220 MB cannot hold both units (250 MB): every access misses under demand paging
+want = 3 * (200e6 / 10e9 + 1e-3) + 3 * (50e6 / 10e9 + 1e-3)
+check("non-uniform sizes, demand paging", run(tr, 220e6, NoPrefetch()).steady(2), want, 0.005)
+
+# 6. next-use eviction retains layers on a cyclic scan (LRU does not): with cache for K=10 of N=20 units and
+#    demand paging, Belady keeps K-1 units resident (hits), LRU keeps none.
+tr = uniform(20, nb, 1e-3, 8)
+r_lru = run(tr, 10 * nb, NoPrefetch(evict="lru"))
+r_bel = run(tr, 10 * nb, NoPrefetch(evict="belady"))
+assert r_lru.hits == 0 and r_bel.hits >= 8 * 9 - 20, (r_lru.hits, r_bel.hits)
+print(f"PASS  Belady retains layers on a cyclic scan: hits LRU={r_lru.hits}, next-use={r_bel.hits}")
+
+# 7. noise: reproducible per seed, and common random numbers across policies for the same layer executions
+noisy_link = Link(bw_gbs=10.0, latency_us=0.0, sync_us=0.0, per_chunk_us=0.0, chunk_mb=1e9, jitter_sigma=0.1, drift_sigma=0.0)
+tr = uniform(10, nb, 5e-3, 3)
+def run_noisy(pol, seed):
+    return Engine(tr, GPU0, noisy_link, 3 * nb, pol, seed=seed, compute_sigma=0.1).run()
+a1, a2 = run_noisy(NoPrefetch(), 5), run_noisy(NoPrefetch(), 5)
+assert a1.total_time == a2.total_time
+b = run_noisy(StaticK(2, wrap=True, evict="fifo"), 5)
+assert abs(a1.compute_time - b.compute_time) < 1e-12      # same seed -> identical compute noise for the same layers
+assert run_noisy(NoPrefetch(), 6).total_time != a1.total_time
+print("PASS  noise is reproducible per seed and shared across policies (compute)")
 print("all engine checks passed")

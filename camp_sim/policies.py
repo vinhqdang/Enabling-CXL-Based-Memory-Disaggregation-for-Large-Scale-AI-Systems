@@ -107,19 +107,22 @@ def freq_per_iteration(seq) -> Dict[int, int]:
 # =============================================================================
 # Pinning strategies (return a set of unit ids)
 # =============================================================================
-def pin_budget(cap: float, smax: float, gamma: float) -> float:
-    return max(0.0, min(gamma * cap, cap - 2.0 * smax))
+def pin_budget(cap: float, smax: float, gamma: float, slots: float = 2.0) -> float:
+    """Bytes available for pinning: ``gamma`` of the cache, but at least ``slots`` streaming slots of the
+    largest unit stay free.  The conventional rule is (gamma=0.9, slots=2); the 'equal budget' rule used
+    to give baselines the same reserve as CAMP is (gamma=1, slots=1)."""
+    return max(0.0, min(gamma * cap, cap - slots * smax))
 
 
 def pins_none(*a, **k) -> Set[int]:
     return set()
 
 
-def pins_first(seq, cap, gamma=0.9) -> Set[int]:
+def pins_first(seq, cap, gamma=0.9, slots=2.0) -> Set[int]:
     """FlexGen-style static placement: resident prefix of the layer sequence."""
     uniq = _unique_units(seq)
     smax = max(e[1] for e in uniq)
-    budget = pin_budget(cap, smax, gamma)
+    budget = pin_budget(cap, smax, gamma, slots)
     out, used = set(), 0.0
     for (u, nb, c, pb) in uniq:
         if used + nb > budget:
@@ -129,13 +132,21 @@ def pins_first(seq, cap, gamma=0.9) -> Set[int]:
     return out
 
 
-def pins_freq(seq, cap, gamma=0.9) -> Set[int]:
-    """Frequency-ranked greedy (CAMP's original Algorithm 2 / PowerInfer-style hot set)."""
+def pins_freq(seq, cap, gamma=0.9, slots=2.0, tiebreak="position", seed=0) -> Set[int]:
+    """Frequency-ranked greedy (CAMP-v1's pinning rule / PowerInfer-style hot set).
+
+    ``tiebreak='position'`` breaks ties by sequence order (a contiguous prefix on uniform models);
+    ``'random'`` breaks them by a seeded shuffle."""
     F = freq_per_iteration(seq)
     uniq = _unique_units(seq)
     order = {e[0]: k for k, e in enumerate(uniq)}
+    if tiebreak == "random":
+        rng = random.Random(seed)
+        keys = list(order)
+        rng.shuffle(keys)
+        order = {u: k for k, u in enumerate(keys)}
     smax = max(e[1] for e in uniq)
-    budget = pin_budget(cap, smax, gamma)
+    budget = pin_budget(cap, smax, gamma, slots)
     out, used = set(), 0.0
     for (u, nb, c, pb) in sorted(uniq, key=lambda e: (-F[e[0]], order[e[0]])):
         if used + nb <= budget:
@@ -144,11 +155,11 @@ def pins_freq(seq, cap, gamma=0.9) -> Set[int]:
     return out
 
 
-def pins_stride(seq, cap, gamma=0.9) -> Set[int]:
+def pins_stride(seq, cap, gamma=0.9, slots=2.0) -> Set[int]:
     """Spread pins evenly over the layer sequence (heuristic: interleave pinned and streamed units)."""
     uniq = _unique_units(seq)
     smax = max(e[1] for e in uniq)
-    budget = pin_budget(cap, smax, gamma)
+    budget = pin_budget(cap, smax, gamma, slots)
     total = sum(e[1] for e in uniq)
     frac = min(1.0, budget / total)
     out, used, acc_ = set(), 0.0, 0.0
@@ -161,11 +172,11 @@ def pins_stride(seq, cap, gamma=0.9) -> Set[int]:
     return out
 
 
-def pins_random(seq, cap, gamma=0.9, seed=0) -> Set[int]:
+def pins_random(seq, cap, gamma=0.9, seed=0, slots=2.0) -> Set[int]:
     rng = random.Random(seed)
     uniq = _unique_units(seq)
     smax = max(e[1] for e in uniq)
-    budget = pin_budget(cap, smax, gamma)
+    budget = pin_budget(cap, smax, gamma, slots)
     rng.shuffle(uniq)
     out, used = set(), 0.0
     for (u, nb, c, pb) in uniq:
@@ -175,7 +186,7 @@ def pins_random(seq, cap, gamma=0.9, seed=0) -> Set[int]:
     return out
 
 
-def pins_knapsack_dp(seq, cap, link: Link, gamma=0.9, quantum=16e6) -> Set[int]:
+def pins_knapsack_dp(seq, cap, link: Link, gamma=0.9, quantum=16e6, slots=2.0) -> Set[int]:
     """Exact 0-1 knapsack on the additive proxy  benefit(v) = F(v) * T_fetch(v).
 
     This is the optimisation problem that Eq. (2) of the paper states; it ignores pipeline
@@ -184,9 +195,9 @@ def pins_knapsack_dp(seq, cap, link: Link, gamma=0.9, quantum=16e6) -> Set[int]:
     F = freq_per_iteration(seq)
     uniq = _unique_units(seq)
     smax = max(e[1] for e in uniq)
-    budget = pin_budget(cap, smax, gamma)
+    budget = pin_budget(cap, smax, gamma, slots)
     W = int(budget // quantum)
-    items = [(e[0], max(1, int(round(e[1] / quantum))), F[e[0]] * link.nominal_time(e[1])) for e in uniq]
+    items = [(e[0], max(1, int(math.ceil(e[1] / quantum))), F[e[0]] * link.nominal_time(e[1])) for e in uniq]
     n = len(items)
     best = [0.0] * (W + 1)
     take = [[False] * (W + 1) for _ in range(n)]

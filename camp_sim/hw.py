@@ -37,6 +37,7 @@ class GPU:
     eff_gemm: float = 0.62
     eff_mem: float = 0.86
     eff_attn: float = 0.42
+    ramp_ai0: float = 0.0            # >0: GEMM efficiency ramps with arithmetic intensity (FLOP/byte), reaching eff_gemm at ai0
     launch_us: float = 4.0           # per kernel launch
     sampling_gap_us: float = 150.0   # host-side sampling/scheduling between iterations
 

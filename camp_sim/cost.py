@@ -19,7 +19,11 @@ Feat = Tuple[float, float, float, float, int]
 
 def true_time(feat: Feat, gpu) -> float:
     gf, gb, cf, cb, nk = feat
-    t_gemm = max(gf / (gpu.peak_flops * gpu.eff_gemm), gb / (gpu.hbm_bw * gpu.eff_mem)) if (gf or gb) else 0.0
+    eg = gpu.eff_gemm
+    if getattr(gpu, "ramp_ai0", 0.0) > 0 and gb > 0:
+        # shape-dependent efficiency: small-batch GEMMs under-utilise the tensor cores
+        eg = gpu.eff_gemm * min(1.0, 0.4 + 0.6 * (gf / gb / gpu.ramp_ai0) ** 0.5)
+    t_gemm = max(gf / (gpu.peak_flops * eg), gb / (gpu.hbm_bw * gpu.eff_mem)) if (gf or gb) else 0.0
     t_core = max(cf / (gpu.peak_flops * gpu.eff_attn), cb / (gpu.hbm_bw * gpu.eff_mem)) if (cf or cb) else 0.0
     return t_gemm + t_core + nk * gpu.launch_us * 1e-6
 
