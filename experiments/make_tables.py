@@ -132,7 +132,7 @@ def main_table(group, label, caption):
 
 
 COMMON = (r"Iteration latency in ms (mean of 10 seeds with common random numbers; best entry per row in bold). ``Cache'' is the share of weight bytes that fit in the HBM weight cache. "
-          r"FlexGen = per-layer fractional split with double buffering; Hot/Cold and Stride = equal-budget pinning with CAMP's or a tuned fixed lookahead (Section~\ref{sec:eval-setup}); "
+          r"FlexGen = per-layer fractional split with buffer count and lookahead tuned per row; Hot/Cold and Stride = equal-budget pinning with CAMP's or a tuned fixed lookahead (Section~\ref{sec:eval-setup}); "
           r"LB = lower bound of Section~\ref{sec:method-lb}; det./LB = noise-free CAMP-v2 latency divided by LB; ``vs.\ best ext.'' = best of Demand/Static-$k$/FlexGen/Hot-Cold/CAMP-v1 divided by CAMP-v2.")
 main_table("main", "main", r"Main comparison on the large-model configurations that do not fit one 80~GB GPU. " + COMMON)
 main_table("constrained", "constrained", r"Constrained-cache configurations (a smaller model with 40\% of its weights in HBM, as for a GPU shared with other services). " + COMMON)
@@ -144,7 +144,7 @@ for r in gp:
     rows.append(f"{r['workload'].replace('B=', '$B{=}$').replace('S=', '$S{=}$')} & {r['cache_ratio']:.1f} & {r['scp_gap_pct']:.1f} & {r['stride_gap_pct']:.1f} & {r['freq_gap_pct']:.1f} & {r['sim_gap_pct']:.1f}\\\\")
 emit(r"""\begin{table}[t]
 \centering
-\caption{Optimality gap of the pin-set selection on an 18-unit model (8 layers, $d{=}2048$), where all $2^{18}$ pin sets can be enumerated. Planner gap: predicted iteration time of the selected set relative to the exhaustive optimum of the planner objective; the last column replays the SCP set in the event engine and compares it with the best set (by simulation) among the enumerated sets.}
+\caption{Optimality gap of the pin-set selection on an 18-unit model (8 layers, $d{=}2048$), where all $2^{18}$ pin sets can be enumerated. Planner gap: predicted iteration time of the selected set relative to the exhaustive optimum of the planner objective; the last column compares the SCP set with the planner-optimal set when both are replayed in the event engine (negative: SCP is faster there).}
 \label{tab:gap}
 \small
 \begin{tabular}{lrrrrr}
@@ -323,7 +323,10 @@ emit(r"""\begin{table}[t]
 """)
 
 import re
+FIT = r"\resizebox{\ifdim\width>\textwidth\textwidth\else\width\fi}{!}{%"
 for block in out:
+    if "resizebox" not in block:
+        block = block.replace("\\begin{tabular}", FIT + "\n\\begin{tabular}", 1).replace("\\end{tabular}", "\\end{tabular}}", 1)
     m = re.search(r"\\label\{tab:(\w+)\}", block)
     with open(os.path.join(ROOT, "manuscript", f"tab_{m.group(1)}.tex"), "w") as f:
         f.write(block)

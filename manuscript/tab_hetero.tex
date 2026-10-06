@@ -1,15 +1,17 @@
 \begin{table}[t]
 \centering
-\caption{Workloads with non-uniform reuse (latency in seconds; 18~GB/s; 35--40\% of weights cached). The first two columns are demand paging with LRU/LFU eviction; the others use CAMP's prefetcher with the stated pinning rule.}
+\caption{Workloads with non-uniform reuse or layer sizes (latency in seconds; 18~GB/s; 35--40\% of weights cached; best in bold, ties within 0.5\%). The first three columns are not CAMP variants; the remaining columns use CAMP's prefetcher with the stated pinning rule. Equal-budget rules keep one streaming slot free; ``prefix'' uses the conventional two-slot reserve.}
 \label{tab:hetero}
-\small
-\begin{tabular}{lrrrrrrr}
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lrrrrrrrrr}
 \toprule
-\textbf{Workload} & \textbf{LRU} & \textbf{LFU} & \textbf{none} & \textbf{prefix} & \textbf{freq.} & \textbf{DP} & \textbf{SCP}\\
+\textbf{Workload} & \textbf{LRU} & \textbf{LFU} & \textbf{FlexGen} & \textbf{none} & \textbf{prefix} & \textbf{freq.} & \textbf{stride} & \textbf{DP} & \textbf{SCP}\\
 \midrule
-Gemma-2-9B, tied embedding (per step) & 1.03 & 0.93 & 1.01 & 0.81 & 0.81 & 0.81 & 0.63\\
-speculative decoding, 13B+1B, $k{=}4$ (per step) & 1.53 & 1.43 & 1.51 & 1.03 & 1.03 & 1.02 & 1.01\\
-encoder--decoder, 64 tokens (per request) & 27.80 & 27.80 & 27.18 & 27.02 & 10.21 & 9.15 & 9.14\\
+Gemma-2-9B, tied embedding (per step) & 1.03 & 0.93 & 0.68 & 1.01 & 0.81 & 0.71 & 0.72 & 0.72 & \textbf{0.63}\\
+speculative decoding, 13B+1B, $k{=}4$ (per step) & 1.53 & 1.43 & 1.07 & 1.51 & 1.03 & 1.02 & 1.20 & 1.03 & \textbf{1.01}\\
+encoder--decoder, 64 tokens (per request) & 27.77 & 27.77 & 18.06 & 27.17 & 27.02 & \textbf{9.14} & 18.02 & 9.95 & \textbf{9.16}\\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \end{table}

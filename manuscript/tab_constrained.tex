@@ -1,0 +1,20 @@
+\begin{table}[t]
+\centering
+\caption{Constrained-cache configurations (a smaller model with 40\% of its weights in HBM, as for a GPU shared with other services). Iteration latency in ms (mean of 10 seeds with common random numbers; best entry per row in bold). ``Cache'' is the share of weight bytes that fit in the HBM weight cache. FlexGen = per-layer fractional split with buffer count and lookahead tuned per row; Hot/Cold and Stride = equal-budget pinning with CAMP's or a tuned fixed lookahead (Section~\ref{sec:eval-setup}); LB = lower bound of Section~\ref{sec:method-lb}; det./LB = noise-free CAMP-v2 latency divided by LB; ``vs.\ best ext.'' = best of Demand/Static-$k$/FlexGen/Hot-Cold/CAMP-v1 divided by CAMP-v2.}
+\label{tab:constrained}
+\scriptsize
+\setlength{\tabcolsep}{2.8pt}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{llrrrrrrrrrrrrr}
+\toprule
+\textbf{Model} & \textbf{Workload} & \textbf{Cache} & \textbf{GB/s} & \textbf{Demand} & \textbf{Static-$k$} & \textbf{FlexGen} & \textbf{Hot/Cold} & \textbf{Stride} & \textbf{CAMP-v1} & \textbf{CAMP-v2} & \textbf{LB} & \textbf{det./LB} & \textbf{vs.\ Demand} & \textbf{vs.\ best ext.}\\
+\midrule
+Llama-2-13B & dec. $B{=}$16,2k & 40\% & 18 & 1\,427 & 1\,407 & \textbf{865} & 877 & 884 & 897 & 871 & 873 & 1.017 & 1.64$\times$ & 0.99$\times$\\
+ & dec. $B{=}$16,2k & 40\% & 45 & 585 & 565 & \textbf{349} & 360 & 356 & 361 & 352 & 349 & 1.024 & 1.66$\times$ & 0.99$\times$\\
+ & pre. $B{=}$4 $S{=}$4k & 40\% & 18 & 2\,169 & 1\,413 & \textbf{888} & 1\,461 & 895 & 1\,126 & 916 & 873 & 1.069 & 2.37$\times$ & 0.97$\times$\\
+ & pre. $B{=}$4 $S{=}$4k & 40\% & 45 & 1\,314 & 758 & 754 & 976 & 753 & \textbf{751} & \textbf{751} & 746 & 1.005 & 1.75$\times$ & 1.00$\times$\\
+Gemma-2-9B & dec. $B{=}$32,2k & 40\% & 18 & 1\,026 & 1\,010 & 674 & 706 & 713 & 810 & \textbf{631} & 633 & 1.013 & 1.63$\times$ & 1.07$\times$\\
+ & dec. $B{=}$32,2k & 40\% & 45 & 424 & 408 & 273 & 285 & 288 & 327 & \textbf{255} & 253 & 1.020 & 1.66$\times$ & 1.07$\times$\\
+\bottomrule
+\end{tabular}}
+\end{table}

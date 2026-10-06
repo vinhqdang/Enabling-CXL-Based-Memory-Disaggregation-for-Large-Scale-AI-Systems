@@ -1,15 +1,16 @@
 \begin{table}[t]
 \centering
-\caption{Runtime cost model. Mean absolute percentage error (MAPE) of the per-layer compute-time estimate before and after online calibration with one probe iteration, and the resulting iteration latency (ms) with SCP pins planned from the generic roofline estimate (``generic''), from the exact device model (``exact''), and without pinning.}
+\caption{Runtime cost model. Mean absolute percentage error (MAPE) of the per-layer compute-time estimate before and after online calibration with one probe iteration, and the resulting iteration latency (ms) when SCP pins are planned without pinning, from the generic roofline estimate, from the calibrated estimate and from the exact device model.}
 \label{tab:costmodel}
 \small
-\begin{tabular}{lrrrrrr}
+\resizebox{\ifdim\width>\textwidth\textwidth\else\width\fi}{!}{%
+\begin{tabular}{lrrrrrrr}
 \toprule
-\textbf{Workload} & \textbf{MAPE generic (\%)} & \textbf{MAPE calibrated (\%)} & \textbf{no pins} & \textbf{generic} & \textbf{exact} & \textbf{LB}\\
+\textbf{Workload} & \textbf{MAPE generic (\%)} & \textbf{MAPE calib. (\%)} & \textbf{no pins} & \textbf{generic} & \textbf{calib.} & \textbf{exact} & \textbf{LB}\\
 \midrule
-llama2-13b prefill B=4 S=4k & 23.2 & 2.7 & 1\,408 & 920 & 919 & 873\\
-llama3-70b prefill B=4 S=2k & 23.5 & 0.5 & 6\,006 & 3\,778 & 3\,788 & 3\,728\\
-llama2-13b decode B=16 & 9.3 & 2.7 & 1\,400 & 871 & 873 & 873\\
+llama2-13b prefill B=4 S=4k & 23.2 & 1.6 & 1\,410 & 914 & 915 & 916 & 873\\
+llama3-70b prefill B=4 S=2k & 23.5 & 0.1 & 6\,214 & 3\,864 & 3\,873 & 3\,857 & 3\,728\\
+llama3-70b decode B=16 & 9.2 & 0.1 & 7\,767 & 4\,848 & 4\,858 & 4\,858 & 4\,772\\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \end{table}

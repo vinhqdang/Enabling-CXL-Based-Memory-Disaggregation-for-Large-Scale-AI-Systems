@@ -1,0 +1,21 @@
+\begin{table}[t]
+\centering
+\caption{Cost-model error under a shape-dependent ground truth (GEMM efficiency ramps with arithmetic intensity, which the runtime estimator does not model), Llama-3-70B, 18~GB/s. ``Probe'' is the shape on which the online calibration is performed; a probe from a different shape leaves a residual error, and the plan is evaluated on the other shape.}
+\label{tab:shape}
+\scriptsize
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lllrrr}
+\toprule
+\textbf{Evaluated on} & \textbf{Probe} & \textbf{Estimator} & \textbf{MAPE (\%)} & \textbf{Latency (ms)} & \textbf{LB (ms)}\\
+\midrule
+decode $B{=}$16 & decode $B{=}$16 & generic (no calibration) & 9.2 & 4\,848 & 4\,772\\
+decode $B{=}$16 & decode $B{=}$16 & calibrated on probe shape & 0.1 & 4\,858 & 4\,772\\
+decode $B{=}$16 & decode $B{=}$16 & constants-exact (no ramp knowledge) & 0.0 & 4\,858 & 4\,772\\
+decode $B{=}$16 & prefill $B{=}$4 $S{=}$2k & calibrated on probe shape & 11.8 & 4\,858 & 4\,772\\
+prefill $B{=}$4 $S{=}$2k & decode $B{=}$16 & calibrated on probe shape & 13.2 & 3\,855 & 3\,728\\
+prefill $B{=}$4 $S{=}$2k & prefill $B{=}$4 $S{=}$2k & generic (no calibration) & 23.5 & 3\,864 & 3\,728\\
+prefill $B{=}$4 $S{=}$2k & prefill $B{=}$4 $S{=}$2k & calibrated on probe shape & 0.1 & 3\,873 & 3\,728\\
+prefill $B{=}$4 $S{=}$2k & prefill $B{=}$4 $S{=}$2k & constants-exact (no ramp knowledge) & 0.0 & 3\,857 & 3\,728\\
+\bottomrule
+\end{tabular}}
+\end{table}

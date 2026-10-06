@@ -1,24 +1,25 @@
 \begin{table}[t]
 \centering
-\caption{Optimality gap of the pin-set selection on an 18-unit model (8 layers, $d{=}2048$), where all $2^{18}$ pin sets can be enumerated. Planner gap: predicted iteration time of the selected set relative to the exhaustive optimum of the planner objective; simulated gap: the same sets replayed in the event engine.}
+\caption{Optimality gap of the pin-set selection on an 18-unit model (8 layers, $d{=}2048$), where all $2^{18}$ pin sets can be enumerated. Planner gap: predicted iteration time of the selected set relative to the exhaustive optimum of the planner objective; the last column compares the SCP set with the planner-optimal set when both are replayed in the event engine (negative: SCP is faster there).}
 \label{tab:gap}
 \small
-\begin{tabular}{lrrrr}
+\resizebox{\ifdim\width>\textwidth\textwidth\else\width\fi}{!}{%
+\begin{tabular}{lrrrrr}
 \toprule
-\textbf{Workload} & \textbf{Cache ratio} & \textbf{SCP gap (\%)} & \textbf{Frequency gap (\%)} & \textbf{SCP, simulated (\%)}\\
+\textbf{Workload} & \textbf{Cache ratio} & \textbf{SCP (\%)} & \textbf{Stride (\%)} & \textbf{Frequency (\%)} & \textbf{SCP, simulated (\%)}\\
 \midrule
-decode $B{=}$16 & 0.3 & 0.0 & 17.7 & 0.0\\
-decode $B{=}$16 & 0.5 & 0.0 & 25.5 & 0.3\\
-decode $B{=}$16 & 0.7 & 0.0 & 32.4 & 0.0\\
-prefill $B{=}$1 $S{=}$2k & 0.3 & 0.0 & 16.1 & 0.0\\
-prefill $B{=}$1 $S{=}$2k & 0.5 & 0.0 & 24.0 & 0.0\\
-prefill $B{=}$1 $S{=}$2k & 0.7 & 0.5 & 31.0 & 1.8\\
-prefill $B{=}$4 $S{=}$4k & 0.3 & 0.0 & 13.0 & 1.9\\
-prefill $B{=}$4 $S{=}$4k & 0.5 & 0.0 & 17.8 & 3.5\\
-prefill $B{=}$4 $S{=}$4k & 0.7 & 3.8 & 22.4 & 12.8\\
-prefill $B{=}$8 $S{=}$2k & 0.3 & 0.0 & 13.0 & 0.2\\
-prefill $B{=}$8 $S{=}$2k & 0.5 & 0.0 & 17.8 & 0.1\\
-prefill $B{=}$8 $S{=}$2k & 0.7 & 4.2 & 22.8 & 12.3\\
+decode $B{=}$16 & 0.3 & 0.0 & 14.1 & 17.7 & 0.0\\
+decode $B{=}$16 & 0.5 & 0.0 & 20.3 & 25.5 & -0.9\\
+decode $B{=}$16 & 0.7 & 0.0 & 0.4 & 32.4 & 0.0\\
+prefill $B{=}$1 $S{=}$2k & 0.3 & 0.0 & 12.5 & 16.1 & 0.0\\
+prefill $B{=}$1 $S{=}$2k & 0.5 & 0.0 & 18.8 & 24.0 & 0.0\\
+prefill $B{=}$1 $S{=}$2k & 0.7 & 0.5 & 0.8 & 31.0 & 1.2\\
+prefill $B{=}$4 $S{=}$4k & 0.3 & 0.0 & 9.7 & 13.0 & 1.0\\
+prefill $B{=}$4 $S{=}$4k & 0.5 & 0.0 & 13.2 & 17.8 & 2.2\\
+prefill $B{=}$4 $S{=}$4k & 0.7 & 3.8 & 5.9 & 22.4 & 12.6\\
+prefill $B{=}$8 $S{=}$2k & 0.3 & 0.0 & 9.7 & 13.0 & 0.3\\
+prefill $B{=}$8 $S{=}$2k & 0.5 & 0.0 & 13.2 & 17.8 & 0.9\\
+prefill $B{=}$8 $S{=}$2k & 0.7 & 4.2 & 5.2 & 22.8 & 12.0\\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \end{table}

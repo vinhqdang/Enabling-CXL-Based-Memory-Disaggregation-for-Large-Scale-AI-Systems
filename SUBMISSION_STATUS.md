@@ -1,8 +1,7 @@
 # Submission status
 
-Manuscript: "CAMP: Graph-Aware Prefetching and Pinning for LLM Inference over Host-Mediated CXL
-Memory" (first submitted as "CAMP: Content-Aware Memory Prefetching for High-Performance
-CXL-Based Inference").
+Manuscript: "Streaming LLM Weights from CXL Memory: Regimes, Placement and Pipeline-Aware Pinning"
+(first submitted as "CAMP: Content-Aware Memory Prefetching for High-Performance CXL-Based Inference").
 
 | Date | Venue | Outcome |
 |------|-------|---------|
@@ -16,8 +15,8 @@ CXL-Based Inference").
   bandwidth bound, per-copy and synchronisation costs and a staged variant; roofline compute
   model for prefill, decode and mixed batches; measurement noise; real model configurations from
   7B to 405B parameters.
-* The pipeline logic was validated on a real GPU (`results/hw/`, `validation/hw_validate.py`).
+* The link and overlap logic was checked on a real GPU (`results/hw/`, `validation/hw_validate.py`); the check is mixed and reported as such.
 * The pinning algorithm was reformulated and its relation to the 0-1 knapsack stated exactly;
-  frequency/LFU/hot-cold baselines and exhaustive-optimum comparisons were added.
+  baselines were strengthened (equal budget, tuned lookahead, tuned FlexGen-style split) and an attribution study and exhaustive-optimum comparison added. The stronger baselines removed the claim of a large gain over FlexGen-style placement on dense models; the paper now reports this.
 * The compute-time estimate is obtained at runtime and its sensitivity is quantified.
 * Related work was cut to the directly relevant material.

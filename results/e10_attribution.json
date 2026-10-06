@@ -1,0 +1,402 @@
+[
+ {
+  "model": "llama3-70b",
+  "workload": "decode B=16",
+  "bw": 18.0,
+  "lb": 4.771676273777778,
+  "steps": {
+   "0 conventional Hot/Cold (2-slot reserve, position tie-break, lookahead 2, LRU)": {
+    "mean": 5.083636985096664,
+    "ci": 0.0505266417870111
+   },
+   "1 + equal budget (1-slot reserve, pin up to cap - 1 slot)": {
+    "mean": 4.893005975759642,
+    "ci": 0.04529109724039856
+   },
+   "2 + random tie-break": {
+    "mean": 4.882462484058102,
+    "ci": 0.04254883850097628
+   },
+   "3 + FIFO eviction and cross-iteration lookahead": {
+    "mean": 4.881555492033771,
+    "ci": 0.042620655554797306
+   },
+   "4 + stride (interleaved) pins instead of random": {
+    "mean": 4.891279946853833,
+    "ci": 0.04621256665198317
+   },
+   "5 + CAMP prefetcher (work-conserving, next-use admission)": {
+    "mean": 4.891279946853833,
+    "ci": 0.04621256665198317
+   },
+   "6 + SCP pins (planner, dry-run verification, calibrated cost model)": {
+    "mean": 4.870181847888531,
+    "ci": 0.04307433928324606
+   },
+   "ref FlexGen-style per-layer split (tuned buffers)": {
+    "mean": 4.895542731308618,
+    "ci": 0.04408999667485809
+   }
+  }
+ },
+ {
+  "model": "llama3-70b",
+  "workload": "decode B=16",
+  "bw": 45.0,
+  "lb": 1.9086705095111112,
+  "steps": {
+   "0 conventional Hot/Cold (2-slot reserve, position tie-break, lookahead 2, LRU)": {
+    "mean": 2.0131916266966905,
+    "ci": 0.029848538150217846
+   },
+   "1 + equal budget (1-slot reserve, pin up to cap - 1 slot)": {
+    "mean": 1.9355906689672548,
+    "ci": 0.028258728672957718
+   },
+   "2 + random tie-break": {
+    "mean": 1.9275012931744144,
+    "ci": 0.02825410618237896
+   },
+   "3 + FIFO eviction and cross-iteration lookahead": {
+    "mean": 1.9265414990526961,
+    "ci": 0.028147823236881486
+   },
+   "4 + stride (interleaved) pins instead of random": {
+    "mean": 1.9307196241494902,
+    "ci": 0.03071782895689477
+   },
+   "5 + CAMP prefetcher (work-conserving, next-use admission)": {
+    "mean": 1.9307196241494902,
+    "ci": 0.03071782895689477
+   },
+   "6 + SCP pins (planner, dry-run verification, calibrated cost model)": {
+    "mean": 1.916169530284493,
+    "ci": 0.02865896762577802
+   },
+   "ref FlexGen-style per-layer split (tuned buffers)": {
+    "mean": 1.9237804833842809,
+    "ci": 0.028447911004645766
+   }
+  }
+ },
+ {
+  "model": "llama3-70b",
+  "workload": "prefill B=4 S=2k",
+  "bw": 18.0,
+  "lb": 3.7277606115555555,
+  "steps": {
+   "0 conventional Hot/Cold (2-slot reserve, position tie-break, lookahead 2, LRU)": {
+    "mean": 4.9897288927474985,
+    "ci": 0.030232658985552233
+   },
+   "1 + equal budget (1-slot reserve, pin up to cap - 1 slot)": {
+    "mean": 5.456612962352932,
+    "ci": 0.019026038917988913
+   },
+   "2 + random tie-break": {
+    "mean": 4.766250641195363,
+    "ci": 0.02468045403443788
+   },
+   "3 + FIFO eviction and cross-iteration lookahead": {
+    "mean": 4.764399067911423,
+    "ci": 0.024393488424676427
+   },
+   "4 + stride (interleaved) pins instead of random": {
+    "mean": 4.190624568406297,
+    "ci": 0.03221844598187986
+   },
+   "5 + CAMP prefetcher (work-conserving, next-use admission)": {
+    "mean": 3.968078417776525,
+    "ci": 0.03285644222552951
+   },
+   "6 + SCP pins (planner, dry-run verification, calibrated cost model)": {
+    "mean": 3.885275164343301,
+    "ci": 0.03936860711791779
+   },
+   "ref FlexGen-style per-layer split (tuned buffers)": {
+    "mean": 3.8704840491521795,
+    "ci": 0.04005345817228682
+   }
+  }
+ },
+ {
+  "model": "llama3-70b",
+  "workload": "prefill B=4 S=2k",
+  "bw": 45.0,
+  "lb": 1.8863523540174958,
+  "steps": {
+   "0 conventional Hot/Cold (2-slot reserve, position tie-break, lookahead 2, LRU)": {
+    "mean": 2.507687756558201,
+    "ci": 0.02632080514524371
+   },
+   "1 + equal budget (1-slot reserve, pin up to cap - 1 slot)": {
+    "mean": 3.222608064966379,
+    "ci": 0.020962231313768134
+   },
+   "2 + random tie-break": {
+    "mean": 2.660411409312912,
+    "ci": 0.019886736036769874
+   },
+   "3 + FIFO eviction and cross-iteration lookahead": {
+    "mean": 2.659527263919212,
+    "ci": 0.019816805348669714
+   },
+   "4 + stride (interleaved) pins instead of random": {
+    "mean": 2.231297522949189,
+    "ci": 0.020305719314630887
+   },
+   "5 + CAMP prefetcher (work-conserving, next-use admission)": {
+    "mean": 2.1921445271211875,
+    "ci": 0.0179424106058469
+   },
+   "6 + SCP pins (planner, dry-run verification, calibrated cost model)": {
+    "mean": 1.9065539577112784,
+    "ci": 0.003671545745518508
+   },
+   "ref FlexGen-style per-layer split (tuned buffers)": {
+    "mean": 1.9075993796331774,
+    "ci": 0.001606923409537626
+   }
+  }
+ },
+ {
+  "model": "llama3-70b",
+  "workload": "prefill B=4 S=4k",
+  "bw": 18.0,
+  "lb": 3.8768914204444442,
+  "steps": {
+   "0 conventional Hot/Cold (2-slot reserve, position tie-break, lookahead 2, LRU)": {
+    "mean": 6.020093672376283,
+    "ci": 0.04577558341886973
+   },
+   "1 + equal budget (1-slot reserve, pin up to cap - 1 slot)": {
+    "mean": 7.387646114869332,
+    "ci": 0.033619787065055064
+   },
+   "2 + random tie-break": {
+    "mean": 6.201671929380861,
+    "ci": 0.037086796317291774
+   },
+   "3 + FIFO eviction and cross-iteration lookahead": {
+    "mean": 6.200874765723189,
+    "ci": 0.03731042885617075
+   },
+   "4 + stride (interleaved) pins instead of random": {
+    "mean": 5.342975337774136,
+    "ci": 0.028979459639913975
+   },
+   "5 + CAMP prefetcher (work-conserving, next-use admission)": {
+    "mean": 5.0660425710384445,
+    "ci": 0.029960885971177725
+   },
+   "6 + SCP pins (planner, dry-run verification, calibrated cost model)": {
+    "mean": 4.1408198545900365,
+    "ci": 0.03263410779951402
+   },
+   "ref FlexGen-style per-layer split (tuned buffers)": {
+    "mean": 4.079331702523064,
+    "ci": 0.02566581667131965
+   }
+  }
+ },
+ {
+  "model": "llama3-70b",
+  "workload": "prefill B=4 S=4k",
+  "bw": 45.0,
+  "lb": 3.874319401093728,
+  "steps": {
+   "0 conventional Hot/Cold (2-slot reserve, position tie-break, lookahead 2, LRU)": {
+    "mean": 3.887540688344609,
+    "ci": 0.0030820666368297574
+   },
+   "1 + equal budget (1-slot reserve, pin up to cap - 1 slot)": {
+    "mean": 5.021650926103144,
+    "ci": 0.011849305471387826
+   },
+   "2 + random tie-break": {
+    "mean": 4.3954393926877815,
+    "ci": 0.004812851621618067
+   },
+   "3 + FIFO eviction and cross-iteration lookahead": {
+    "mean": 4.394558942043021,
+    "ci": 0.0048317401249696485
+   },
+   "4 + stride (interleaved) pins instead of random": {
+    "mean": 3.9134344825574714,
+    "ci": 0.0030930047448190392
+   },
+   "5 + CAMP prefetcher (work-conserving, next-use admission)": {
+    "mean": 3.9175782094355696,
+    "ci": 0.0026844224476223156
+   },
+   "6 + SCP pins (planner, dry-run verification, calibrated cost model)": {
+    "mean": 3.886438473774664,
+    "ci": 0.0031509849620728093
+   },
+   "ref FlexGen-style per-layer split (tuned buffers)": {
+    "mean": 3.8946791008993777,
+    "ci": 0.0030568050774090103
+   }
+  }
+ },
+ {
+  "model": "llama2-13b",
+  "workload": "prefill B=4 S=4k",
+  "bw": 18.0,
+  "lb": 0.8731124622222223,
+  "steps": {
+   "0 conventional Hot/Cold (2-slot reserve, position tie-break, lookahead 2, LRU)": {
+    "mean": 1.1545758299709004,
+    "ci": 0.013221242585508879
+   },
+   "1 + equal budget (1-slot reserve, pin up to cap - 1 slot)": {
+    "mean": 1.5939563682280078,
+    "ci": 0.012164851308251165
+   },
+   "2 + random tie-break": {
+    "mean": 1.5281186362555763,
+    "ci": 0.013533865957232192
+   },
+   "3 + FIFO eviction and cross-iteration lookahead": {
+    "mean": 1.5279950888172238,
+    "ci": 0.013514648151373038
+   },
+   "4 + stride (interleaved) pins instead of random": {
+    "mean": 0.9331817929602114,
+    "ci": 0.012206013143991638
+   },
+   "5 + CAMP prefetcher (work-conserving, next-use admission)": {
+    "mean": 0.8952338078736372,
+    "ci": 0.013048543291861163
+   },
+   "6 + SCP pins (planner, dry-run verification, calibrated cost model)": {
+    "mean": 0.916313730512761,
+    "ci": 0.015174199704891832
+   },
+   "ref FlexGen-style per-layer split (tuned buffers)": {
+    "mean": 0.8881388254175204,
+    "ci": 0.014784444122590674
+   }
+  }
+ },
+ {
+  "model": "llama2-13b",
+  "workload": "prefill B=4 S=4k",
+  "bw": 45.0,
+  "lb": 0.7462466860944023,
+  "steps": {
+   "0 conventional Hot/Cold (2-slot reserve, position tie-break, lookahead 2, LRU)": {
+    "mean": 0.9718954365202693,
+    "ci": 0.009955408521511841
+   },
+   "1 + equal budget (1-slot reserve, pin up to cap - 1 slot)": {
+    "mean": 1.0796889755616281,
+    "ci": 0.004527779211970325
+   },
+   "2 + random tie-break": {
+    "mean": 0.9966630825566158,
+    "ci": 0.005381021804965836
+   },
+   "3 + FIFO eviction and cross-iteration lookahead": {
+    "mean": 0.9965088237462636,
+    "ci": 0.005380860280132285
+   },
+   "4 + stride (interleaved) pins instead of random": {
+    "mean": 0.7573526068490395,
+    "ci": 0.0010194004933700325
+   },
+   "5 + CAMP prefetcher (work-conserving, next-use admission)": {
+    "mean": 0.7529594549267854,
+    "ci": 0.0010195954277320452
+   },
+   "6 + SCP pins (planner, dry-run verification, calibrated cost model)": {
+    "mean": 0.7510025803901299,
+    "ci": 0.0010218986488166298
+   },
+   "ref FlexGen-style per-layer split (tuned buffers)": {
+    "mean": 0.7536561702998401,
+    "ci": 0.0010225228074967313
+   }
+  }
+ },
+ {
+  "model": "llama2-13b",
+  "workload": "decode B=16",
+  "bw": 18.0,
+  "lb": 0.8731124622222223,
+  "steps": {
+   "0 conventional Hot/Cold (2-slot reserve, position tie-break, lookahead 2, LRU)": {
+    "mean": 0.903430396590459,
+    "ci": 0.013658804155320512
+   },
+   "1 + equal budget (1-slot reserve, pin up to cap - 1 slot)": {
+    "mean": 0.8805891573232851,
+    "ci": 0.013253623409153703
+   },
+   "2 + random tie-break": {
+    "mean": 0.8777447784855806,
+    "ci": 0.012297355867132502
+   },
+   "3 + FIFO eviction and cross-iteration lookahead": {
+    "mean": 0.8774943044180887,
+    "ci": 0.012272139899817932
+   },
+   "4 + stride (interleaved) pins instead of random": {
+    "mean": 0.8841712414541353,
+    "ci": 0.012978356103897134
+   },
+   "5 + CAMP prefetcher (work-conserving, next-use admission)": {
+    "mean": 0.8841712414541353,
+    "ci": 0.012978356103897134
+   },
+   "6 + SCP pins (planner, dry-run verification, calibrated cost model)": {
+    "mean": 0.8708597329860471,
+    "ci": 0.012650923018297436
+   },
+   "ref FlexGen-style per-layer split (tuned buffers)": {
+    "mean": 0.8649057098793107,
+    "ci": 0.012793236079692273
+   }
+  }
+ },
+ {
+  "model": "llama2-13b",
+  "workload": "decode B=16",
+  "bw": 45.0,
+  "lb": 0.3492449848888889,
+  "steps": {
+   "0 conventional Hot/Cold (2-slot reserve, position tie-break, lookahead 2, LRU)": {
+    "mean": 0.3681652524583604,
+    "ci": 0.006930239187285362
+   },
+   "1 + equal budget (1-slot reserve, pin up to cap - 1 slot)": {
+    "mean": 0.36633457255527857,
+    "ci": 0.0067075506522598855
+   },
+   "2 + random tie-break": {
+    "mean": 0.3605413401721843,
+    "ci": 0.005967524361356416
+   },
+   "3 + FIFO eviction and cross-iteration lookahead": {
+    "mean": 0.3602674793417611,
+    "ci": 0.005957749259489625
+   },
+   "4 + stride (interleaved) pins instead of random": {
+    "mean": 0.3560662267830559,
+    "ci": 0.006453295437924014
+   },
+   "5 + CAMP prefetcher (work-conserving, next-use admission)": {
+    "mean": 0.3560662267830559,
+    "ci": 0.006453295437924014
+   },
+   "6 + SCP pins (planner, dry-run verification, calibrated cost model)": {
+    "mean": 0.3519070091074464,
+    "ci": 0.006638012311921996
+   },
+   "ref FlexGen-style per-layer split (tuned buffers)": {
+    "mean": 0.34875451537339286,
+    "ci": 0.006320263392702382
+   }
+  }
+ }
+]

@@ -1,0 +1,25 @@
+\begin{table}[t]
+\centering
+\caption{Alternatives to streaming from a CXL expander: weight quantisation, pinned host DRAM, and two GPUs with tensor parallelism (latency in ms; CAMP-v2 where weights are streamed; ``resident'' = all weights fit one 80~GB GPU together with the KV cache). The two-GPU column is an optimistic estimate (perfect scaling, no communication) and is shown only to indicate when a second GPU makes streaming unnecessary.}
+\label{tab:alt}
+\scriptsize
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lllrcrrrr}
+\toprule
+\textbf{Model} & \textbf{Weights} & \textbf{Phase} & \textbf{GB} & \textbf{1 GPU fits} & \textbf{CXL 18} & \textbf{CXL 45} & \textbf{host DRAM 52} & \textbf{2 GPUs (opt.)}\\
+\midrule
+Llama-3-70B & FP16 & dec. & 141 & no & 4\,875 & 1\,912 & 1\,656 & does not fit\\
+Llama-3-70B & FP16 & pre. & 141 & no & 3\,795 & 1\,906 & 1\,906 & 943\\
+Llama-3-70B & FP8/INT8 & dec. & 71 & no & 854 & 346 & 302 & 16\\
+Llama-3-70B & FP8/INT8 & pre. & 71 & yes & 1\,886 & 1\,886 & 1\,886 & 943\\
+Llama-3-70B & INT4 & dec. & 35 & yes & 20 & 20 & 20 & 10\\
+Llama-3-70B & INT4 & pre. & 35 & yes & 1\,886 & 1\,886 & 1\,886 & 943\\
+Llama-3-405B & FP16 & dec. & 812 & no & 43\,206 & 17\,319 & 15\,087 & does not fit\\
+Llama-3-405B & FP16 & pre. & 812 & no & 41\,788 & 16\,820 & 14\,641 & does not fit\\
+Llama-3-405B & FP8/INT8 & dec. & 406 & no & 20\,431 & 8\,307 & 7\,193 & does not fit\\
+Llama-3-405B & FP8/INT8 & pre. & 406 & no & 18\,948 & 10\,929 & 10\,929 & does not fit\\
+Llama-3-405B & INT4 & dec. & 203 & no & 9\,149 & 3\,624 & 3\,119 & does not fit\\
+Llama-3-405B & INT4 & pre. & 203 & no & 10\,996 & 10\,921 & 10\,921 & does not fit\\
+\bottomrule
+\end{tabular}}
+\end{table}

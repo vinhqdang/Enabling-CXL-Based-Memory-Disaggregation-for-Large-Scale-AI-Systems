@@ -1,30 +1,26 @@
 \begin{table}[t]
 \centering
-\caption{Iteration latency (ms, mean of 10 seeds) of CAMP-v2 and the baselines. ``Cache'' is the share of weight bytes that fit in the HBM weight cache. Speed-up is relative to the best baseline in the row; ``/LB'' is CAMP-v2 latency divided by the lower bound of Section~\ref{sec:method-lb}. Static-$k$ uses the best $k\in\{1,2,4,8\}$ per configuration. 95\% confidence half-widths are $<3\%$ of the mean for every entry (Fig.~\ref{fig:main}).}
+\caption{Main comparison on the large-model configurations that do not fit one 80~GB GPU. Iteration latency in ms (mean of 10 seeds with common random numbers; best entry per row in bold). ``Cache'' is the share of weight bytes that fit in the HBM weight cache. FlexGen = per-layer fractional split with buffer count and lookahead tuned per row; Hot/Cold and Stride = equal-budget pinning with CAMP's or a tuned fixed lookahead (Section~\ref{sec:eval-setup}); LB = lower bound of Section~\ref{sec:method-lb}; det./LB = noise-free CAMP-v2 latency divided by LB; ``vs.\ best ext.'' = best of Demand/Static-$k$/FlexGen/Hot-Cold/CAMP-v1 divided by CAMP-v2.}
 \label{tab:main}
 \scriptsize
-\setlength{\tabcolsep}{3.2pt}
+\setlength{\tabcolsep}{2.8pt}
 \resizebox{\textwidth}{!}{%
-\begin{tabular}{llrrrrrrrrrrr}
+\begin{tabular}{llrrrrrrrrrrrrr}
 \toprule
-\textbf{Model} & \textbf{Workload} & \textbf{Cache} & \textbf{GB/s} & \textbf{Demand} & \textbf{Static-$k$} & \textbf{FlexGen} & \textbf{Hot/Cold} & \textbf{CAMP-v1} & \textbf{CAMP-v2} & \textbf{LB} & \textbf{Speed-up} & \textbf{/LB}\\
+\textbf{Model} & \textbf{Workload} & \textbf{Cache} & \textbf{GB/s} & \textbf{Demand} & \textbf{Static-$k$} & \textbf{FlexGen} & \textbf{Hot/Cold} & \textbf{Stride} & \textbf{CAMP-v1} & \textbf{CAMP-v2} & \textbf{LB} & \textbf{det./LB} & \textbf{vs.\ Demand} & \textbf{vs.\ best ext.}\\
 \midrule
-Llama-2-13B & dec. $B{=}$16,2k & 40\% & 18 & 1\,425 & 1\,403 & 915 & 905 & 898 & \textbf{873} & 873 & 1.03$\times$ & 1.00\\
- & dec. $B{=}$16,2k & 40\% & 45 & 587 & 566 & 374 & 370 & 363 & \textbf{353} & 349 & 1.03$\times$ & 1.01\\
- & mixed 64+512 & 40\% & 18 & 1\,468 & 1\,403 & 931 & 920 & 898 & \textbf{877} & 873 & 1.02$\times$ & 1.00\\
- & mixed 64+512 & 40\% & 45 & 630 & 566 & 389 & 384 & 364 & \textbf{356} & 349 & 1.02$\times$ & 1.02\\
- & pre. $B{=}$1 $S{=}$2k & 40\% & 18 & 1\,494 & 1\,403 & 942 & 933 & 903 & \textbf{884} & 873 & 1.02$\times$ & 1.01\\
- & pre. $B{=}$1 $S{=}$2k & 40\% & 45 & 658 & 568 & 399 & 395 & 375 & \textbf{359} & 349 & 1.05$\times$ & 1.03\\
- & pre. $B{=}$4 $S{=}$4k & 40\% & 18 & 2\,160 & 1\,410 & 1\,167 & 1\,157 & 1\,129 & \textbf{920} & 873 & 1.23$\times$ & 1.05\\
- & pre. $B{=}$4 $S{=}$4k & 40\% & 45 & 1\,314 & 757 & 750 & 970 & 750 & \textbf{750} & 746 & 1.00$\times$ & 1.01\\
-Llama-3-70B & dec. $B{=}$16,2k & 39\% & 18 & 7\,895 & 7\,837 & 5\,124 & 5\,092 & 5\,074 & \textbf{4\,880} & 4\,772 & 1.04$\times$ & 1.02\\
- & dec. $B{=}$16,2k & 39\% & 45 & 3\,145 & 3\,084 & 2\,012 & 1\,999 & 1\,980 & \textbf{1\,908} & 1\,909 & 1.04$\times$ & 1.00\\
- & pre. $B{=}$4 $S{=}$2k & 52\% & 18 & 9\,757 & 7\,836 & 5\,027 & 4\,996 & 4\,676 & \textbf{3\,807} & 3\,728 & 1.23$\times$ & 1.02\\
- & pre. $B{=}$4 $S{=}$2k & 52\% & 45 & 5\,015 & 3\,060 & 2\,500 & 2\,488 & 2\,390 & \textbf{1\,905} & 1\,887 & 1.25$\times$ & 1.01\\
- & pre. $B{=}$4 $S{=}$4k & 50\% & 18 & 11\,731 & 7\,844 & 6\,036 & 6\,036 & 5\,725 & \textbf{4\,103} & 3\,877 & 1.40$\times$ & 1.06\\
- & pre. $B{=}$4 $S{=}$4k & 50\% & 45 & 7\,033 & 3\,907 & 3\,879 & 3\,879 & 3\,879 & \textbf{3\,880} & 3\,874 & 1.00$\times$ & 1.00\\
-Gemma-2-9B & dec. $B{=}$32,2k & 40\% & 18 & 1\,022 & 1\,012 & 816 & 816 & 813 & \textbf{631} & 633 & 1.29$\times$ & 1.00\\
- & dec. $B{=}$32,2k & 40\% & 45 & 423 & 409 & 332 & 332 & 329 & \textbf{254} & 253 & 1.29$\times$ & 1.00\\
+Llama-3-70B & dec. $B{=}$16,2k & 39\% & 18 & 7\,853 & 7\,800 & 4\,896 & 4\,875 & 4\,891 & 5\,065 & \textbf{4\,870} & 4\,772 & 1.012 & 1.61$\times$ & 1.00$\times$\\
+ & dec. $B{=}$16,2k & 39\% & 45 & 3\,182 & 3\,127 & 1\,924 & 1\,920 & 1\,931 & 1\,993 & \textbf{1\,916} & 1\,909 & 1.016 & 1.66$\times$ & 1.00$\times$\\
+ & mixed 32+512 & 23\% & 18 & 7\,931 & 7\,800 & 6\,133 & \textbf{6\,095} & 6\,151 & 6\,193 & \textbf{6\,095} & 5\,965 & 1.013 & 1.30$\times$ & 1.00$\times$\\
+ & mixed 32+512 & 23\% & 45 & 3\,260 & 3\,127 & 2\,438 & 2\,436 & 2\,445 & 2\,463 & \textbf{2\,426} & 2\,386 & 1.019 & 1.34$\times$ & 1.00$\times$\\
+ & pre. $B{=}$4 $S{=}$2k & 52\% & 18 & 9\,704 & 7\,810 & \textbf{3\,870} & 4\,764 & 3\,968 & 4\,682 & 3\,885 & 3\,728 & 1.032 & 2.50$\times$ & 1.00$\times$\\
+ & pre. $B{=}$4 $S{=}$2k & 52\% & 45 & 5\,025 & 3\,119 & 1\,908 & 2\,660 & 2\,192 & 2\,408 & \textbf{1\,907} & 1\,887 & 1.006 & 2.64$\times$ & 1.00$\times$\\
+ & pre. $B{=}$4 $S{=}$4k & 50\% & 18 & 11\,667 & 7\,818 & \textbf{4\,079} & 6\,201 & 5\,066 & 5\,720 & 4\,141 & 3\,877 & 1.056 & 2.82$\times$ & 0.99$\times$\\
+ & pre. $B{=}$4 $S{=}$4k & 50\% & 45 & 7\,026 & 3\,914 & 3\,895 & 4\,395 & 3\,918 & \textbf{3\,886} & \textbf{3\,886} & 3\,874 & 1.002 & 1.81$\times$ & 1.00$\times$\\
+Llama-3-405B & dec. $B{=}$16,2k & 5\% & 18 & 45\,324 & 45\,027 & 43\,257 & 43\,313 & 43\,263 & 43\,295 & \textbf{43\,138} & 42\,809 & 1.005 & 1.05$\times$ & 1.00$\times$\\
+ & dec. $B{=}$16,2k & 5\% & 45 & 18\,294 & 18\,000 & 17\,288 & 17\,476 & 17\,459 & 17\,306 & \textbf{17\,272} & 17\,124 & 1.010 & 1.06$\times$ & 1.00$\times$\\
+ & pre. $B{=}$4 $S{=}$2k & 9\% & 18 & 56\,072 & 45\,008 & 41\,896 & 51\,510 & 42\,218 & 42\,718 & \textbf{41\,724} & 41\,165 & 1.011 & 1.34$\times$ & 1.00$\times$\\
+ & pre. $B{=}$4 $S{=}$2k & 9\% & 45 & 28\,966 & 18\,019 & 16\,797 & 27\,065 & 16\,919 & 22\,387 & \textbf{16\,744} & 16\,466 & 1.014 & 1.73$\times$ & 1.00$\times$\\
 \bottomrule
 \end{tabular}}
 \end{table}

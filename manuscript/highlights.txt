@@ -1,5 +1,5 @@
-Host-mediated GPU-CXL weight streaming, modelled and checked on a real GPU
-CAMP: online cost model, work-conserving prefetch, stall-cost-aware pinning
-Within 6% of a lower bound; up to 1.47x faster than the best static baseline
-Pin placement, not reuse frequency, decides the gain when compute meets transfer
-CXL streaming is nearly free only for compute-dense iterations (above 16k tokens)
+Host-mediated CXL weight streaming modelled; link logic checked on a real GPU
+Streaming is nearly free only above ~16k tokens per iteration; decode is link-bound
+Layer placement, not reuse frequency, decides gains when compute meets transfer
+A tuned per-layer split ties the policy on dense models; it wins on non-uniform reuse
+Compute-estimate accuracy changes latency by under 1% once calibrated

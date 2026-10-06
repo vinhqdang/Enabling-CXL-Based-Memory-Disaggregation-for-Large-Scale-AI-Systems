@@ -50,8 +50,8 @@ for r in e2:
                      st=pref(res, "Stride")["mean"], v1=pref(res, "CAMP-v1")["mean"], sk=pref(res, "Static-k")["mean"],
                      rea=pref(res, "Reactive")["mean"], ag=pref(res, "Aggressive")["mean"], unc=pref(res, "CAMP-v2 (uncal")["mean"], ex=pref(res, "CAMP-v2 (exact")["mean"],
                      c2ci=pref(res, "CAMP-v2")["ci"]))
-put("nMainRows", len(rows), "{:d}")
-put("nMainConfigs", len(rows) // 2, "{:d}")
+put("mainRows", len(rows), "{:d}")
+put("mainConfigs", len(rows) // 2, "{:d}")
 rng("demOverCamp", [x["dem"] / x["c2"] for x in rows])
 rng("skOverCamp", [x["sk"] / x["c2"] for x in rows])
 rng("fgOverCamp", [x["fg"] / x["c2"] for x in rows])
@@ -60,9 +60,11 @@ rng("stOverCamp", [x["st"] / x["c2"] for x in rows])
 rng("vOneOverCamp", [x["v1"] / x["c2"] for x in rows])
 ext = [min(x["dem"], x["sk"], x["fg"], x["hc"], x["v1"]) / x["c2"] for x in rows]
 rng("extOverCamp", ext)
-put("nWinExt", sum(1 for e in ext if e > 1.01), "{:d}")
-put("nTieExt", sum(1 for e in ext if 0.99 <= e <= 1.01), "{:d}")
-put("nLoseExt", sum(1 for e in ext if e < 0.99), "{:d}")
+put("extOverCampMaxPct", (max(ext) - 1) * 100, "{:.0f}")
+put("tieExtPlusWins", sum(1 for e in ext if 0.96 <= e <= 1.033), "{:d}")
+put("winExt", sum(1 for e in ext if e > 1.01), "{:d}")
+put("tieExt", sum(1 for e in ext if 0.99 <= e <= 1.01), "{:d}")
+put("loseExt", sum(1 for e in ext if e < 0.99), "{:d}")
 put("worstLossExt", (1 / min(ext) - 1) * 100, "{:.1f}")
 rng("detLb", [x["r"]["det_ratio_lb"] for x in rows], "{:.3f}")
 rng("noisyLb", [x["c2"] / max(x["r"]["lb"], x["r"]["ideal"]) for x in rows], "{:.3f}")
@@ -89,13 +91,13 @@ put("exactMaxPct", max(abs(x["ex"] / x["c2"] - 1) for x in rows) * 100, "{:.1f}"
 put("ciMaxPct", max(x["c2ci"] / x["c2"] for x in rows) * 100, "{:.1f}")
 # FlexGen vs CAMP, where FlexGen wins
 fgw = [x for x in rows if x["fg"] < x["c2"] * 0.99]
-put("nFgWins", len(fgw), "{:d}")
+put("fgWins", len(fgw), "{:d}")
 put("fgWinMaxPct", max((x["c2"] / x["fg"] - 1) * 100 for x in fgw) if fgw else 0, "{:.1f}")
 fgl = [x for x in rows if x["fg"] > x["c2"] * 1.01]
-put("nFgLoses", len(fgl), "{:d}")
+put("fgLoses", len(fgl), "{:d}")
 put("fgLoseMaxPct", max((x["fg"] / x["c2"] - 1) * 100 for x in fgl), "{:.0f}")
 stl = [x for x in rows if x["st"] > x["c2"] * 1.01]
-put("nStLoses", len(stl), "{:d}")
+put("stLoses", len(stl), "{:d}")
 put("stLoseMaxPct", max((x["st"] / x["c2"] - 1) * 100 for x in rows), "{:.0f}")
 
 put("reaOverSkMax", max(abs(x["rea"] / x["sk"] - 1) for x in rows) * 100, "{:.1f}")
@@ -125,8 +127,8 @@ for r in e3:
     simple = min(pref(r["res"], k)["mean"] for k in ("none", "prefix", "frequency (conv", "frequency (equal", "stride", "knapsack"))
     sa.append(simple / pref(r["res"], "SCP (plan+")["mean"])
 put("scpGainOverBestSimpleMax", (max(sa) - 1) * 100, "{:.1f}")
-put("nScpBeatsSimple", sum(1 for v in sa if v > 1.01), "{:d}")
-put("nPinCfg", len(e3), "{:d}")
+put("scpBeatsSimple", sum(1 for v in sa if v > 1.01), "{:d}")
+put("pinCfg", len(e3), "{:d}")
 # link utilisation
 u_stride = [pref(r["res"], "stride")["util"] for r in e3]
 u_freq = [pref(r["res"], "frequency (equal")["util"] for r in e3]
@@ -140,7 +142,7 @@ put("gapScpMean", statistics.mean(r["scp_gap_pct"] for r in gp), "{:.2f}")
 put("gapStrideMax", max(r["stride_gap_pct"] for r in gp), "{:.1f}")
 put("gapFreqMax", max(r["freq_gap_pct"] for r in gp), "{:.1f}")
 put("gapSimMax", max(r["sim_gap_pct"] for r in gp), "{:.1f}")
-put("nGap", len(gp), "{:d}")
+put("gapCount", len(gp), "{:d}")
 
 # ------------------------------------------------------------------ E4 eviction & heterogeneity
 ev = load("e4_reuse_heterogeneity")["eviction_uniform"]
@@ -206,11 +208,11 @@ for r in e7:
 def sl(m, w, bw, key="CAMP-v2"):
     r = sc[(m, w, bw)]
     return pref(r["results"], key)["mean"] / r["ideal"]
-put("scaleDec405Eighteen", sl("llama3-405b", "decode B=16 ctx=2k", 18.0), "{:.0f}")
-put("scaleDec405FortyFive", sl("llama3-405b", "decode B=16 ctx=2k", 45.0), "{:.0f}")
-put("scaleDec405Ms", pref(sc[("llama3-405b", "decode B=16 ctx=2k", 18.0)]["results"], "CAMP-v2")["mean"], "{:.1f}")
-put("scalePre405Eighteen", sl("llama3-405b", "prefill B=4 S=2k", 18.0))
-put("scalePre405FortyFive", sl("llama3-405b", "prefill B=4 S=2k", 45.0))
+put("scaleDecFourOhFiveEighteen", sl("llama3-405b", "decode B=16 ctx=2k", 18.0), "{:.0f}")
+put("scaleDecFourOhFiveFortyFive", sl("llama3-405b", "decode B=16 ctx=2k", 45.0), "{:.0f}")
+put("scaleDecFourOhFiveMs", pref(sc[("llama3-405b", "decode B=16 ctx=2k", 18.0)]["results"], "CAMP-v2")["mean"], "{:.1f}")
+put("scalePreFourOhFiveEighteen", sl("llama3-405b", "prefill B=4 S=2k", 18.0))
+put("scalePreFourOhFiveFortyFive", sl("llama3-405b", "prefill B=4 S=2k", 45.0))
 
 # ------------------------------------------------------------------ E8 link
 e8 = load("e8_link_sensitivity")
@@ -234,7 +236,7 @@ e9 = load("e9_robustness")
 put("plannerMape", e9["planner_mape"], "{:.2f}")
 put("plannerMedian", e9["planner_median"], "{:.2f}")
 put("plannerMax", e9["planner_max"], "{:.1f}")
-put("nPlanner", len(e9["planner"]), "{:d}")
+put("plannerCount", len(e9["planner"]), "{:d}")
 hi = [r for r in e9["noise"] if r["jitter"] == 0.5]
 for r in hi:
     k = "Dec" if r["workload"].startswith("decode") else "Pre"
@@ -272,6 +274,7 @@ put("attConvOverScpMax", max(step(k[0], k[1], k[2], 0) / step(k[0], k[1], k[2], 
 put("attConvOverScpMin", min(step(k[0], k[1], k[2], 0) / step(k[0], k[1], k[2], 6) for k in att), "{:.2f}")
 put("attEqBudgetWorseMax", max(step(k[0], k[1], k[2], 1) / step(k[0], k[1], k[2], 0) for k in att), "{:.2f}")
 put("attStrideOverScpMax", max(step(k[0], k[1], k[2], 4) / step(k[0], k[1], k[2], 6) for k in att), "{:.2f}")
+put("attFourOverFiveMax", max(step(k[0], k[1], k[2], 4) / step(k[0], k[1], k[2], 5) for k in att), "{:.2f}")
 put("attFiveOverSixMax", max(step(k[0], k[1], k[2], 5) / step(k[0], k[1], k[2], 6) for k in att), "{:.2f}")
 
 # ------------------------------------------------------------------ E11 alternatives
@@ -290,7 +293,7 @@ a405 = alt("llama3-405b", "INT4", "decode")
 put("altFourOhFiveFourDec", a405["cxl18"], "{:.1f}")
 put("altFourOhFiveFourWeights", a405["weight_gb"], "{:.0f}")
 put("altSeventyFpHostDec", a["hostdram52"] * 1e3, "{:.0f}")
-put("altSeventyFpCxl45Dec", a["cxl45"] * 1e3, "{:.0f}")
+put("altSeventyFpCxlFortyFiveDec", a["cxl45"] * 1e3, "{:.0f}")
 p = alt("llama3-70b", "FP16", "prefill")
 put("altSeventyFpPre", p["cxl18"] * 1e3, "{:.0f}")
 put("altSeventyTwoGpuPre", p["two_gpu_latency_optimistic"] * 1e3, "{:.0f}")
