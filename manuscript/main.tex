@@ -28,8 +28,14 @@
 
 \author[buv]{Quang-Vinh Dang\corref{cor1}}
 \ead{vinh.dq4@buv.edu.vn}
+\author[uef]{Dat Le}
+\ead{datla@uef.edu.vn}
+\author[mil]{Minh Ngoc Dinh}
+\ead{minh.dinh@maeducation.com}
 \cortext[cor1]{Corresponding author. ORCID: 0000-0002-3877-8024}
 \address[buv]{British University Vietnam, Hung Yen, Vietnam}
+\address[uef]{Department of Science, Technology, and International Projects, Ho Chi Minh City University of Economics and Finance, Ho Chi Minh City 700000, Vietnam}
+\address[mil]{Millennia Education, Ho Chi Minh City, Vietnam}
 
 \begin{abstract}
 Models larger than GPU memory can be served by streaming weights from CXL memory. The GPU cannot address a CXL expander, so every transfer is a host-initiated DMA limited by the slower of the device and the PCIe link (10--20~GB/s). This is a simulation study: the link is modelled from published measurements, and only the simulator's overlap logic is checked on a real GPU with pinned host memory as the pool; no CXL device was measured. First, streaming is nearly free only above about 16k tokens per iteration: at 18~GB/s a 70B model is \nRegSlowSixteenKEighteen$\times$ slower than resident weights at 16k tokens and \nRegSlowOneEighteen$\times$ slower at one token. Second, where resident layers sit matters more than which ones: contiguous resident sets idle the link when compute and transfer are comparable, while interleaved placements, such as a FlexGen-style per-layer split, stay within about 7\% of a lower bound. Third, \camp{} combines a work-conserving prefetcher with stall-cost-aware pinning (SCP), a plan-and-verify choice of resident layers. On Llama-2/3 (up to 405B) and Gemma-2 \camp{} is \nDemOverCampMin--\nDemOverCampMax$\times$ faster than demand paging and within \nDetLbMed--\nDetLbMax$\times$ of the lower bound without noise. Against a tuned per-layer split it is ahead by up to \nExtOverCampMaxPct\%, behind by at most \nWorstLossExt\%, ties on uniform dense models and wins where reuse or unit sizes are non-uniform (up to \nHetEncFg$\times$ on encoder--decoder inference). Fourth, sharing one expander among $G$ GPUs raises the threshold $G$-fold, giving a simple sizing rule. The compute-time estimate changes latency by under 1\% once calibrated.
@@ -507,19 +513,22 @@ Changing the resident set requires moving up to the pinned bytes once. At 18~GB/
 \section{Conclusion}
 \label{sec:conclusion}
 
-We studied LLM inference with weights streamed from CXL expanders through a host-mediated DMA path. A closed-form threshold and a regime map show when streaming is nearly free (above about 16k tokens per iteration) and when it is tens of times slower (decode). Which layers are resident matters less than where they sit: contiguous resident sets idle the link when compute and transfer are comparable, interleaved ones do not, and a per-layer fractional split in the style of FlexGen is already interleaved. \camp{}, which combines a work-conserving prefetcher with stall-cost-aware pinning, stays within \nDetLbMed--\nDetLbMax$\times$ of an implementation-independent lower bound in simulation, is up to \nDemOverCampMax$\times$ faster than demand paging, ties the best baseline on dense uniform models and is ahead where unit sizes or reuse are non-uniform; the compute estimate and the LFU/LRU distinction, often presented as central, matter little. The link and overlap logic of the simulator was checked on a real GPU with host memory standing in for the pool, with mixed accuracy that we report as is. The main open items are measurement on real CXL hardware and PCIe Gen5 GPUs, tensor-level pinning, online variants for Mixture-of-Experts, and multi-tenant sharing of the pool.
+We studied LLM inference with weights streamed from CXL expanders through a host-mediated DMA path. A closed-form threshold and a regime map show when streaming is nearly free (above about 16k tokens per iteration) and when it is tens of times slower (decode). Which layers are resident matters less than where they sit: contiguous resident sets idle the link when compute and transfer are comparable, interleaved ones do not, and a per-layer fractional split in the style of FlexGen is already interleaved. \camp{}, which combines a work-conserving prefetcher with stall-cost-aware pinning, stays within \nDetLbMed--\nDetLbMax$\times$ of an implementation-independent lower bound in simulation, is up to \nDemOverCampMax$\times$ faster than demand paging, ties the best baseline on dense uniform models and is ahead where unit sizes or reuse are non-uniform; the compute estimate and the LFU/LRU distinction, often presented as central, matter little. The link and overlap logic of the simulator was checked on a real GPU with host memory standing in for the pool, with mixed accuracy that we report as is. Sharing one expander among $G$ GPUs raises the threshold $G$-fold, so one expander feeds $G\le T/T^\star$ GPUs at near-resident speed. The main open items are measurement on real CXL hardware and PCIe Gen5 GPUs, tensor-level pinning, online variants for Mixture-of-Experts, and multi-tenant sharing of the pool.
 
 \section*{CRediT authorship contribution statement}
-\textbf{Quang-Vinh Dang}: Conceptualization, Methodology, Software, Validation, Formal analysis, Investigation, Data curation, Writing -- original draft, Writing -- review \& editing, Visualization, Supervision.
+\textbf{Quang-Vinh Dang}: Conceptualization, Methodology, Software, Validation, Formal analysis, Investigation, Data curation, Writing -- original draft, Visualization, Supervision. \textbf{Dat Le}: Validation, Writing -- review \& editing. \textbf{Minh Ngoc Dinh}: Validation, Writing -- review \& editing.
 
 \section*{Data availability}
 The simulator, experiment scripts, raw result files, the hardware micro-benchmark and its measured output are available at \url{https://github.com/vinhqdang/Enabling-CXL-Based-Memory-Disaggregation-for-Large-Scale-AI-Systems}. Every figure, table and number in the text is generated from the files in \texttt{results/} by \texttt{experiments/plots.py}, \texttt{experiments/make\_tables.py} and \texttt{experiments/make\_numbers.py}.
 
+\section*{Funding}
+This research did not receive any specific grant from funding agencies in the public, commercial, or not-for-profit sectors.
+
 \section*{Declaration of competing interest}
-The author declares that he has no known competing financial interests or personal relationships that could have appeared to influence the work reported in this paper.
+The authors declare that they have no known competing financial interests or personal relationships that could have appeared to influence the work reported in this paper.
 
 \section*{Declaration of generative AI and AI-assisted technologies in the writing process}
-During the preparation of this work the author used generative AI-assisted tools for software implementation, experiment scripting, analysis scripts and drafting and editing of text, including responses to reviewers. After using these tools, the author reviewed, verified and edited all code, results and content as needed and takes full responsibility for the content of the publication.
+During the preparation of this work the authors used generative AI-assisted tools for software implementation, experiment scripting, analysis scripts and drafting and editing of text. After using these tools, the authors reviewed, verified and edited all code, results and content as needed and take full responsibility for the content of the publication.
 
 \bibliographystyle{elsarticle-num}
 \bibliography{refs}

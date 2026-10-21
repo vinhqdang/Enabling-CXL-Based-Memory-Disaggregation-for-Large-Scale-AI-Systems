@@ -1,20 +1,21 @@
-# Submission package: venue to be chosen (Array is excluded: it rejected an earlier version)
+# Submission package: Microprocessors and Microsystems: Embedded Hardware Design (Elsevier, new submission via Editorial Manager)
 
-Files to upload in the transfer / submission form:
+Files to upload:
 
-| File | Use in the submission system |
-|------|------------------------------|
-| `manuscript.pdf` | Manuscript (PDF for review) |
-| `manuscript_source.zip` | LaTeX source (`main.tex`, `refs.bib`, `main.bbl`, tables, figures) if the system asks for source files |
-| `highlights.txt` | Highlights (5 items, each at most 85 characters) |
+| File | Use |
+|------|-----|
+| `manuscript.pdf` | Manuscript PDF for review (elsarticle, single column) |
+| `manuscript_source.zip` | LaTeX source (`main.tex`, `refs.bib`, `main.bbl`, `numbers.tex`, tables, figures); the journal requires an editable source, a PDF alone is not accepted |
+| `highlights.txt` | Highlights (5 items, at most 85 characters) |
 | `cover_letter.pdf` | Cover letter |
+| `author_vitae.docx` | Vitae, at most 100 words per author (Word); the biographies of Dat Le and Minh Ngoc Dinh must be filled in; passport-type photo per author as separate figure files |
 
-Checklist before pressing submit:
+Open items for the authors before submitting:
 
-1. In the Elsevier transfer page, choose the target journal; do not choose Array. Check APC and waivers first if the journal is open access. Replace [JOURNAL NAME] in the cover letter.
-2. Replace the transferred manuscript files with the ones above (the transfer carries the old files). Mention in the cover letter box that the paper was desk-rejected elsewhere only if the form asks; no response letter is needed.
-3. Abstract field: paste the abstract from the PDF (check the word count against the journal limit).
-4. Suggested reviewers: not prepared (names and e-mail addresses must come from the author); choose researchers who published on CXL memory for AI, weight offloading or LLM serving systems.
-5. Declarations: the manuscript contains the CRediT statement, data availability, competing-interest statement and the generative-AI declaration required by the journal. The AI declaration must stay accurate; edit its wording only if the actual use of tools differs.
-6. Confirm the repository link in the Data availability statement is public before submitting.
-7. Generative-AI declaration: the manuscript contains a generic declaration (tools used for implementation, scripting, drafting and editing; author verified everything). The Elsevier form may ask for the name of the tool; whether and how to name it is the author's decision.
+1. Authors: Quang-Vinh Dang (corresponding), Dat Le, Minh Ngoc Dinh. Confirm the CRediT roles in the manuscript (drafted: Dang all main roles; Le and Dinh validation and review/editing).
+2. Complete the Elsevier declarations tool (competing interests); upload the resulting Word file.
+3. Data statement: the journal requires deposit in a data repository and citation (Option C). The manuscript currently links the GitHub repository; archive a release on Zenodo and cite the DOI.
+4. Abstract limit 250 words, 1-7 keywords (6 given), highlights 3-5 items: satisfied.
+5. Generative-AI statement is included before the references; it must match actual use.
+6. Funding statement included (no specific funding).
+7. Scope: the journal focuses on embedded hardware; the cover letter states the fit and its limits openly.

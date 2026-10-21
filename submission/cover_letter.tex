@@ -6,21 +6,21 @@
 
 Dear Editor-in-Chief and Editors,
 
-Please find enclosed the manuscript \textbf{``Streaming LLM Weights from CXL Memory: A Simulation Study of Regimes, Placement and Pipeline-Aware Pinning''} for consideration in the \emph{[JOURNAL NAME]}. The study has been rebuilt from an earlier version with a new simulator, stronger baselines and new experiments, and is presented explicitly as a simulation and analysis study.
+Please find enclosed the manuscript \textbf{``Streaming LLM Weights from CXL Memory: A Simulation Study of Regimes, Placement and Pipeline-Aware Pinning''} for consideration in the \emph{Microprocessors and Microsystems: Embedded Hardware Design}. The study has been rebuilt from an earlier version with a new simulator, stronger baselines and new experiments, and is presented explicitly as a simulation and analysis study.
 
 \textbf{Problem.} Models such as Llama-3-70B (141~GB in FP16) exceed GPU memory. CXL Type-3 memory expanders offer cheap host-attached capacity, but a GPU cannot address them: weights reach HBM through host-initiated DMA at roughly 10--20~GB/s on published prototypes. We ask when streaming weights over this path is viable and what a runtime policy can still gain.
 
 \textbf{Contributions.} (1) A host-mediated transfer model, a closed-form arithmetic-intensity threshold, an implementation-independent lower bound and a regime map: streaming is nearly free only above about 16k tokens per iteration and tens of times slower than resident weights for small-batch decode. (2) An analysis of where policy gains come from: placement of the resident layers matters when compute and transfer are comparable (contiguous sets idle the link), and a tuned FlexGen-style per-layer split is already within a few per cent of our policy on dense uniform models. (3) CAMP, a runtime policy (work-conserving prefetcher with next-use admission and stall-cost-aware pinning) that stays within 1.07 of the lower bound in simulation, is up to 2.8$\times$ faster than demand paging, ties the best baseline on dense models and is ahead where unit sizes or reuse are non-uniform (up to 1.97$\times$ on encoder--decoder inference). (4) A pool-sizing rule: when $G$ GPUs share one expander the threshold rises $G$-fold, so streaming stays nearly free while $G\le T/T^\star$ (confirmed in simulation up to 16 GPUs). (5) Negative results: the compute-time estimate changes latency by under 1\% once calibrated, and LFU is indistinguishable from LRU on cyclic scans. (6) A simulator, cross-checked against a published CXL weight-streaming result, whose link and overlap logic is checked on a real GPU, with the accuracy of that check reported as it is (mixed: 0.6\% in link-bound configurations, up to 25\% elsewhere).
 
-\textbf{Fit with the journal.} The work applies modelling, simulation and scheduling methods to memory systems for large-language-model inference, which fits the computer science and applied computing scope of the journal.
+\textbf{Fit with the journal.} The journal covers the memory and communication structures of complex processor platforms and the interplay between hardware and software with emphasis on hardware. The manuscript studies one such structure: a host-mediated path through which an accelerator obtains data from a CXL-attached memory tier. It models the path's bandwidth, per-transfer costs and overlap with computation, derives when the path can be hidden behind computation, and evaluates a data-movement scheduler for it. We are aware that the journal's focus is embedded hardware and that this is a platform-level study of an accelerator memory hierarchy rather than a circuit or SoC design; we believe the memory-system and co-design questions it addresses are of interest to the readership.
 
 \textbf{Scope of the evidence.} This is a simulation study and the manuscript says so in its title, abstract and introduction. No CXL hardware was measured; the CXL link is simulated with parameters anchored in published measurements and the pipeline logic is validated on a PCIe-attached GPU with pinned host memory standing in for the pool. Mixture-of-Experts models, multi-GPU or multi-tenant pools and CXL switches are not evaluated, and the T4 check leaves part of its own error unexplained. Code, raw results and the hardware micro-benchmark are publicly available (see the Data availability statement).
 
-The manuscript is original, is not under consideration elsewhere, and the author declares no competing interests. The generative-AI declaration required by the journal is included in the manuscript.
+The manuscript is original, is not under consideration elsewhere, and the authors declare no competing interests. The generative-AI declaration required by the journal is included in the manuscript.
 
 Sincerely,
 
-Quang-Vinh Dang\\
-British University Vietnam, Hung Yen, Vietnam\\
+Quang-Vinh Dang (corresponding author), Dat Le, Minh Ngoc Dinh\\
+British University Vietnam, Hung Yen, Vietnam; Ho Chi Minh City University of Economics and Finance; Millennia Education, Ho Chi Minh City, Vietnam\\
 vinh.dq4@buv.edu.vn \quad ORCID 0000-0002-3877-8024
 \end{document}
