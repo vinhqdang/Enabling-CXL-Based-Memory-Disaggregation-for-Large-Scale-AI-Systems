@@ -1,4 +1,4 @@
-# Submission package: Microprocessors and Microsystems: Embedded Hardware Design (Elsevier, new submission via Editorial Manager)
+# Submission package: Simulation Modelling Practice and Theory (Elsevier, new submission via Editorial Manager)
 
 Files to upload:
 
@@ -10,6 +10,8 @@ Files to upload:
 | `cover_letter.pdf` | Cover letter |
 | `author_vitae.docx` | Vitae, at most 100 words per author (Word); the biographies of Dat Le and Minh Ngoc Dinh must be filled in; passport-type photo per author as separate figure files |
 
+Check the journal's own guide for authors (the limits below were taken from Microprocessors and Microsystems and are the same for most Elsevier journals).
+
 Open items for the authors before submitting:
 
 1. Authors: Quang-Vinh Dang (corresponding), Dat Le, Minh Ngoc Dinh. Confirm the CRediT roles in the manuscript (drafted: Dang all main roles; Le and Dinh validation and review/editing).
@@ -18,4 +20,4 @@ Open items for the authors before submitting:
 4. Abstract limit 250 words, 1-7 keywords (6 given), highlights 3-5 items: satisfied.
 5. Generative-AI statement is included before the references; it must match actual use.
 6. Funding statement included (no specific funding).
-7. Scope: the journal focuses on embedded hardware; the cover letter states the fit and its limits openly.
+7. Scope: the journal publishes simulation and modelling studies; check its current guide for authors for abstract length, keywords, highlights and data-statement rules before uploading.

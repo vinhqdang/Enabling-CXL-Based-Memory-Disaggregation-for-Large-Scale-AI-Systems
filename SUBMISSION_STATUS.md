@@ -10,7 +10,8 @@ Manuscript: "Streaming LLM Weights from CXL Memory: Regimes, Placement and Pipel
 | 2026-10-06 | Journal of Parallel and Distributed Computing (Elsevier) | Submitted as a new manuscript (title: "Streaming LLM Weights from CXL Memory: Regimes, Placement and Pipeline-Aware Pinning"). Classifications chosen: Heterogeneous Computing System, Resource Allocation, Scheduling In Computing, Optimization, Scalability. Package: `submission/`. Backup venue if rejected: Microprocessors and Microsystems. |
 | 2026-10-21 | JPDC, JPDC-D-26-01936 | Rejected without review (Associate Editor in Chief). Reason: results premature; the work is about CXL but no CXL was used. Editor encourages improving the evaluation to represent the actual setup and resubmitting. |
 | 2026-10-21 | Venue choice | Array is excluded: it already rejected an earlier version (ARRAY-D-26-00328R1) although Elsevier's transfer list offers it. Remaining transfer options: Machine Learning with Applications (scope is ML applications, weak fit). Backup: Microprocessors and Microsystems. Not yet submitted anywhere. |
-| 2026-10-22 | Microprocessors and Microsystems | Package prepared with three authors (Dang, Le, Dinh); journal scope is embedded hardware, so desk-rejection for scope is a risk. Not yet submitted. |
+| 2026-10-22 | Microprocessors and Microsystems | Package prepared with three authors (Dang, Le, Dinh), then dropped by the authors: scope is embedded hardware, high desk-rejection risk. Not submitted. |
+| 2026-10-22 | Simulation Modelling Practice and Theory (Elsevier) | Chosen because the work is a simulation study; cover letter and README updated. Backups: IEEE Access, Future Generation Computer Systems. Not yet submitted. |
 
 ## What changed after the JSA reviews
 
