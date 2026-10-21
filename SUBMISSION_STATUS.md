@@ -9,6 +9,7 @@ Manuscript: "Streaming LLM Weights from CXL Memory: Regimes, Placement and Pipel
 | 2026-08-25 | Journal of Systems Architecture (Elsevier), JSA-D-26-01708 | Rejected (decision 2026-10). Two reviewers; the points were addressed by rebuilding the study, not by a rebuttal. |
 | 2026-10-06 | Journal of Parallel and Distributed Computing (Elsevier) | Submitted as a new manuscript (title: "Streaming LLM Weights from CXL Memory: Regimes, Placement and Pipeline-Aware Pinning"). Classifications chosen: Heterogeneous Computing System, Resource Allocation, Scheduling In Computing, Optimization, Scalability. Package: `submission/`. Backup venue if rejected: Microprocessors and Microsystems. |
 | 2026-10-21 | JPDC, JPDC-D-26-01936 | Rejected without review (Associate Editor in Chief). Reason: results premature; the work is about CXL but no CXL was used. Editor encourages improving the evaluation to represent the actual setup and resubmitting. |
+| 2026-10-21 | Array (Elsevier transfer offer, guaranteed peer review) | Prepared, not yet submitted. Manuscript reframed as a simulation study (title, abstract, new "Nature of the evidence" paragraph, "Why simulation" note); cover letter, README and title/abstract file updated in `submission/`. Next step: author selects Array on the transfer page and uploads `submission/` files. Backup: Machine Learning with Applications. |
 
 ## What changed after the JSA reviews
 

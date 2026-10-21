@@ -1,4 +1,4 @@
-%% CAMP -- manuscript for the Journal of Parallel and Distributed Computing (Elsevier, elsarticle class)
+%% CAMP -- manuscript for the Array (Elsevier, elsarticle class)
 \documentclass[preprint,12pt]{elsarticle}
 
 \usepackage{amsmath,amssymb}
@@ -18,13 +18,13 @@
 \newcommand{\camp}{\textsc{CAMP}}
 \newcommand{\bwlink}{BW_{\mathrm{eff}}}
 
-\journal{Journal of Parallel and Distributed Computing}
+\journal{Array}
 
 \begin{document}
 
 \begin{frontmatter}
 
-\title{Streaming LLM Weights from CXL Memory: Regimes, Placement and Pipeline-Aware Pinning}
+\title{Streaming LLM Weights from CXL Memory: A Simulation Study of Regimes, Placement and Pipeline-Aware Pinning}
 
 \author[buv]{Quang-Vinh Dang\corref{cor1}}
 \ead{vinh.dq4@buv.edu.vn}
@@ -32,7 +32,7 @@
 \address[buv]{British University Vietnam, Hung Yen, Vietnam}
 
 \begin{abstract}
-Models whose weights exceed GPU memory can be served by streaming part of the weights from CXL-attached memory. A CXL Type-3 expander is not addressable by the GPU, so every transfer is a host-initiated DMA limited by the slower of the CXL device and the PCIe link (10--20~GB/s). We study this path with an event-driven simulator whose link and overlap logic is checked on a real GPU (pinned host memory replaces the pool; no CXL device was measured). First, streaming is nearly free only above about 16k tokens per iteration: at 18~GB/s a 70B model is \nRegSlowSixteenKEighteen$\times$ slower than resident weights at 16k tokens and \nRegSlowOneEighteen$\times$ slower at one token. Second, where resident layers sit matters more than which ones: contiguous resident sets idle the link when compute and transfer are comparable, while interleaved placements, such as a FlexGen-style per-layer split, stay within about 7\% of an implementation-independent lower bound. Third, we present \camp, a runtime policy combining a work-conserving prefetcher with stall-cost-aware pinning (SCP), a plan-and-verify choice of resident layers. On Llama-2/3 (up to 405B) and Gemma-2 configurations \camp{} is \nDemOverCampMin--\nDemOverCampMax$\times$ faster than demand paging and within \nDetLbMed--\nDetLbMax$\times$ of the lower bound without noise. Against the strongest baseline, a tuned per-layer split, it is ahead by up to \nExtOverCampMaxPct\% and behind by at most \nWorstLossExt\%: it ties on uniform dense models and wins where reuse or unit sizes are non-uniform (up to \nHetEncFg$\times$ on encoder--decoder inference). The compute-time estimate changes latency by under 1\% once calibrated.
+Models larger than GPU memory can be served by streaming weights from CXL-attached memory. A CXL expander is not addressable by the GPU, so every transfer is a host-initiated DMA limited by the slower of the CXL device and the PCIe link (10--20~GB/s). This is a simulation study: the link is modelled from published measurements, and only the simulator's overlap logic is checked on a real GPU with pinned host memory as the pool; no CXL device was measured. First, streaming is nearly free only above about 16k tokens per iteration: at 18~GB/s a 70B model is \nRegSlowSixteenKEighteen$\times$ slower than resident weights at 16k tokens and \nRegSlowOneEighteen$\times$ slower at one token. Second, where resident layers sit matters more than which ones: contiguous resident sets idle the link when compute and transfer are comparable, while interleaved placements, such as a FlexGen-style per-layer split, stay within about 7\% of an implementation-independent lower bound. Third, we present \camp, a runtime policy combining a work-conserving prefetcher with stall-cost-aware pinning (SCP), a plan-and-verify choice of resident layers. On Llama-2/3 (up to 405B) and Gemma-2 configurations \camp{} is \nDemOverCampMin--\nDemOverCampMax$\times$ faster than demand paging and within \nDetLbMed--\nDetLbMax$\times$ of the lower bound without noise. Against the strongest baseline, a tuned per-layer split, it is ahead by up to \nExtOverCampMaxPct\% and behind by at most \nWorstLossExt\%: it ties on uniform dense models and wins where reuse or unit sizes are non-uniform (up to \nHetEncFg$\times$ on encoder--decoder inference). The compute-time estimate changes latency by under 1\% once calibrated.
 \end{abstract}
 
 \begin{keyword}
@@ -58,6 +58,8 @@ Known-graph tensor swapping is an established idea in training \cite{rhu2016vdnn
 \item \textbf{The \camp{} policy and the cases where it differs (Sections~\ref{sec:camp}, \ref{sec:res-main}, \ref{sec:res-reuse}).} \camp{} combines a work-conserving prefetcher with next-use admission, a pipeline planner and stall-cost-aware pinning (SCP), which scores candidate resident sets with the planner and verifies them in a dry run. SCP never lost more than \nScpRegretMaxPct\% to the best of six simpler pin rules in \nPinCfg{} configurations and gained up to \nScpGainOverBestSimpleMax\% over it, without being told which rule suits the workload. Against a FlexGen-style split whose buffer count and lookahead are tuned per configuration by simulation, \camp{} is within $\pm$\nWorstLossExt\% on \nTieExtPlusWins{} of \nMainRows{} rows and \nFgLoseMaxPct\% faster on Gemma-2 (tied embedding); where per-layer reuse differs strongly (encoder--decoder) the split is \nHetEncFg$\times$ slower. Against the conventional hot/cold baseline the gain reaches \nHcOverCampMax$\times$.
 \item \textbf{Methodology and negative results (Sections~\ref{sec:method}, \ref{sec:validation}, \ref{sec:res-cost}).} An event-driven simulator with common random numbers, ten seeds, a hardware check of its link and overlap logic on a real GPU, and a cost-model study. The compute estimate, a prominent component in related proposals, affects latency by at most \nCmSpreadB\% once calibrated by one probe iteration, and an LFU eviction policy is indistinguishable from LRU on cyclic scans.
 \end{enumerate}
+
+\paragraph{Nature of the evidence} This is a modelling and simulation study, not a measurement of CXL hardware. All quantitative claims about CXL-backed serving are conditional on the link model of Section~\ref{sec:model}, whose bandwidth and fixed costs come from published prototype measurements and are swept from 8 to 64~GB/s (Section~\ref{sec:res-scale}). The only measurements we made are on a PCIe-attached GPU reading page-locked host DRAM, and they test the simulator's copy and overlap logic, not CXL. Readers who need absolute numbers for a given expander should substitute their own measured bandwidth and per-copy cost into the closed-form threshold and lower bound, which is what Section~\ref{sec:res-regime} is designed for.
 
 \paragraph{Scope} We target dense transformer models whose layer order is static. We do not evaluate Mixture-of-Experts routing, multi-GPU or multi-tenant sharing of a CXL pool, KV-cache placement in CXL, or CXL switches. No CXL hardware was available: the CXL link is simulated with parameters anchored in published measurements, and the hardware validation (Section~\ref{sec:validation}) uses pinned host memory on a PCIe-attached GPU as a stand-in for the pool. All GPU compute times other than the T4 micro-benchmark come from a roofline model, not from measurement.
 
@@ -263,6 +265,8 @@ Units that are not pinned are evicted by next-use order (furthest next use first
 
 \subsection{Simulator}
 \label{sec:sim}
+
+\emph{Why simulation.} A GPU cannot address a CXL expander, so a real experiment needs a server with a CXL Type-3 device, a PCIe-attached GPU on the same root complex, and a runtime that places weights in the CXL-backed memory. We had no such platform. A simulator lets us explore bandwidths from 8 to 64~GB/s, models up to 405B parameters and many policies under identical conditions, which no single testbed would allow, at the price that every result inherits the accuracy of the link and compute models.
 
 The simulator (\texttt{camp\_sim}, released with this paper) is an event-driven model of one GPU, one copy engine and an HBM weight cache. It contains no policy: prefetch, victim selection and pinning are plug-ins. The compute stream executes accesses strictly in order; each access first issues its demand fetch, then lets the policy issue lookahead, then waits for the weights. Copy completions and layer completions are events, and policies are re-invoked at both. Noise is drawn from a generator keyed by (seed, event identity), and the bandwidth drift is indexed by simulated time, so different policies run with the same seed see the same environment for the same copy or layer (common random numbers); policy comparisons use paired seeds. All experiments use ten seeds unless stated; we report means and 95\% confidence half-widths ($t$-distribution; at most \nCiMaxPct\% of the mean for \camp-v2 in Table~\ref{tab:main}). Layer weights are never materialised: the simulator tracks bytes, not tensors.
 
