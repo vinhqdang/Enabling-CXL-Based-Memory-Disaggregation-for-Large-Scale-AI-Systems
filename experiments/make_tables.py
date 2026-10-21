@@ -322,6 +322,32 @@ emit(r"""\begin{table}[t]
 \end{table}
 """)
 
+e12 = load("e12_pool_sharing")
+rows = []
+for pool in (18, 45):
+    for T in (16384, 65536):
+        rs = [r for r in e12["rows"] if r["pool"] == pool and r["T"] == T]
+        cells = []
+        for r in rs:
+            sl = r["camp"] / r["ideal"]
+            cells.append(f"{sl:.2f}" if sl < 10 else f"{sl:.1f}")
+        pred = T / rs[0]["tstar"]
+        rows.append(f"{pool} & {T:,} & {rs[0]['tstar']/1e3:.1f}k & {pred:.1f} & " .replace(",", "\\,") + " & ".join(cells) + r" \\")
+emit(r"""\begin{table}[t]
+\centering
+\caption{Several GPUs behind one expander (70B, 40\% of the weights resident per GPU, all GPUs streaming at once, \camp-v2). Slowdown relative to resident weights when the pool bandwidth is shared equally among $G$ GPUs. $T^\star$ is the threshold of Eq.~(\ref{eq:threshold}) for the whole pool; $T/T^\star$ is the predicted largest $G$ with near-free streaming.}
+\label{tab:pool}
+\small
+\begin{tabular}{rrrrrrrrr}
+\toprule
+\textbf{Pool GB/s} & \textbf{$T$} & \textbf{$T^\star$} & \textbf{$T/T^\star$} & $G{=}1$ & $G{=}2$ & $G{=}4$ & $G{=}8$ & $G{=}16$\\
+\midrule
+""" + "\n".join(rows) + r"""
+\bottomrule
+\end{tabular}
+\end{table}
+""")
+
 import re
 FIT = r"\resizebox{\ifdim\width>\textwidth\textwidth\else\width\fi}{!}{%"
 for block in out:

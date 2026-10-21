@@ -16,7 +16,7 @@ non-uniform ones (the paper reports the negative results too).
 | Path | Content |
 |------|---------|
 | `camp_sim/` | Simulator: `hw.py` (GPU and host-mediated link model), `cost.py` (roofline ground truth and the runtime cost model), `models.py` (Llama-2/3, Gemma-2 configs, traces), `sim.py` (event engine), `policies.py` (baselines, CAMP prefetcher, SCP pinning) |
-| `experiments/` | `run_all.py` (experiments E1-E11), `validate_hw.py`, `plots.py`, `make_tables.py`, `make_numbers.py` (every number quoted in the text), `fig_architecture.py` |
+| `experiments/` | `run_all.py` (experiments E1-E11), `run_new.py` (E12 pool sharing, E13 cross-check against a published result), `validate_hw.py`, `plots.py`, `make_tables.py`, `make_numbers.py` (every number quoted in the text), `fig_architecture.py` |
 | `validation/hw_validate.py` | Real-GPU micro-benchmark (copy cost, GEMM roofline, streaming loop) |
 | `results/` | Raw JSON results of every experiment and the measured T4 data (`results/hw/`) |
 | `tests/test_engine.py` | Closed-form checks of the event engine |
@@ -30,6 +30,7 @@ non-uniform ones (the paper reports the negative results too).
 pip install -r requirements.txt
 python tests/test_engine.py                 # engine vs. closed-form pipeline times
 python experiments/run_all.py               # all simulator experiments (~15 min on four cores; run the e1..e11 arguments in parallel)
+python experiments/run_new.py               # e12, e13
 python experiments/validate_hw.py           # simulator vs. measured T4 data in results/hw
 python experiments/plots.py && python experiments/fig_architecture.py
 python experiments/make_tables.py && python experiments/make_numbers.py

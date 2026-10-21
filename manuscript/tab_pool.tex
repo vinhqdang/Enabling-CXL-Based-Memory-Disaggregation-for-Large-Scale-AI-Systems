@@ -1,0 +1,17 @@
+\begin{table}[t]
+\centering
+\caption{Several GPUs behind one expander (70B, 40\% of the weights resident per GPU, all GPUs streaming at once, \camp-v2). Slowdown relative to resident weights when the pool bandwidth is shared equally among $G$ GPUs. $T^\star$ is the threshold of Eq.~(\ref{eq:threshold}) for the whole pool; $T/T^\star$ is the predicted largest $G$ with near-free streaming.}
+\label{tab:pool}
+\small
+\resizebox{\ifdim\width>\textwidth\textwidth\else\width\fi}{!}{%
+\begin{tabular}{rrrrrrrrr}
+\toprule
+\textbf{Pool GB/s} & \textbf{$T$} & \textbf{$T^\star$} & \textbf{$T/T^\star$} & $G{=}1$ & $G{=}2$ & $G{=}4$ & $G{=}8$ & $G{=}16$\\
+\midrule
+18 & 16\,384 & 20.4k & 0.8 & 1.10 & 2.16 & 4.24 & 8.50 & 16.9 \\
+18 & 65\,536 & 20.4k & 3.2 & 1.01 & 1.01 & 1.10 & 2.15 & 4.27 \\
+45 & 16\,384 & 8.2k & 2.0 & 1.00 & 1.01 & 1.73 & 3.40 & 6.80 \\
+45 & 65\,536 & 8.2k & 8.0 & 1.00 & 1.00 & 1.01 & 1.01 & 1.72 \\
+\bottomrule
+\end{tabular}}
+\end{table}

@@ -22,3 +22,4 @@ Manuscript: "Streaming LLM Weights from CXL Memory: Regimes, Placement and Pipel
   baselines were strengthened (equal budget, tuned lookahead, tuned FlexGen-style split) and an attribution study and exhaustive-optimum comparison added. The stronger baselines removed the claim of a large gain over FlexGen-style placement on dense models; the paper now reports this.
 * The compute-time estimate is obtained at runtime and its sensitivity is quantified.
 * Related work was cut to the directly relevant material.
+| 2026-10-21 | Array (prepared) | Added after a literature update (LIA, ITME, TRACE, DAK): pool-sizing rule for several GPUs per expander (e12) and a consistency check against ITME's published weight-streaming result (e13). Package in `submission/` regenerated. |

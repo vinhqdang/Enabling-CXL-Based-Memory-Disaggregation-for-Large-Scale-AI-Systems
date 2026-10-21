@@ -303,5 +303,22 @@
  "hwStaging": "7.3",
  "hwDemandMax": "25",
  "hwDemandSign": "over",
- "hwBigMean": "-9"
+ "hwBigMean": "-9",
+ "poolPredRatioMin": "0.85",
+ "poolPredRatioMax": "1.00",
+ "poolPredRatioMed": "0.88",
+ "poolEighteenSixtyFiveTwo": "1.01",
+ "poolEighteenSixtyFiveFour": "1.10",
+ "poolFortyFiveSixteenTwo": "1.01",
+ "poolFortyFiveSixteenFour": "1.73",
+ "poolFortyFiveSixtyFiveEight": "1.01",
+ "poolFortyFiveSixtyFiveSixteen": "1.72",
+ "poolOverLbMax": "1.067",
+ "poolTstarEighteen": "20.4",
+ "poolTstarFortyFive": "8.2",
+ "itmeSeventyMin": "0.4",
+ "itmeSeventyMax": "0.6",
+ "itmeEightMin": "0.7",
+ "itmeEightMax": "2.0",
+ "itmeTstar": "10.7"
 }
