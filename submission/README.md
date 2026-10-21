@@ -5,7 +5,7 @@ Files to upload:
 | File | Use |
 |------|-----|
 | `manuscript.pdf` | Manuscript PDF for review (elsarticle, single column) |
-| `manuscript_source.zip` | LaTeX source (`main.tex`, `refs.bib`, `main.bbl`, `numbers.tex`, tables, figures); the journal requires an editable source, a PDF alone is not accepted |
+| `manuscript_source.zip` | Self-contained LaTeX source: one `main.tex` (all tables and numbers inlined), `main.bbl` and the figure PNGs; verified to compile from the unzipped folder alone; the journal requires an editable source, a PDF alone is not accepted |
 | `highlights.txt` | Highlights (5 items, at most 85 characters) |
 | `cover_letter.pdf` | Cover letter |
 | `author_vitae.docx` | Vitae, at most 100 words per author (Word); the biographies of Dat Le and Minh Ngoc Dinh must be filled in; passport-type photo per author as separate figure files |
