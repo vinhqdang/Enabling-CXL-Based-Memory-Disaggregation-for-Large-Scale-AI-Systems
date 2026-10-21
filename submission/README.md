@@ -1,4 +1,4 @@
-# Submission package: Array (via Elsevier transfer from JPDC-D-26-01936)
+# Submission package: venue to be chosen (Array is excluded: it rejected an earlier version)
 
 Files to upload in the transfer / submission form:
 
@@ -11,7 +11,7 @@ Files to upload in the transfer / submission form:
 
 Checklist before pressing submit:
 
-1. In the Elsevier transfer page, choose **Array** (guaranteed peer review). Array is fully open access (APC 2,770 USD): check the geographical-pricing or waiver options on its publishing-options page first.
+1. In the Elsevier transfer page, choose the target journal; do not choose Array. Check APC and waivers first if the journal is open access. Replace [JOURNAL NAME] in the cover letter.
 2. Replace the transferred manuscript files with the ones above (the transfer carries the old files). Mention in the cover letter box that the paper was desk-rejected elsewhere only if the form asks; no response letter is needed.
 3. Abstract field: paste the abstract from the PDF (check the word count against the journal limit).
 4. Suggested reviewers: not prepared (names and e-mail addresses must come from the author); choose researchers who published on CXL memory for AI, weight offloading or LLM serving systems.

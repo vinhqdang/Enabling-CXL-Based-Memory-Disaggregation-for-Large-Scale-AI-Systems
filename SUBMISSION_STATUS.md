@@ -5,11 +5,11 @@ Manuscript: "Streaming LLM Weights from CXL Memory: Regimes, Placement and Pipel
 
 | Date | Venue | Outcome |
 |------|-------|---------|
-| 2026-Q1 | Array (Elsevier), ARRAY-D-26-00328 | Rejected after two review rounds (2026-05-09). |
+| 2026-01-26 | Array (Elsevier), ARRAY-D-26-00328 | Submitted as "CAMP: Content-Aware Memory Prefetching for High-Performance CXL-Based Inference"; revised once (R1); rejected 2026-08-23. |
 | 2026-08-25 | Journal of Systems Architecture (Elsevier), JSA-D-26-01708 | Rejected (decision 2026-10). Two reviewers; the points were addressed by rebuilding the study, not by a rebuttal. |
 | 2026-10-06 | Journal of Parallel and Distributed Computing (Elsevier) | Submitted as a new manuscript (title: "Streaming LLM Weights from CXL Memory: Regimes, Placement and Pipeline-Aware Pinning"). Classifications chosen: Heterogeneous Computing System, Resource Allocation, Scheduling In Computing, Optimization, Scalability. Package: `submission/`. Backup venue if rejected: Microprocessors and Microsystems. |
 | 2026-10-21 | JPDC, JPDC-D-26-01936 | Rejected without review (Associate Editor in Chief). Reason: results premature; the work is about CXL but no CXL was used. Editor encourages improving the evaluation to represent the actual setup and resubmitting. |
-| 2026-10-21 | Array (Elsevier transfer offer, guaranteed peer review) | Prepared, not yet submitted. Manuscript reframed as a simulation study (title, abstract, new "Nature of the evidence" paragraph, "Why simulation" note); cover letter, README and title/abstract file updated in `submission/`. Next step: author selects Array on the transfer page and uploads `submission/` files. Backup: Machine Learning with Applications. |
+| 2026-10-21 | Venue choice | Array is excluded: it already rejected an earlier version (ARRAY-D-26-00328R1) although Elsevier's transfer list offers it. Remaining transfer options: Machine Learning with Applications (scope is ML applications, weak fit). Backup: Microprocessors and Microsystems. Not yet submitted anywhere. |
 
 ## What changed after the JSA reviews
 
@@ -22,4 +22,4 @@ Manuscript: "Streaming LLM Weights from CXL Memory: Regimes, Placement and Pipel
   baselines were strengthened (equal budget, tuned lookahead, tuned FlexGen-style split) and an attribution study and exhaustive-optimum comparison added. The stronger baselines removed the claim of a large gain over FlexGen-style placement on dense models; the paper now reports this.
 * The compute-time estimate is obtained at runtime and its sensitivity is quantified.
 * Related work was cut to the directly relevant material.
-| 2026-10-21 | Array (prepared) | Added after a literature update (LIA, ITME, TRACE, DAK): pool-sizing rule for several GPUs per expander (e12) and a consistency check against ITME's published weight-streaming result (e13). Package in `submission/` regenerated. |
+* After the JPDC desk rejection the manuscript was reframed as a simulation study and extended with a pool-sizing rule for several GPUs per expander (E12) and a consistency check against ITME's published weight-streaming result (E13).
