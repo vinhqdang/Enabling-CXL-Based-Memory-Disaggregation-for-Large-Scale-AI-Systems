@@ -1,4 +1,4 @@
-# Submission package: Simulation Modelling Practice and Theory (Elsevier, new submission via Editorial Manager)
+# Submission package: Performance Evaluation (Elsevier, new submission via Editorial Manager)
 
 Files to upload:
 
@@ -20,4 +20,4 @@ Open items for the authors before submitting:
 4. Abstract limit 250 words, 1-7 keywords (6 given), highlights 3-5 items: satisfied.
 5. Generative-AI statement is included before the references; it must match actual use.
 6. Funding statement included (no specific funding).
-7. Scope: the journal publishes simulation and modelling studies; check its current guide for authors for abstract length, keywords, highlights and data-statement rules before uploading.
+7. Scope: Performance Evaluation lists system sizing, resource allocation, simulation methods and AI-based services among its topics, and expects contributions to be positioned against recent articles from the journal (done: Sun et al., 2025). Its guide matches the limits above (abstract 250 words, 1-7 keywords, 3-5 highlights of at most 85 characters, Option C data deposit, CRediT, SSRN free preprint option offered at submission: needs approval of all co-authors).
