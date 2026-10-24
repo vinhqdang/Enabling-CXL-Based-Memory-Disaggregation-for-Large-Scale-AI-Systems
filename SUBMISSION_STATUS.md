@@ -13,6 +13,7 @@ Manuscript: "Streaming LLM Weights from CXL Memory: Regimes, Placement and Pipel
 | 2026-10-22 | Microprocessors and Microsystems | Package prepared with three authors (Dang, Le, Dinh), then dropped by the authors: scope is embedded hardware, high desk-rejection risk. Not submitted. |
 | 2026-10-22 | Simulation Modelling Practice and Theory | Considered, not used. |
 | 2026-10-22 | Performance Evaluation (Elsevier) | Chosen by the authors (scope: modelling, sizing, simulation, AI-based services). Related-work paragraph added citing Sun et al., Performance Evaluation 170 (2025) 102527. Cover letter and README updated. Submitted by the authors (Dang, Le, Dinh) as a new manuscript; title "Streaming LLM Weights from CXL Memory: A Simulation Study of Regimes, Placement and Pipeline-Aware Pinning". Awaiting editorial decision. Package: `submission/`. |
+| 2026-10-24 | PEVA-D-26-00536 (Performance Evaluation) | Returned without review (EiC Michela Meo): fit marginal, the journal expects a more formalized performance analysis; transfer to Parallel Computing offered (accept by 2027-03-03). Not yet accepted or submitted to Parallel Computing. |
 
 ## What changed after the JSA reviews
 
