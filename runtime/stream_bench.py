@@ -684,7 +684,8 @@ def run_model(name, args, dry, workloads, rs, placements, ks):
                   period_ms=rnd(allres["period"]), mean_ms=rnd(allres["mean"]),
                   min_ms=rnd(allres["min"]), max_ms=rnd(allres["max"]),
                   durations_ms=[rnd(x) for x in allres["durations"]],
-                  slot_bytes=0, n_iters=wl["n_iters"], warmup=wl["warmup"], lb_ms=rnd(lb_all)))
+                  slot_bytes=0, n_iters=wl["n_iters"], warmup=wl["warmup"], lb_ms=rnd(lb_all),
+                  period_over_lb=rnd(allres["period"] / lb_all) if lb_all > 0 else None))
         del Wv, gpu_all
         bench.empty_cache()
 
