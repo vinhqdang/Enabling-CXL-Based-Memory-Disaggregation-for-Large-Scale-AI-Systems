@@ -216,3 +216,6 @@ manuscript/*.spl
 manuscript/*.log
 manuscript/*.fls
 manuscript/*.fdb_latexmk
+__pycache__/
+*.pyc
+.pytest_cache/
