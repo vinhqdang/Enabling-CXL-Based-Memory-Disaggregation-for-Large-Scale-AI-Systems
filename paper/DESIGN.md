@@ -22,15 +22,17 @@ plus the pure link circuit (weight sum of f over streamed units).
 ## Results to prove (uniform units c, f)
 * LB: P >= max(L c, m f) for every placement.
 * T1 (compute-bound per unit): f <= c and k >= 2  =>  P = L c for every placement.
-* T2 (balanced optimal): f > c, k >= 3, residents spread evenly (gap counts between consecutive
-  streamed units differ by at most one, Bresenham)  =>  P = max(L c, m f) (optimal).
+* T2 (balanced optimal): f > c, k >= 2 with (k-1) f >= 2c (so k = 3 always suffices, k = 2 when
+  f >= 2c), residents spread evenly (balanced gap sequence)  =>  P = max(L c, m f) (optimal).
   Proof: segment gain over single units is (q-k+1)(f-c) - (k-2)c - c G with G >= q r/m - 1
   for balanced gaps; sum over a w-iteration tiling <= w max(0, m f - L c) + n_seg (2c - (k-1) f).
 * T3 (contiguous exact): f > c, k >= 2: P = max(L c, m f, r c + 2c + (m-k) f).
   Penalty ratio contiguous / balanced < 2, approaches 2 when r c ~ m f and k f, c << r c.
-* P4 (two slots are not enough): k = 2 can exceed the bound by up to n_seg (2c - f) for c < f < 2c.
-* C5 (memory budget of M units for residents + slots): k = 3, r = M - 3, balanced is optimal
-  when f > c; P* = max(L c, (L - M + 3) f).
+* P4 (band c < f < 2c with k = 2): balanced exceeds the bound by at most (m/2)(2c - f) per
+  iteration (observed at most a third of that); brute force finds balanced optimal for L <= 12.
+* C5 (memory budget of M units for residents + slots): use the smallest k with (k-1) f >= 2c and
+  r = M - k balanced; in the band c < f < 2c compare k = 2 and k = 3 with the exact evaluator
+  (k = 2 wins in about 70% of random instances because it frees a unit for residency).
 Numerical checks (scratch, 3000 random instances): T2 no violation for k >= 3; T3 exact;
 balanced optimal by brute force for L <= 12 also with k = 2.
 
