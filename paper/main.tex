@@ -1,0 +1,265 @@
+\documentclass[preprint,12pt]{elsarticle}
+
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage[hidelinks]{hyperref}
+\usepackage{xurl}
+\usepackage{microtype}
+\biboptions{numbers,sort&compress}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+\newtheorem{proposition}{Proposition}
+\newtheorem{corollary}{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+
+\newcommand{\Res}{R}
+\newcommand{\per}{P}
+\input{numbers.tex}
+
+\journal{Preprint}
+
+\begin{document}
+
+\begin{frontmatter}
+
+\title{Where Should Resident Layers Go? Optimal Placement for Weight Streaming in Offloaded LLM Inference}
+
+\author[buv]{Quang-Vinh Dang\corref{cor1}}
+\ead{vinh.dq4@buv.edu.vn}
+\author[uef]{Dat Le}
+\ead{datla@uef.edu.vn}
+\author[mil]{Minh Ngoc Dinh}
+\ead{minh.dinh@maeducation.com}
+\cortext[cor1]{Corresponding author. ORCID: 0000-0002-3877-8024}
+\address[buv]{British University Vietnam, Hung Yen, Vietnam}
+\address[uef]{Department of Science, Technology, and International Projects, Ho Chi Minh City University of Economics and Finance, Ho Chi Minh City 700000, Vietnam}
+\address[mil]{Millennia Education, Ho Chi Minh City, Vietnam}
+
+\begin{abstract}
+\input{abstract.tex}
+\end{abstract}
+
+\begin{keyword}
+LLM inference \sep weight offloading \sep prefetching \sep max-plus algebra \sep layer placement \sep host-attached memory
+\end{keyword}
+
+\end{frontmatter}
+
+%% ===================================================================
+\section{Introduction}
+\label{sec:intro}
+
+A large language model whose weights do not fit in GPU memory can still be served on one GPU by keeping part of the weights in host-attached memory and copying the remaining layers into GPU memory while earlier layers compute \cite{sheng2023flexgen,rajbhandari2021infinity,hf2024accelerate}. The host-attached tier is usually page-locked DRAM; Compute Express Link (CXL) memory expanders extend it with capacity that the host maps as ordinary memory, and that a GPU reaches through the same host-initiated DMA path \cite{yoon2025tract,jang2026itme}. On this path the transfer bandwidth is one to two orders of magnitude below GPU memory bandwidth (about 12~GB/s for PCIe Gen3 $\times$16, 10--20~GB/s for published CXL prototypes), so the copies are the bottleneck unless they overlap with computation.
+
+Every such runtime makes two decisions that are rarely discussed separately: how many GPU buffers (\emph{slots}) to reserve for layers in transit, and \emph{which} layers to keep permanently resident in the remaining memory. The second decision has an obvious part, how many layers fit, and a less obvious part, \emph{where} in the layer sequence the resident layers sit. Popular tools fill the GPU in model order: the Hugging Face Accelerate \texttt{device\_map} assigns modules to the GPU until it is full and offloads the rest \cite{hf2024accelerate}, which makes the resident layers a contiguous prefix of the model. FlexGen splits every layer between GPU and host by a fixed fraction \cite{sheng2023flexgen}, and an edge-serving system spreads retained layers evenly over its pipeline stages \cite{sun2025loip}. None of these choices is justified by an analysis of the transfer pipeline, and we did not find a study that quantifies how much the position of the resident layers matters.
+
+This paper gives that analysis and checks it on a GPU. We model one inference iteration as a cyclic sequence of layer units, a single copy engine and a ring of $k$ slots, and we show that the steady-state iteration time is the maximum circuit mean of a max-plus linear system, which we characterise exactly. The model yields closed forms and a small set of rules:
+
+\begin{enumerate}
+\item \textbf{Exact iteration time} (Section~\ref{sec:model}). For any per-layer compute and transfer times, any resident set and any number of slots, the iteration time is the maximum mean weight of a family of \emph{tilings} of the layer sequence. It can be evaluated in time linear in the number of layers per iteration simulated, and it reproduces the measured iteration time on a real GPU to within \nAccMape\% on average (Section~\ref{sec:res-acc}).
+\item \textbf{Optimal placement for uniform layers} (Section~\ref{sec:theory}). If a layer computes at least as long as it takes to copy, any placement with two slots runs at the speed of resident weights, and resident layers buy nothing. Otherwise, spreading the resident layers evenly over the model attains the lower bound $\max(Lc, mf)$ whenever $(k-1)f\ge 2c$, so three slots always suffice and two suffice when a copy takes at least twice as long as a layer's computation.
+\item \textbf{The cost of contiguous placement} (Section~\ref{sec:theory}). For a contiguous resident block we derive the exact iteration time $\max(Lc,\,mf,\,rc+2c+(m-k)f)$. It can be up to twice the optimum, and the worst case is the balanced regime in which the resident layers' computation equals the streamed layers' copies.
+\item \textbf{Measurements on a GPU} (Section~\ref{sec:results}). With real layer kernels, real model shapes and page-locked host memory on a Tesla T4, evenly spread resident layers are up to \nMeasPenaltyMax$\times$ faster than the contiguous prefix chosen by model-order filling, two slots fall short in the band predicted by the theory, and the model predicts which placement wins in \nAccRankPct\% of the comparisons.
+\end{enumerate}
+
+The PCIe Gen3 path of the T4 sustains about \nHwBw~GB/s of page-locked copies, the same bandwidth class as the CXL expanders measured by others \cite{yoon2025tract,jang2026itme}; we use it as a real instance of a host-mediated path and make no claim about CXL device latency. Section~\ref{sec:discussion} discusses what the theory implies for faster paths and for CXL memory.
+
+%% ===================================================================
+\section{Background and related work}
+\label{sec:related}
+
+\paragraph{Weight offloading for inference}
+FlexGen formulates the placement of weights, activations and the key--value cache over GPU, CPU and disk as a linear program over per-layer fractions and overlaps I/O with computation \cite{sheng2023flexgen}. ZeRO-Inference streams partitioned weights from CPU or NVMe memory \cite{rajbhandari2021infinity}. Hugging Face Accelerate maps modules to devices in model order and moves offloaded weights to the GPU when a module runs \cite{hf2024accelerate}; llama.cpp offloads a chosen number of layers to the GPU and computes the others on the CPU \cite{gerganov2023llamacpp}. PowerInfer \cite{song2024powerinfer}, Fiddler \cite{kamahori2025fiddler} and LIA \cite{kim2025lia} split computation between CPU and GPU instead of moving weights, and LLM in a flash reduces the bytes read from flash \cite{alizadeh2024flash}. LOIP spreads retained and offloaded layers evenly over the stages of an edge pipeline to overlap loading with computation \cite{sun2025loip}. Our results explain why even spreading works, when it is optimal, and what contiguous placement costs, for the single-GPU pipeline that all of these systems contain.
+
+\paragraph{Host-attached and CXL memory}
+CXL Type-3 expanders appear to the host as memory without a local processor \cite{pond2023,tpp2023}. A GPU cannot address them directly; weights reach GPU memory by a host-initiated copy from a page-locked region, and TraCT reports that copies from an unpinned CXL region go through a bounce buffer \cite{yoon2025tract}. ITME prefetches model weights layer by layer from a CXL-hybrid memory and reports about 18~GB/s \cite{jang2026itme}. DAK lets the GPU read remote memory directly \cite{lin2026dak}, a different path from the one modelled here. For our model, a CXL expander and host DRAM differ only in the transfer time per layer.
+
+\paragraph{Swapping in training}
+Training systems swap tensors along a known dataflow graph: vDNN \cite{rhu2016vdnn}, SwapAdvisor \cite{huang2020swapadvisor}, AutoTM \cite{hildebrand2020autotm} and Capuchin \cite{peng2020capuchin}. They decide what to evict and when to prefetch over one pass of a graph; inference repeats the same layer sequence every iteration with read-only weights, which is what makes a steady-state analysis possible.
+
+\paragraph{Max-plus algebra}
+Synchronised discrete-event systems such as pipelines with buffers are linear in the max-plus algebra, and their asymptotic cycle time is the maximum circuit mean of the associated event graph \cite{baccelli1992synchronization}, computable for instance with Karp's algorithm \cite{karp1978characterization}. We apply this framework to the weight-streaming pipeline and exploit the structure of its circuits to obtain closed forms.
+
+%% ===================================================================
+\section{Model}
+\label{sec:model}
+
+\paragraph{Units and iterations}
+An inference iteration (one prefill chunk or one decode step of a batch) executes $L$ \emph{units} in a fixed order $0,1,\dots,L-1$; a unit is a transformer layer, or any other block whose weights move as one piece, such as the output head. Iterations repeat. Unit $i$ takes $c_i>0$ to compute once its weights are in GPU memory and $f_i>0$ to copy from host-attached memory to the GPU; $c_i$ depends on the number of tokens in the iteration and $f_i=a+s_i/B$ on the unit's size $s_i$, the path bandwidth $B$ and a per-copy cost $a$.
+
+\paragraph{Resident set and slots}
+A set $\Res$ of $r$ units stays in GPU memory. The other $m=L-r$ units, $s_0<s_1<\dots<s_{m-1}$, are \emph{streamed} every iteration through $k$ GPU slots used as a ring, $1\le k\le m$. We number streamed transfers globally: transfer $j\ge0$ carries unit $\sigma(j)=s_{j \bmod m}$ of iteration $\lfloor j/m\rfloor$ into slot $j \bmod k$.
+
+\paragraph{Assumptions}
+(A1) One copy engine performs the transfers one at a time in the order $j=0,1,\dots$. (A2) The GPU computes units one at a time in program order. (A3) Transfer $j$ may start as soon as the previous transfer has finished and its slot is free, that is, once the computation of the unit carried by transfer $j-k$ has finished (work-conserving prefetching). (A4) Times are deterministic and the same in every iteration. A1--A3 describe a runtime with one copy stream, one compute stream and events between them, which is how the runtime of Section~\ref{sec:method} is built; A4 is relaxed in the measurements.
+
+\paragraph{Recurrences}
+Let $X_j$ be the completion time of transfer $j$ and $Y_n$ the completion time of the $n$-th unit execution (unit $n \bmod L$ of iteration $\lfloor n/L\rfloor$), with $\nu(j)$ the execution index of transfer $j$'s unit. Then
+\begin{align}
+X_j &= \max\bigl(X_{j-1},\, Y_{\nu(j-k)}\bigr) + f_{\sigma(j)}, \label{eq:x}\\
+Y_n &= \max\bigl(Y_{n-1},\, X_{j}\bigr) + c_{n \bmod L} \quad\text{if execution $n$ uses transfer $j$, and } Y_n = Y_{n-1}+c_{n\bmod L} \text{ otherwise}, \label{eq:y}
+\end{align}
+with terms of negative index equal to zero. These are max-plus linear recurrences: only maxima and additions occur.
+
+\paragraph{Event graph and tilings}
+Draw one node per event $X_j$ and $Y_n$ and an arc from every event on the right-hand side of \eqref{eq:x}--\eqref{eq:y} to the event on the left, weighted with the time added ($f$ for arcs into $X$, $c$ for arcs into $Y$). Shifting all indices by one iteration ($m$ transfers, $L$ executions) maps the graph onto itself, so the system is periodic. A walk that starts at a node and returns to the same node shifted by $w\ge1$ iterations is a \emph{circuit spanning $w$ iterations}; its weight is the sum of its arc weights.
+
+\begin{lemma}[Iteration time]\label{lem:cycle}
+Under A1--A4 the iteration time $\per(\Res,k)=\lim_{n\to\infty} Y_{nL}/n$ exists and equals the maximum, over all circuits, of the circuit weight divided by the number of iterations it spans.
+\end{lemma}
+\begin{proof}
+Collecting the events of one iteration into a vector $z(n)$ gives $z(n)=A_0\otimes z(n)\oplus A_1\otimes z(n-1)$ in max-plus notation, with $A_0$ acyclic because arcs inside an iteration point forward in time. Hence $z(n)=A_0^{*}A_1\otimes z(n-1)$, and the cycle time of this recurrence is the maximum circuit mean of the graph of $A_0^{*}A_1$ \cite[Ch.~3]{baccelli1992synchronization}. Circuits of that graph correspond to circuits of the event graph, with the number of iterations spanned as the length.
+\end{proof}
+
+A circuit can only move forward: from $Y_n$ to $Y_{n+1}$ (weight $c$), from the execution of transfer $j$'s unit to transfer $j+k$ (the slot arc, weight $f$), from $X_j$ to $X_{j+1}$ (weight $f$) and from $X_j$ to the execution that uses it (weight $c$). Reading a circuit in time order therefore gives the following description, which we use in all proofs.
+
+\begin{lemma}[Tilings]\label{lem:tiling}
+Every circuit spanning $w$ iterations either uses only transfer nodes, in which case its weight is $w\sum_{i\notin\Res} f_i$, or it partitions the $wL$ unit executions of $w$ consecutive iterations into
+\emph{singles}, each one execution $n$ with weight $c_{n\bmod L}$, and \emph{segments}. A segment begins right after the execution of a streamed unit carried by transfer $j$, ends with the execution of the unit carried by transfer $j+k+t$ for some $t\ge0$, contains every execution in between, and has weight $\sum_{q=j+k}^{j+k+t} f_{\sigma(q)} + c_{\sigma(j+k+t)}$. Conversely, every such partition is a circuit.
+\end{lemma}
+
+A segment contains $k+t$ streamed executions and all resident executions between them; compared with covering the same executions by singles it changes the weight by its \emph{gain}. For uniform units ($c_i=c$, $f_i=f$) and a segment that contains $q=k+t$ streamed units and $G$ resident units,
+\begin{equation}
+\mathrm{gain} = (t+1)f + c - c\,(q+G) = (q-k+1)(f-c) - (k-2)\,c - c\,G. \label{eq:gain}
+\end{equation}
+The iteration time is therefore $Lc$ plus the largest average gain per iteration over all tilings, or the transfer-only bound, whichever is larger.
+
+\begin{proposition}[Lower bound]\label{prop:lb}
+For every resident set and every $k$, $\per(\Res,k)\ge \max\bigl(\sum_i c_i,\ \sum_{i\notin\Res} f_i\bigr)$.
+\end{proposition}
+\begin{proof}
+The tiling made only of singles and the transfer-only circuit are circuits spanning one iteration.
+\end{proof}
+
+%% ===================================================================
+\section{Placement theory}
+\label{sec:theory}
+
+Throughout this section units are uniform: $c_i=c$ and $f_i=f$. This is the case of a dense transformer whose units are its layers; the output head and other irregular units are treated numerically in Section~\ref{sec:nonuniform}. We write $m=L-r$ for the number of streamed units and assume $2\le k\le m$.
+
+\paragraph{Gaps and balanced placements}
+For a resident set $\Res$ let $g_j$ be the number of resident units between streamed units $s_j$ and $s_{j+1}$ (indices modulo $m$, wrapping around the iteration), so that $\sum_j g_j = r$.
+
+\begin{definition}
+A placement is \emph{balanced} if any two windows of the same length of the cyclic gap sequence $(g_0,\dots,g_{m-1})$ have sums that differ by at most one.
+\end{definition}
+
+In a balanced placement every window of $q$ consecutive gaps sums to $\lfloor qr/m\rfloor$ or $\lceil qr/m\rceil$, since the average over all windows of length $q$ is $qr/m$; this extends to windows longer than $m$, which contain whole turns of the cycle. Balanced placements exist for every $r$ and $m$: the gaps $g_j=\lfloor (j+1)r/m\rfloor-\lfloor jr/m\rfloor$ form a balanced (Christoffel) word \cite[Ch.~2]{lothaire2002algebraic}. In words, the resident layers are spread as evenly as the integers allow.
+
+\begin{theorem}[Per-layer compute bound]\label{thm:compute}
+If $f\le c$ and $k\ge2$, then $\per(\Res,k)=Lc$ for every resident set $\Res$.
+\end{theorem}
+\begin{proof}
+By \eqref{eq:gain}, every segment has gain $(q-k+1)(f-c)-(k-2)c-cG\le0$. Hence every tiling has weight at most $wLc$, and the transfer-only circuit has weight $wmf\le wLc$. Proposition~\ref{prop:lb} gives the reverse inequality.
+\end{proof}
+
+Theorem~\ref{thm:compute} says that resident layers are useless when a layer's computation hides its own copy: two slots (double buffering) already run at the speed of fully resident weights. The interesting case is $f>c$, in which copies are slower than computation per layer and resident layers must supply the missing computation time.
+
+\begin{theorem}[Balanced placement is optimal]\label{thm:balanced}
+If $f>c$, $k\ge 2$, $(k-1)f\ge 2c$ and the placement is balanced, then $\per(\Res,k)=\max(Lc,\,mf)$, the lower bound of Proposition~\ref{prop:lb}. In particular three slots always suffice, and two suffice when $f\ge 2c$.
+\end{theorem}
+\begin{proof}
+Consider a tiling spanning $w$ iterations with segments $1,\dots,N$, where segment $\ell$ contains $q_\ell$ streamed and $G_\ell$ resident units. The resident units of segment $\ell$ are those of $q_\ell$ consecutive gaps, so $G_\ell\ge q_\ell r/m-1$ by balance. By \eqref{eq:gain},
+\begin{align*}
+\mathrm{gain}_\ell &\le (q_\ell-k+1)(f-c)-(k-2)c-c\,(q_\ell r/m-1)\\
+&= q_\ell\,\frac{mf-Lc}{m} \;-\;\bigl((k-1)f-2c\bigr),
+\end{align*}
+using $L=m+r$. The second term is non-positive by assumption. Segments are disjoint, so $\sum_\ell q_\ell\le wm$. If $mf\ge Lc$, the weight of the tiling is at most $wLc+\sum_\ell q_\ell(mf-Lc)/m\le wLc+w(mf-Lc)=wmf$. If $mf<Lc$, every gain is negative and the weight is at most $wLc$. The transfer-only circuit has weight $wmf$. By Lemma~\ref{lem:cycle}, $\per\le\max(Lc,mf)$, and Proposition~\ref{prop:lb} gives equality.
+\end{proof}
+
+\begin{theorem}[Contiguous placement]\label{thm:contig}
+If $f>c$, $k\ge2$ and the resident units form one contiguous block, then
+\[
+\per(\Res,k)=\max\bigl(Lc,\ mf,\ rc+2c+(m-k)f\bigr).
+\]
+\end{theorem}
+\begin{proof}
+\emph{Lower bound.} Besides the two circuits of Proposition~\ref{prop:lb}, take the one-iteration tiling that covers the resident block and the first streamed unit after it by singles and the remaining $m-1$ streamed units by one segment with $t=m-1-k$; its weight is $rc+c+(m-k)f+c$. (If $m=k$ this term is at most $Lc$.)
+
+\emph{Upper bound.} Take a tiling spanning $w$ iterations. Call an occurrence of the resident block \emph{uncovered} if no segment contains it. A segment that contains the first streamed unit after an occurrence of the block also contains the block, so after an uncovered occurrence that unit is a single. The uncovered occurrences split the $w$ iterations into stretches; consider a stretch of $v$ iterations that contains $N\ge1$ segments (a stretch without segments has weight $vLc$). It has $v-1$ covered occurrences of the block and at most $vm-1$ streamed units in segments. Summing \eqref{eq:gain} over its segments, and using $(k-1)(f-c)+(k-2)c=(k-1)f-c>0$,
+\begin{align*}
+\text{weight} &\le vLc+(f-c)(vm-1)-N\bigl((k-1)f-c\bigr)-c\,r\,(v-1)\\
+&\le vLc+(f-c)(vm-1)-\bigl((k-1)f-c\bigr)-c\,r\,(v-1)\\
+&= v\,mf+\bigl(rc+2c-kf\bigr),
+\end{align*}
+so its weight per iteration is at most $mf+(rc+2c-kf)/v\le\max\bigl(mf,\ rc+2c+(m-k)f\bigr)$. If no occurrence is uncovered, all $w$ block occurrences lie in segments, $\sum_\ell q_\ell\le wm$, and the same computation without the $-1$ terms gives at most $w\,mf$. Every circuit thus has mean at most $\max(Lc,mf,rc+2c+(m-k)f)$.
+\end{proof}
+
+The third term has a direct reading. While the resident block computes, the copy engine can load only the $k$ streamed units that fit in the slots and then waits; the remaining $m-k$ copies happen while streamed units run at the copy rate, so the resident computation is not hidden behind copies.
+
+\begin{corollary}[Cost of contiguous placement]\label{cor:ratio}
+Under the assumptions of Theorems~\ref{thm:balanced} and~\ref{thm:contig}, the contiguous placement is slower than the balanced one by the factor
+\[
+\frac{\max(Lc,\,mf,\,rc+2c+(m-k)f)}{\max(Lc,\,mf)} < 2 .
+\]
+The factor approaches 2 when $rc\approx mf$ and $kf$ and $c$ are small compared with $rc$.
+\end{corollary}
+\begin{proof}
+Because $kf>2c$, $rc+2c+(m-k)f<rc+mf\le Lc+mf\le2\max(Lc,mf)$. For the limit take $r=m$, $f=c(1+\epsilon)$ and $m\to\infty$ with $k$ fixed.
+\end{proof}
+
+The penalty therefore peaks exactly where streaming is most attractive: when the resident layers' computation is about as long as the streamed layers' copies, a balanced placement hides all copies behind computation and a contiguous one exposes almost all of them.
+
+\begin{proposition}[Two slots in the band $c<f<2c$]\label{prop:two}
+If $c<f<2c$, $k=2$ and the placement is balanced, then $\max(Lc,mf)\le\per(\Res,2)\le\max(Lc,mf)+\tfrac{m}{2}(2c-f)$.
+\end{proposition}
+\begin{proof}
+In the proof of Theorem~\ref{thm:balanced} the second term of each gain is $2c-f>0$, and every segment contains at least $k=2$ streamed units, so there are at most $wm/2$ segments.
+\end{proof}
+
+In the band the bound is loose: over 3\,000 random instances the excess was at most a third of it, and for $L\le12$ a brute-force search over all placements found no placement better than the balanced one. Because a slot uses the same memory as a resident layer, two slots plus one more resident layer is often faster than three slots; the exact evaluator of Lemma~\ref{lem:cycle} decides this in each case (Section~\ref{sec:res-slots}).
+
+\paragraph{Guidelines}
+For a dense model with layers of equal size the analysis gives a complete recipe. (i) If a layer's computation is at least its copy time, use two slots and no resident layers beyond what is free. (ii) Otherwise use two slots if $f\ge2c$ and three if $c<f<2c$ (or evaluate both), fill the remaining memory with resident layers, and spread them evenly. (iii) The resulting iteration time is $\max(Lc,mf)$, so the number of resident layers needed to reach compute speed is $r\ge L(1-c/f)$.
+
+\subsection{Non-uniform units}
+\label{sec:nonuniform}
+
+Real models are not perfectly uniform: the output head of Llama-3 holds as many parameters as several layers but computes for only the last token in generation. Lemma~\ref{lem:cycle} still gives the exact iteration time, and the recurrences \eqref{eq:x}--\eqref{eq:y} evaluate it by simulating a few hundred iterations, in time proportional to the number of unit executions. We use this evaluator inside a local search that swaps, adds and removes resident units subject to the memory budget (resident bytes plus $k$ slots sized for the largest streamed unit) and compare it with the balanced placement of the layers alone (Section~\ref{sec:res-nonuniform}).
+
+%% ===================================================================
+\section{Measurement methodology}
+\label{sec:method}
+
+\input{method.tex}
+
+%% ===================================================================
+\section{Results}
+\label{sec:results}
+
+\input{results.tex}
+
+%% ===================================================================
+\section{Discussion}
+\label{sec:discussion}
+
+\input{discussion.tex}
+
+%% ===================================================================
+\section{Conclusion}
+\label{sec:conclusion}
+
+\input{conclusion.tex}
+
+\section*{CRediT authorship contribution statement}
+\textbf{Quang-Vinh Dang}: Conceptualization, Methodology, Formal analysis, Software, Investigation, Writing -- original draft, Visualization, Supervision. \textbf{Dat Le}: Validation, Writing -- review \& editing. \textbf{Minh Ngoc Dinh}: Validation, Writing -- review \& editing.
+
+\section*{Data availability}
+The model code, the GPU runtime, the raw measurements and the scripts that produce every number, table and figure are available at \url{https://github.com/vinhqdang/Enabling-CXL-Based-Memory-Disaggregation-for-Large-Scale-AI-Systems}.
+
+\section*{Funding}
+This research did not receive any specific grant from funding agencies in the public, commercial, or not-for-profit sectors.
+
+\section*{Declaration of competing interest}
+The authors declare that they have no known competing financial interests or personal relationships that could have appeared to influence the work reported in this paper.
+
+\section*{Declaration of generative AI and AI-assisted technologies in the manuscript preparation process}
+During the preparation of this work the authors used generative AI-assisted tools for software implementation, experiment scripting and drafting and editing of text. After using these tools, the authors reviewed, verified and edited all code, results and content as needed and take full responsibility for the content of the published article.
+
+\bibliographystyle{elsarticle-num}
+\bibliography{refs}
+
+\end{document}
