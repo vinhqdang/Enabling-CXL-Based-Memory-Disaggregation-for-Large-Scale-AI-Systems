@@ -8,7 +8,8 @@ runs the units in order. The script measures per-unit copy time f_u, per-unit
 compute time c_u, the all-resident iteration period, and the steady-state
 period for placements, slot counts and workloads.
 
-Single-file, standard library + torch only.
+Single-file, standard library + torch only. One model per process is
+recommended: each model gets one pinned host slab, released between models.
 
 Examples (on a GPU VM):
   colab run --gpu T4 --timeout 600 runtime/stream_bench.py --quick
@@ -34,6 +35,12 @@ from contextlib import nullcontext
 import torch
 import torch.nn.functional as F
 
+try:
+    from torch.nn.attention import SDPBackend, sdpa_kernel
+except ImportError:  # older torch: no explicit backend selection
+    SDPBackend = None
+    sdpa_kernel = None
+
 
 MODELS = {
     "llama3.2-3b": dict(L=28, d=3072, n_heads=24, n_kv=8, head_dim=128, ff=8192, vocab=128256),
@@ -54,8 +61,14 @@ SWEEP_KS = [1, 2, 3, 4, 6]
 SWEEP_PLACEMENTS = ["balanced", "contiguous_first"]
 KNOWN_PLACEMENTS = {"contiguous_first", "contiguous_last", "balanced", "random0", "random1"}
 
+PRE_ITERS, PRE_WARM = 12, 4
+DEC_ITERS, DEC_WARM = 40, 10
+WARM_ITERS = 2            # untimed pass before every timed run
+RESET_EVERY = 16          # reset the activation to its saved input every 16 repeats
+
 FP16 = torch.float16
-ALIGN = 256
+ALIGN = 256               # alignment of fields inside a unit
+SLAB_ALIGN = 4096         # alignment of units inside the host slab
 RMS_EPS = 1e-5
 FILL_CHUNK = 1 << 24
 
@@ -139,12 +152,12 @@ class DryEvent:
 
 # ----------------------------------------------------------------- layout and tensors
 
-def _align(x):
-    return (x + ALIGN - 1) // ALIGN * ALIGN
+def _align(x, a=ALIGN):
+    return (x + a - 1) // a * a
 
 
 def layer_layout(cfg):
-    """Byte offsets of the fields inside one layer's flat host buffer."""
+    """Byte offsets of the fields inside one layer's host unit."""
     d, nh, nkv, hd, ff = cfg["d"], cfg["n_heads"], cfg["n_kv"], cfg["head_dim"], cfg["ff"]
     specs = [
         ("wqkv", (d, (nh + 2 * nkv) * hd)),
@@ -158,10 +171,18 @@ def layer_layout(cfg):
     lay = {}
     for name, shape in specs:
         off = _align(off)
-        nbytes = math.prod(shape) * 2
         lay[name] = (off, shape)
-        off += nbytes
+        off += math.prod(shape) * 2
     return lay, _align(off)
+
+
+def slab_total(L, layer_bytes, head_bytes, head):
+    """Size of the single pinned slab holding all units, each 4096-byte aligned."""
+    sizes = [layer_bytes] * L + ([head_bytes] if head else [])
+    off = 0
+    for nb in sizes:
+        off = _align(off, SLAB_ALIGN) + nb
+    return _align(off, SLAB_ALIGN)
 
 
 def views_layer(buf, lay):
@@ -173,7 +194,7 @@ def views_layer(buf, lay):
 
 
 def fill_fp16(t_u8):
-    """Fill a uint8 CPU tensor with random fp16 values (scaled normal)."""
+    """Fill a uint8 CPU tensor (view) with random fp16 values."""
     f = t_u8.view(FP16)
     n = f.numel()
     for s in range(0, n, FILL_CHUNK):
@@ -230,7 +251,11 @@ class Bench:
         self.head_resident = head_resident
         self.N = self.L + (1 if head else 0)
         self.max_inner = 3 if dry else 500
-        self.gqa_ok = False
+        self.attn_mode = None
+        self.attn_probe = {}
+        self.cap = None
+        self.slab = None
+        self.slab_bytes = 0
         self.host = None
         self.comp = DryStream() if dry else torch.cuda.Stream()
         self.cpy = DryStream() if dry else torch.cuda.Stream()
@@ -261,20 +286,33 @@ class Bench:
         if not self.dry:
             torch.cuda.empty_cache()
 
-    # memory
+    # host memory: one pinned slab per model, units sliced from it
     def alloc_host(self):
-        host = []
+        offs, off = [], 0
         for u in range(self.N):
-            t = torch.empty(self.ubytes(u), dtype=torch.uint8)
-            if not self.dry:
-                t = t.pin_memory()
+            off = _align(off, SLAB_ALIGN)
+            offs.append(off)
+            off += self.ubytes(u)
+        total = _align(off, SLAB_ALIGN)
+        if self.dry:
+            slab = torch.empty(total, dtype=torch.uint8)
+        else:
+            slab = torch.empty(total, dtype=torch.uint8, pin_memory=True)
+            assert slab.is_pinned(), "host slab is not page-locked"
+        self.slab = slab
+        self.slab_bytes = total
+        self.host = []
+        for u in range(self.N):
+            t = slab[offs[u]:offs[u] + self.ubytes(u)]
             fill_fp16(t)
-            host.append(t)
-        self.host = host
+            self.host.append(t)
 
     def free_host(self):
         self.host = None
+        self.slab = None
         self.empty_cache()
+        if hasattr(torch._C, "_host_emptyCache"):
+            torch._C._host_emptyCache()
 
     def load_units(self, idx):
         bufs = {}
@@ -290,13 +328,21 @@ class Bench:
             return views_layer(buf, self.lay)
         return {"W": buf[:self.head_bytes].view(FP16).view(self.vocab, self.d)}
 
+    def slot_views(self, buf, S):
+        sv = {}
+        if any(u < self.L for u in S):
+            sv["layer"] = views_layer(buf, self.lay)
+        if any(u >= self.L for u in S):
+            sv["head"] = {"W": buf[:self.head_bytes].view(FP16).view(self.vocab, self.d)}
+        return sv
+
     def make_wl(self, spec):
         p = spec.split(":")
         if p[0] == "pre":
-            wl = dict(name=spec, kind="pre", T=int(p[1]), n_iters=8, warmup=3)
+            wl = dict(name=spec, kind="pre", T=int(p[1]), n_iters=PRE_ITERS, warmup=PRE_WARM)
             x_shape = (wl["T"], self.d)
         else:
-            wl = dict(name=spec, kind="dec", B=int(p[1]), ctx=int(p[2]), n_iters=30, warmup=8)
+            wl = dict(name=spec, kind="dec", B=int(p[1]), ctx=int(p[2]), n_iters=DEC_ITERS, warmup=DEC_WARM)
             x_shape = (wl["B"], self.d)
             kv_shape = (wl["B"], self.nkv, wl["ctx"], self.hd)
             wl["K"] = (torch.randn(kv_shape, dtype=torch.float32, device=self.dev) * 0.1).to(FP16)
@@ -305,25 +351,63 @@ class Bench:
         self.sync()
         return wl
 
-    def probe_gqa(self):
-        try:
-            q = torch.randn(1, self.nh, 4, self.hd, dtype=torch.float32, device=self.dev).to(FP16)
-            kv = torch.randn(1, self.nkv, 4, self.hd, dtype=torch.float32, device=self.dev).to(FP16)
-            F.scaled_dot_product_attention(q, kv, kv, is_causal=True, enable_gqa=True)
-            self.sync()
-            self.gqa_ok = True
-        except Exception as exc:  # noqa: BLE001 - any failure selects the fallback
-            self.gqa_ok = False
-            NOTES.append(f"enable_gqa unsupported ({type(exc).__name__}); using repeat_interleave")
+    # attention backend
+    def probe_attn(self):
+        nh, nkv, hd = self.nh, self.nkv, self.hd
+        q = (torch.randn(1, nh, 4, hd, dtype=torch.float32, device=self.dev) * 0.1).to(FP16)
+        kv = (torch.randn(1, nkv, 4, hd, dtype=torch.float32, device=self.dev) * 0.1).to(FP16)
+        kvr = kv.repeat_interleave(nh // nkv, dim=1)
+        results = {}
 
-    # compute
+        def attempt(label, fn):
+            try:
+                fn()
+                self.sync()
+                results[label] = True
+            except Exception as exc:  # noqa: BLE001 - a failing mode is recorded, not fatal
+                results[label] = f"{type(exc).__name__}: {str(exc)[:160]}"
+
+        def gqa_call():
+            F.scaled_dot_product_attention(q, kv, kv, is_causal=True, enable_gqa=True)
+
+        def repeat_call():
+            F.scaled_dot_product_attention(q, kvr, kvr, is_causal=True)
+
+        def efficient_call():
+            with sdpa_kernel(SDPBackend.EFFICIENT_ATTENTION):
+                F.scaled_dot_product_attention(q, kvr, kvr, is_causal=True)
+
+        attempt("enable_gqa", gqa_call)
+        attempt("repeat_default", repeat_call)
+        if not self.dry and sdpa_kernel is not None:
+            attempt("repeat_efficient", efficient_call)
+
+        self.cap = None if self.dry else tuple(torch.cuda.get_device_capability(0))
+        if self.cap is None or self.cap >= (8, 0):
+            prefs = ["enable_gqa", "repeat_default"]
+        else:
+            # sm < 80: enable_gqa is not used; force the memory-efficient kernel
+            prefs = ["repeat_efficient", "repeat_default"]
+        mode = next((p for p in prefs if results.get(p) is True), None)
+        if mode is None:
+            raise RuntimeError(f"no attention mode works: {results}")
+        if self.cap is not None and self.cap < (8, 0) and mode == "repeat_default":
+            NOTES.append("memory-efficient attention unavailable on sm<80; default backend used")
+        self.attn_mode = mode
+        self.attn_probe = results
+
     def attn(self, q, k, v, causal):
-        if self.gqa_ok:
+        if self.attn_mode == "enable_gqa":
             return F.scaled_dot_product_attention(q, k, v, is_causal=causal, enable_gqa=True)
         rep = self.nh // self.nkv
-        return F.scaled_dot_product_attention(
-            q, k.repeat_interleave(rep, dim=1), v.repeat_interleave(rep, dim=1), is_causal=causal)
+        k = k.repeat_interleave(rep, dim=1)
+        v = v.repeat_interleave(rep, dim=1)
+        if self.attn_mode == "repeat_efficient":
+            with sdpa_kernel(SDPBackend.EFFICIENT_ATTENTION):
+                return F.scaled_dot_product_attention(q, k, v, is_causal=causal)
+        return F.scaled_dot_product_attention(q, k, v, is_causal=causal)
 
+    # compute
     def layer_fwd(self, x, W, wl):
         nh, nkv, hd, ff = self.nh, self.nkv, self.hd, self.ff
         h = rms(x, W["n1"])
@@ -355,28 +439,27 @@ class Bench:
             st["logits"] = self.head_fwd(st["x"], W["W"], wl)
 
     # timing primitives
-    def time_compute_unit(self, u, W, wl, n_rep=9, warm=2):
-        self.compute(u, W, {"x": wl["x0"]}, wl)
-        self.sync()
-        e0, e1 = self.event(True), self.event(True)
+    def _timed_compute(self, u, W, wl, inner):
+        a, b = self.event(True), self.event(True)
         with self.sctx(self.comp):
-            e0.record(self.comp)
-            self.compute(u, W, {"x": wl["x0"]}, wl)
-            e1.record(self.comp)
-        self.sync()
-        est = e0.elapsed_time(e1)
-        inner = 1 if est >= 20.0 else min(self.max_inner, max(1, math.ceil(20.0 / max(est, 1e-4))))
-        samples = []
-        for _ in range(n_rep):
             st = {"x": wl["x0"]}
-            a, b = self.event(True), self.event(True)
-            with self.sctx(self.comp):
-                a.record(self.comp)
-                for _ in range(inner):
-                    self.compute(u, W, st, wl)
-                b.record(self.comp)
-            self.sync()
-            samples.append(a.elapsed_time(b) / inner)
+            a.record(self.comp)
+            for r in range(inner):
+                if r > 0 and r % RESET_EVERY == 0:
+                    st = {"x": wl["x0"]}
+                self.compute(u, W, st, wl)
+            b.record(self.comp)
+        self.sync()
+        return a.elapsed_time(b) / inner
+
+    def time_compute_unit(self, u, W, wl, n_rep=9, warm=2):
+        with self.sctx(self.comp):
+            self.compute(u, W, {"x": wl["x0"]}, wl)
+        self.sync()
+        self._timed_compute(u, W, wl, 1)          # first sizing pass (discarded)
+        est = self._timed_compute(u, W, wl, 1)    # second sizing pass is used
+        inner = 1 if est >= 20.0 else min(self.max_inner, max(1, math.ceil(20.0 / max(est, 1e-4))))
+        samples = [self._timed_compute(u, W, wl, inner) for _ in range(n_rep)]
         return statistics.median(samples[warm:]), inner, samples
 
     def time_h2d_alone(self, u, slot, n_rep=9, warm=2):
@@ -393,23 +476,30 @@ class Bench:
         return statistics.median(samples[warm:]), samples
 
     def time_h2d_concurrent(self, u, slot, Wv, wl, n_comp, n_rep=9, warm=2):
-        """Copy unit u while n_comp resident layers run on the compute stream."""
+        """Copy unit u while n_comp resident layers run on the compute stream.
+
+        The copy is enqueued on the copy stream behind a start event recorded on
+        comp, and before the compute loop, so it starts together with the compute.
+        """
         nb = self.ubytes(u)
         samples, ovs = [], []
         for _ in range(n_rep):
-            st = {"x": wl["x0"]}
             cs, ce = self.event(True), self.event(True)
+            a, b = self.event(True), self.event(True)
             with self.sctx(self.comp):
                 cs.record(self.comp)
-                for j in range(n_comp):
-                    i = j % self.L
-                    self.compute(i, Wv[i], st, wl)
-                ce.record(self.comp)
-            a, b = self.event(True), self.event(True)
             with self.sctx(self.cpy):
+                self.cpy.wait_event(cs)
                 a.record(self.cpy)
                 slot[:nb].copy_(self.host[u], non_blocking=True)
                 b.record(self.cpy)
+            with self.sctx(self.comp):
+                st = {"x": wl["x0"]}
+                for j in range(n_comp):
+                    if j > 0 and j % RESET_EVERY == 0:
+                        st = {"x": wl["x0"]}
+                    self.compute(j % self.L, Wv[j % self.L], st, wl)
+                ce.record(self.comp)
             self.sync()
             ta = cs.elapsed_time(a)
             tb = cs.elapsed_time(b)
@@ -420,95 +510,98 @@ class Bench:
         return statistics.median(samples[warm:]), statistics.median(ovs[warm:]), samples
 
     # executor
+    def _issue_copy(self, g, S, k, slots, comp_done, copy_done, total):
+        if g >= total:
+            return
+        m = len(S)
+        u = S[g % m]
+        nb = self.ubytes(u)
+        slot = slots[g % k]
+        with self.sctx(self.cpy):
+            if g >= k:
+                self.cpy.wait_event(comp_done[g - k])
+            slot[:nb].copy_(self.host[u], non_blocking=True)
+            ev = self.event()
+            ev.record(self.cpy)
+            copy_done[g] = ev
+
+    def _pass(self, wl, S, k, res_set, Wres, slots, sviews, n_iters):
+        """One pass over n_iters iterations; returns iteration-boundary events and enqueue times."""
+        N = self.N
+        m = len(S)
+        total = n_iters * m
+        comp_done, copy_done = {}, {}
+        t0 = self.event(True)
+        self.sync()
+        t0.record(self.comp)
+        for g in range(min(k, total)):
+            self._issue_copy(g, S, k, slots, comp_done, copy_done, total)
+        ends = [t0]
+        enq = []
+        g = 0
+        for _ in range(n_iters):
+            st = {"x": wl["x0"]}
+            t_enq = time.perf_counter()
+            for u in range(N):
+                if u in res_set:
+                    with self.sctx(self.comp):
+                        self.compute(u, Wres[u], st, wl)
+                else:
+                    W = sviews[g % k][self.kind(u)]
+                    with self.sctx(self.comp):
+                        self.comp.wait_event(copy_done[g])
+                        self.compute(u, W, st, wl)
+                        ev = self.event()
+                        ev.record(self.comp)
+                        comp_done[g] = ev
+                    self._issue_copy(g + k, S, k, slots, comp_done, copy_done, total)
+                    g += 1
+                    for old in [x for x in comp_done if x < g - 2 * k]:
+                        del comp_done[old]
+                    for old in [x for x in copy_done if x < g - 2 * k]:
+                        del copy_done[old]
+            enq.append((time.perf_counter() - t_enq) * 1000.0)
+            e = self.event(True)
+            e.record(self.comp)
+            ends.append(e)
+        self.sync()
+        return ends, enq
+
     def run_stream(self, resident, k, wl, n_iters, warmup, gpu_res=None):
-        N, L = self.N, self.L
         res = sorted(set(resident))
         res_set = set(res)
-        S = [u for u in range(N) if u not in res_set]
+        S = [u for u in range(self.N) if u not in res_set]
         m = len(S)
         k = min(k, m) if m > 0 else 0
         owned = gpu_res is None
         if owned:
             gpu_res = self.load_units(res)
         Wres = {u: self.views(u, gpu_res[u]) for u in res}
-
         max_b = max((self.ubytes(u) for u in S), default=0)
         slots = [torch.empty(max_b, dtype=torch.uint8, device=self.dev) for _ in range(k)]
-        sviews = []
-        for buf in slots:
-            sv = {}
-            if any(u < L for u in S):
-                sv["layer"] = views_layer(buf, self.lay)
-            if any(u >= L for u in S):
-                sv["head"] = {"W": buf[:self.head_bytes].view(FP16).view(self.vocab, self.d)}
-            sviews.append(sv)
+        sviews = [self.slot_views(buf, S) for buf in slots]
         self.sync()
 
-        comp, cpy = self.comp, self.cpy
-        total = n_iters * m
-        comp_done, copy_done = {}, {}
-
-        def issue_copy(g):
-            if g >= total:
-                return
-            u = S[g % m]
-            nb = self.ubytes(u)
-            slot = slots[g % k]
-            with self.sctx(cpy):
-                if g >= k:
-                    cpy.wait_event(comp_done[g - k])
-                slot[:nb].copy_(self.host[u], non_blocking=True)
-                ev = self.event()
-                ev.record(cpy)
-                copy_done[g] = ev
-
-        t0 = self.event(True)
-        self.sync()
-        t0.record(comp)
-        for g in range(min(k, total)):
-            issue_copy(g)
-
-        ends = [t0]
-        g = 0
-        for _ in range(n_iters):
-            st = {"x": wl["x0"]}
-            for u in range(N):
-                if u in res_set:
-                    with self.sctx(comp):
-                        self.compute(u, Wres[u], st, wl)
-                else:
-                    W = sviews[g % k][self.kind(u)]
-                    with self.sctx(comp):
-                        comp.wait_event(copy_done[g])
-                        self.compute(u, W, st, wl)
-                        ev = self.event()
-                        ev.record(comp)
-                        comp_done[g] = ev
-                    issue_copy(g + k)
-                    g += 1
-                    for old in [x for x in comp_done if x < g - 2 * k]:
-                        del comp_done[old]
-                    for old in [x for x in copy_done if x < g - 2 * k]:
-                        del copy_done[old]
-            e = self.event(True)
-            e.record(comp)
-            ends.append(e)
-        self.sync()
+        self._pass(wl, S, k, res_set, Wres, slots, sviews, WARM_ITERS)   # untimed warm run
+        ends, enq = self._pass(wl, S, k, res_set, Wres, slots, sviews, n_iters)
 
         durs = [ends[i].elapsed_time(ends[i + 1]) for i in range(n_iters)]
         post = durs[warmup:] if len(durs) > warmup else durs
+        window = ends[warmup].elapsed_time(ends[n_iters]) / (n_iters - warmup)
         out = dict(
-            period=statistics.median(post),
+            period=window,                               # mean over post-warmup window
+            period_median=statistics.median(post),
             mean=statistics.mean(post),
             min=min(post),
             max=max(post),
             durations=durs,
+            host_enqueue_ms=statistics.mean(enq[warmup:]) if enq[warmup:] else 0.0,
             k=k,
             m=m,
             streamed=S,
             slot_bytes=max_b,
         )
-        del slots, sviews, Wres, comp_done, copy_done, ends
+        del slots, sviews, Wres, ends
         if owned:
             del gpu_res
         self.empty_cache()
@@ -516,6 +609,19 @@ class Bench:
 
 
 # ----------------------------------------------------------------- measurement helpers
+
+def stream_fields(out, lb):
+    d = dict(
+        period_ms=rnd(out["period"]), period_median_ms=rnd(out["period_median"]),
+        mean_ms=rnd(out["mean"]), min_ms=rnd(out["min"]), max_ms=rnd(out["max"]),
+        host_enqueue_ms=rnd(out["host_enqueue_ms"]),
+        durations_ms=[rnd(x) for x in out["durations"]], slot_bytes=out["slot_bytes"],
+    )
+    if lb is not None and lb > 0:
+        d["lb_ms"] = rnd(lb)
+        d["period_over_lb"] = rnd(out["period"] / lb)
+    return d
+
 
 def stream_run(bench, wl, res, k, placement, r, exp, f_alone, c_map):
     N = bench.N
@@ -525,17 +631,13 @@ def stream_run(bench, wl, res, k, placement, r, exp, f_alone, c_map):
     m = len(S)
     set_stage(f"{bench.name} {wl['name']} {placement} r={r} k={k} m={m}")
     out = bench.run_stream(res, k, wl, wl["n_iters"], wl["warmup"])
-    rec = dict(
-        exp=exp, model=bench.name, kind="stream", workload=wl["name"], placement=placement,
-        r=r, k=out["k"], k_req=k, resident=res, streamed=S, m=m,
-        period_ms=rnd(out["period"]), mean_ms=rnd(out["mean"]), min_ms=rnd(out["min"]),
-        max_ms=rnd(out["max"]), durations_ms=[rnd(x) for x in out["durations"]],
-        slot_bytes=out["slot_bytes"], n_iters=wl["n_iters"], warmup=wl["warmup"],
-    )
+    lb = None
     if c_map is not None and f_alone is not None:
         lb = max(sum(c_map[u] for u in range(N)), sum(f_alone[u] for u in S))
-        rec["lb_ms"] = rnd(lb)
-        rec["period_over_lb"] = rnd(out["period"] / lb) if lb > 0 else None
+    rec = dict(exp=exp, model=bench.name, kind="stream", workload=wl["name"], placement=placement,
+               r=r, k=out["k"], k_req=k, resident=res, streamed=S, m=m,
+               n_iters=wl["n_iters"], warmup=wl["warmup"])
+    rec.update(stream_fields(out, lb))
     emit(rec)
     return out
 
@@ -594,21 +696,21 @@ def sweep(bench, f_alone, c_map):
 
 # ----------------------------------------------------------------- per-model driver
 
-def setup_model(name, head, head_resident, dry):
+def setup_model(name, head, dry):
     cfg = dict(MODELS[name])
     if dry:
         cfg.update(DRY_SHAPE)
         cfg["L"] = min(cfg["L"], DRY_MAX_L)
     lay, layer_bytes = layer_layout(cfg)
-    head_bytes = cfg["vocab"] * cfg["d"] * 2 if head else 0
+    head_bytes = cfg["vocab"] * cfg["d"] * 2
     avail = meminfo().get("MemAvailable", 12 * 2 ** 30)
     L_nom = cfg["L"]
     L = L_nom
-    while L > 1 and L * layer_bytes + head_bytes > 0.7 * avail:
+    while L > 1 and slab_total(L, layer_bytes, head_bytes, head) > 0.7 * avail:
         L -= 1
-    total = L * layer_bytes + head_bytes
+    total = slab_total(L, layer_bytes, head_bytes, head)
     if total > 0.7 * avail:
-        NOTES.append(f"{name}: skipped, {total / 2**30:.2f} GiB exceeds 70% of available host RAM")
+        NOTES.append(f"{name}: skipped, slab {total / 2**30:.2f} GiB exceeds 70% of available host RAM")
         emit(dict(kind="host_skip", model=name, need_bytes=total, avail_bytes=avail))
         return None
     if L != L_nom:
@@ -621,7 +723,7 @@ def setup_model(name, head, head_resident, dry):
 
 def run_model(name, args, dry, workloads, rs, placements, ks):
     head = args.head or args.head_resident
-    cfg = setup_model(name, head, args.head_resident, dry)
+    cfg = setup_model(name, head, dry)
     if cfg is None:
         return {"skipped": True}
     bench = Bench(name, cfg, dry, head, args.head_resident)
@@ -632,9 +734,13 @@ def run_model(name, args, dry, workloads, rs, placements, ks):
               head=head, head_resident=args.head_resident))
 
     set_stage(f"{name}: host alloc")
-    say(f"{name}: allocating {N} host units ({L} layers)")
+    say(f"{name}: allocating pinned slab for {N} units ({L} layers)")
     bench.alloc_host()
-    bench.probe_gqa()
+    slab_bytes = bench.slab_bytes
+    emit(dict(kind="host_slab", model=name, slab_bytes=slab_bytes, pinned=not dry))
+    bench.probe_attn()
+    emit(dict(kind="attn", model=name, mode=bench.attn_mode, capability=bench.cap,
+              probe=bench.attn_probe))
     max_b = max(bench.ubytes(u) for u in range(N))
     slot = torch.empty(max_b, dtype=torch.uint8, device=bench.dev)
 
@@ -679,13 +785,11 @@ def run_model(name, args, dry, workloads, rs, placements, ks):
         set_stage(f"{name} {spec}: all-resident period")
         allres = bench.run_stream(list(range(N)), 2, wl, wl["n_iters"], wl["warmup"], gpu_res=gpu_all)
         lb_all = sum(c_map.values())
-        emit(dict(exp="allres", model=name, kind="stream", workload=spec, placement="all_resident",
-                  r=L, k=0, k_req=0, resident=list(range(N)), streamed=[], m=0,
-                  period_ms=rnd(allres["period"]), mean_ms=rnd(allres["mean"]),
-                  min_ms=rnd(allres["min"]), max_ms=rnd(allres["max"]),
-                  durations_ms=[rnd(x) for x in allres["durations"]],
-                  slot_bytes=0, n_iters=wl["n_iters"], warmup=wl["warmup"], lb_ms=rnd(lb_all),
-                  period_over_lb=rnd(allres["period"] / lb_all) if lb_all > 0 else None))
+        rec = dict(exp="allres", model=name, kind="stream", workload=spec, placement="all_resident",
+                   r=L, k=0, k_req=0, resident=list(range(N)), streamed=[], m=0,
+                   n_iters=wl["n_iters"], warmup=wl["warmup"])
+        rec.update(stream_fields(allres, lb_all))
+        emit(rec)
         del Wv, gpu_all
         bench.empty_cache()
 
@@ -695,14 +799,14 @@ def run_model(name, args, dry, workloads, rs, placements, ks):
         bench.empty_cache()
 
     if not over_budget():
-        say(f"{name}: slot sweep {SWEEP_WL}")
+        say(f"{name}: slot sweep {sweep_spec(dry)}")
         sweep(bench, f_alone, c_cache.get(sweep_spec(dry)))
     else:
         NOTES.append(f"budget reached; slot sweep for {name} skipped")
 
     del slot
     bench.free_host()
-    return {"L": L, "N": N}
+    return {"L": L, "N": N, "attn_mode": bench.attn_mode, "slab_bytes": slab_bytes}
 
 
 # ----------------------------------------------------------------- device info
@@ -797,6 +901,11 @@ def main():
         sys.exit("CUDA is not available; use --dry for a CPU control-flow check")
 
     threading.Thread(target=heartbeat, daemon=True).start()
+    if len(models) > 1:
+        msg = ("WARNING: several models in one process; they run sequentially with the host slab "
+               "released between them. One model per run is recommended for clean host memory.")
+        NOTES.append(msg)
+        print(msg, flush=True)
     info = device_info(dry)
     emit(dict(kind="device", **info))
     say(f"models={models} workloads={workloads} rs={rs} ks={ks} placements={placements} "
