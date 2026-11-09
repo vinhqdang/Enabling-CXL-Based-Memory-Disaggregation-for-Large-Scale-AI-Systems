@@ -108,6 +108,7 @@ def build_context(path, group, recs):
         ctx["kinds"][str(kind)] += 1
         if kind == "device" and ctx["device"] is None:
             ctx["device"] = {k: r.get(k) for k in ("name", "cuda", "torch", "capability", "pcie_max")}
+            ctx["device"]["lock_mhz"] = (r.get("clocks") or {}).get("target_mhz")
         elif kind == "model":
             ctx["models"][r["model"]] = {"L": r.get("L"), "N": r.get("N"), "layer_bytes": r.get("layer_bytes"),
                                          "head_bytes": r.get("head_bytes") or 0,
@@ -270,7 +271,7 @@ def ranking(rows, key_base, key_cont=None):
                     tot_c += 1
                     pa, pb = a[key_cont], b[key_cont]
                     agree_c += int(((pa > pb) - (pa < pb)) == ms)
-    return {"threshold_rel": RANK_THRESHOLD, "pairs": tot,
+    return {"threshold_rel": RANK_THRESHOLD, "pairs": tot, "agree": agree,
             "agree_pct": pct(agree / tot) if tot else None,
             "pairs_cont": tot_c, "agree_cont_pct": pct(agree_c / tot_c) if tot_c else None}
 
@@ -742,6 +743,119 @@ def spread_and_worst(rows):
     return compute_spread, worst_rb
 
 
+def read_interference(path):
+    """Ratio records of the interference diagnostic, grouped by clock state ('locked' / 'unlocked')."""
+    if not os.path.exists(path):
+        return None
+    out = defaultdict(list)
+    with open(path, "rb") as fh:
+        for raw in fh:
+            if raw.startswith(b"REC "):
+                try:
+                    r = json.loads(raw[4:].decode("utf-8", "replace"))
+                except ValueError:
+                    continue
+                if r.get("type") == "ratio":
+                    out[r.get("clock")].append(r)
+    return out
+
+
+def band_excess(rows, k):
+    """Largest measured (or predicted) period over the lower bound for balanced placements at pre:768."""
+    sel = [r for r in rows if r["group"] == "main" and r["model"] == "llama3.2-3b" and not r["head"]
+           and r["workload"] == "pre:768" and r["placement"] == "balanced" and r["k"] == k
+           and r["exp"] == "grid" and r["lb_cal_ms"] is not None and r["pred_cal_ms"] is not None]
+    if not sel:
+        return None
+    meas = max(sel, key=lambda r: r["period_ms"] / r["lb_cal_ms"])
+    pred = max(sel, key=lambda r: r["pred_cal_ms"] / r["lb_cal_ms"])
+    return {"k": k, "measured_pct": 100 * (meas["period_ms"] / meas["lb_cal_ms"] - 1), "r_at_measured_max": meas["r"],
+            "predicted_pct": 100 * (pred["pred_cal_ms"] / pred["lb_cal_ms"] - 1), "r_at_predicted_max": pred["r"],
+            "n": len(sel)}
+
+
+def compute_bound_deviation(rows, compute3):
+    """|period / all_resident period - 1| over streaming configurations of compute-bound 3B prefill."""
+    vals = [abs(r["period_ms"] / r["allres_ms"] - 1) for r in rows
+            if r["group"] == "main" and r["model"] == "llama3.2-3b" and not r["head"] and r["exp"] != "allres"
+            and prefill_t(r["workload"]) in compute3 and r["allres_ms"]]
+    return 100 * max(vals) if vals else None
+
+
+def sweep_model_cf(ctx, model, wl, r_res, k_values, tol=0.005):
+    """Calibrated model: contiguous_first period at r_res for each k, and the smallest k within tol of the bound."""
+    um = unit_maps(ctx, model, wl)
+    cal = calibration(ctx, model, wl, um) if um else None
+    if um is None or cal is None:
+        return None
+    cs = [cal["s"] * x for x in um["c"]]
+    f = um["f"]
+    res = contiguous_first(um["N"], r_res)
+    lb = max(sum(cs), sum(f[u] for u in range(um["N"]) if u not in res))
+    ratios = {k: cycle_time(cs, f, res, k) / lb for k in k_values}
+    ok = [k for k in k_values if ratios[k] - 1 <= tol]
+    return {"r": r_res, "ratio_to_bound": {str(k): v for k, v in ratios.items()},
+            "smallest_k_within_tol": min(ok) if ok else None, "tol_pct": 100 * tol}
+
+
+def unlocked_block(unl_rows):
+    """Unlocked group: calibrated / clock-corrected errors, clock per workload, penalty and reversals."""
+    ev = evaluated(unl_rows)
+    cal = [r for r in ev if r["pred_cal_ms"] is not None]
+    pen = penalty_table(unl_rows)
+    rev = [e for e in pen if e["measured_bal_ms"] > e["measured_cf_ms"] * 1.01]
+    clocks = {}
+    for r in ev:
+        if r["sm_clock_stream"] is not None:
+            clocks.setdefault(r["workload"], []).append(r["sm_clock_stream"])
+    max_pen = max(pen, key=lambda e: e["measured_ratio"], default=None)
+    return {
+        "n": len(ev),
+        "files": sorted({r["source"] for r in unl_rows}),
+        "calibrated": {k: v for k, v in err_block(cal, "err_cal").items() if k != "worst"},
+        "uncalibrated_base": {k: v for k, v in err_block(ev, "err_base_raw").items() if k != "worst"},
+        "clock_corrected": {k: v for k, v in err_block(ev, "err_clk").items() if k != "worst"},
+        "mean_sm_clock_MHz_by_workload": {w: round(mean(v), 1) for w, v in sorted(clocks.items())},
+        "penalty_table": pen,
+        "penalty_max": max_pen,
+        "reversals_over_1pct": len(rev),
+        "reversal_entries": rev,
+    }
+
+
+def fig_unlocked(plt, figs, unl_rows):
+    grid = [r for r in unl_rows if r["exp"] == "grid" and r["placement"] in ("contiguous_first", "balanced")
+            and r["lb_cal_ms"] is not None]
+    if not grid:
+        skip("fig_unlocked.pdf: no calibrated grid records in the unlocked group")
+        return
+    wls = sorted({r["workload"] for r in grid}, key=lambda w: prefill_t(w) or 0)
+    fig, axes = plt.subplots(len(wls), 1, figsize=(3.4, 1.9 * len(wls) + 1.1), squeeze=False)
+    cols = {"contiguous_first": COLORS[0], "balanced": COLORS[1]}
+    for ax, wl in zip(axes[:, 0], wls):
+        sel = [r for r in grid if r["workload"] == wl]
+        ks = sorted({r["k"] for r in sel})
+        for p in ("contiguous_first", "balanced"):
+            for r in sorted([x for x in sel if x["placement"] == p], key=lambda x: x["r"]):
+                ax.scatter([r["r"]], [r["period_ms"] / r["lb_cal_ms"]], s=16,
+                           marker="o" if r["k"] == ks[0] else "s", color=cols[p],
+                           edgecolor="black", linewidth=0.3, zorder=3)
+        ax.axhline(1.0, color="black", linewidth=0.5, linestyle=":")
+        ax.set_xlabel("Resident units r")
+        ax.set_ylabel("Period / lower bound")
+        ax.text(0.02, 0.96, wl.replace(":", " "), transform=ax.transAxes, va="top", fontsize=6)
+    handles = [plt.Line2D([], [], color=cols["contiguous_first"], marker="o", linestyle="", label="contiguous first"),
+               plt.Line2D([], [], color=cols["balanced"], marker="o", linestyle="", label="balanced"),
+               plt.Line2D([], [], color="black", marker="o", linestyle="", label="smaller k"),
+               plt.Line2D([], [], color="black", marker="s", linestyle="", label="larger k")]
+    fig.legend(handles=handles, frameon=False, fontsize=5.5, loc="lower center", ncol=2)
+    fig.tight_layout(rect=[0, 0.12, 1, 1])
+    out = os.path.join(figs, "fig_unlocked.pdf")
+    fig.savefig(out)
+    plt.close(fig)
+    print("wrote", out, f"({len(wls)} panels)")
+
+
 # ---------------------------------------------------------------- main
 
 def main():
@@ -761,6 +875,7 @@ def main():
 
     groups = {"main": sorted(glob.glob(os.path.join(raw, "t4_full_*.log"))),
               "repeat": sorted(glob.glob(os.path.join(raw, "t4_repeat_*.log"))),
+              "unlocked": sorted(glob.glob(os.path.join(raw, "t4_unlocked_*.log"))),
               "capped": sorted(glob.glob(os.path.join(raw, "t4_power_capped_*.log"))),
               "quick": [p for p in [os.path.join(raw, "t4_quick.log")] if os.path.exists(p)]}
     all_files = [f for g in groups.values() for f in g]
@@ -1012,6 +1127,49 @@ def main():
                  "compute_bound_spread_max_pct": max(comp_spread) if comp_spread else None,
                  "random_vs_balanced_worst": {"pct": rb_max[0], "where": rb_max[1]} if rb_max else None}
 
+    # new diagnostics requested for the paper
+    interf = read_interference(os.path.join(raw, "t4_interference.log"))
+    slow_unl = []
+    slow_locked = []
+    if interf:
+        for r in interf.get("unlocked", []):
+            for key in ("compute_d_over_b", "compute_e_over_b"):
+                if r.get(key) is not None:
+                    slow_unl.append(100 * (r[key] - 1))
+        for r in interf.get("locked", []):
+            if r.get("compute_d_over_b") is not None:
+                slow_locked.append(100 * (r["compute_d_over_b"] - 1))
+    lock_vals = [file_info[src]["device"]["lock_mhz"] for src in main_srcs
+                 if file_info[src]["device"] and file_info[src]["device"].get("lock_mhz") is not None]
+    clock_by_file = {}
+    for src in file_info:
+        sm = [r["sm_clock_mean"] for c in [ctx_by_source[src]] for r in c["stream"] if r.get("sm_clock_mean") is not None]
+        clock_by_file[src] = {"group": file_info[src]["group"],
+                              "lock_mhz": file_info[src]["device"]["lock_mhz"] if file_info[src]["device"] else None,
+                              "stream_sm_clock_mean_MHz": round(mean(sm), 1) if sm else None}
+    band_a = band_excess(main_rows, 2)
+    band_b = band_excess(main_rows, 3)
+    dev_pct = compute_bound_deviation(main_rows, compute3)
+    e_1024 = [r["f_over_c"] for r in main_rows if r["model"] == "llama3.1-8b-16L" and r["workload"] == "pre:1024"]
+    e_ratio = mean(e_1024)
+    sweep_k = sweep_model_cf(ctx_by_source[SWEEP_SOURCE], "llama3.2-3b", "pre:768", 14, list(range(1, 9))) \
+        if SWEEP_SOURCE in ctx_by_source else None
+    unl_rows = [r for r in rows if r["group"] == "unlocked"]
+    unl = unlocked_block(unl_rows) if unl_rows else None
+    if unl is None:
+        skip("unlocked group: results/raw/t4_unlocked_*.log not present yet")
+    diag = {"interference": {"unlocked_slowdown_min_pct": min(slow_unl) if slow_unl else None,
+                             "unlocked_slowdown_max_pct": max(slow_unl) if slow_unl else None,
+                             "locked_slowdown_max_pct": max(slow_locked) if slow_locked else None,
+                             "n_unlocked": len(slow_unl), "n_locked": len(slow_locked)},
+            "clock_lock_MHz": {"low": min(lock_vals) if lock_vals else None,
+                               "high": max(lock_vals) if lock_vals else None},
+            "clock_by_file": clock_by_file,
+            "compute_bound_deviation_max_pct": dev_pct,
+            "eight_b_ratio_pre1024": e_ratio,
+            "band_excess_k2": band_a, "band_excess_k3": band_b,
+            "slot_model_cf_r14": sweep_k}
+
     summary = {
         "inputs": {"groups": {g: [os.path.basename(x) for x in fl] for g, fl in groups.items()},
                    "files": file_info, "truncated_lines_dropped": stats["truncated_lines"],
@@ -1024,6 +1182,8 @@ def main():
                  "head_validation": head_block, "eight_b_validation": eight_block,
                  "regimes": regimes_table, "decode": dec_block, "prefill_T_3B": prefill_T},
         "repeatability": repeat,
+        "diagnostics": diag,
+        "unlocked": unl,
         "penalty": penalty,
         "slot_sweep": {"points": sweeps, "summary": sweep_summary, "calibrated_mape_pct": sweep_mape},
         "nonuniform": nu_block,
@@ -1086,15 +1246,13 @@ def main():
         ("CapMaxCal", fmt(cap_block["calibrated"]["max_abs_err_pct"], 2)),
         ("CapClockMape", fmt(cap_block["clock_corrected"]["mape_pct"], 2)),
         ("CapClockMax", fmt(cap_block["clock_corrected"]["max_abs_err_pct"], 2)),
-        ("CapDriftPct", fmt_int(cap_block["base_uncalibrated"]["max_abs_err_pct"])),
+        ("CapMaxErrInt", fmt_int(cap_block["base_uncalibrated"]["max_abs_err_pct"])),
         ("EightBMape", fmt(eight_block["calibrated"]["mape_pct"], 2)),
         ("EightBMax", fmt(eight_block["calibrated"]["max_abs_err_pct"], 2)),
         ("HeadMape", fmt(head_block["calibrated"]["mape_pct"], 2)),
         ("HeadMax", fmt(head_block["calibrated"]["max_abs_err_pct"], 2)),
         ("QuickMapeCal", fmt(quick_block["calibrated"]["mape_pct"], 2)),
         ("SweepMape", fmt(sweep_mape, 2)),
-        ("SweepBalMinK", str(sweep_summary.get("balanced_min_k", "n/a"))),
-        ("SweepCfMinK", str(sweep_summary.get("contiguous_min_k", "n/a"))),
         ("CalScaleMin", fmt(summary["scale_s"]["min"], 2)),
         ("CalScaleMax", fmt(summary["scale_s"]["max"], 2)),
         ("NonUnifHeadGainPct", fmt(nu_block["head_resident_gain_pct"] if nu_block else None, 1)),
@@ -1130,6 +1288,48 @@ def main():
     else:
         macros += [("MeasPenaltyMax", "n/a"), ("MeasPenaltyMaxWorkload", "n/a"), ("MeasPenaltyMaxR", "n/a"),
                    ("MeasPenaltyMaxK", "n/a"), ("PredPenaltyAtMax", "n/a")]
+    di = diag["interference"]
+    lk = diag["clock_lock_MHz"]
+    ba = diag["band_excess_k2"] or {}
+    bb = diag["band_excess_k3"] or {}
+    sk = diag["slot_model_cf_r14"] or {}
+    nu_k3 = nu_block["gains_at_median"][3]["b_over_c_minus_1_pct"] if nu_block else None
+    u = unl or {}
+    up = u.get("penalty_max") or {}
+    macros += [
+        ("ConcSlowMinPct", fmt_int(di["unlocked_slowdown_min_pct"])),
+        ("ConcSlowMaxPct", fmt_int(di["unlocked_slowdown_max_pct"])),
+        ("ConcSlowLockedMaxPct", fmt(di["locked_slowdown_max_pct"], 1)),
+        ("ClockLowMHz", fmt_int(lk["low"])),
+        ("ClockHighMHz", fmt_int(lk["high"])),
+        ("ComputeBoundDevMaxPct", fmt(diag["compute_bound_deviation_max_pct"], 2)),
+        ("EightBRatioTenTwentyFour", fmt(diag["eight_b_ratio_pre1024"], 2)),
+        ("BandExcessMaxPct", fmt(ba.get("measured_pct"), 1)),
+        ("BandExcessPredPct", fmt(ba.get("predicted_pct"), 1)),
+        ("BandExcessR", fmt_int(ba.get("r_at_measured_max"))),
+        ("BandKThreeMaxPct", fmt(bb.get("measured_pct"), 2)),
+        ("AccRankExact", fmt(rank["agree_pct"], 1)),
+        ("AccRankWrong", "n/a" if rank.get("agree") is None else str(rank["pairs"] - rank["agree"])),
+        ("MapeTransferPre", fmt(regimes_table["prefill transfer-bound (f/c > 1)"]["calibrated"]["mape_pct"], 2)),
+        ("MapeComputePre", fmt(regimes_table["prefill compute-bound (f/c <= 1)"]["calibrated"]["mape_pct"], 2)),
+        ("MapeDecode", fmt(regimes_table["decode"]["calibrated"]["mape_pct"], 2)),
+        ("SweepCfMinKModel", str(sk.get("smallest_k_within_tol", "n/a")) if sk else "n/a"),
+        ("SweepCfFourMs", fmt(sweep_point("contiguous_first", 4), 1)),
+        ("NonUnifBudget", fmt(MEDIAN_BUDGET, 0)),
+        ("NonUnifHeadGainKThreePct", fmt(nu_k3, 1)),
+        ("UnlockedN", str(u.get("n", 0)) if unl else "n/a"),
+        ("UnlockedMape", fmt(u.get("calibrated", {}).get("mape_pct"), 2)),
+        ("UnlockedMax", fmt(u.get("calibrated", {}).get("max_abs_err_pct"), 2)),
+        ("UnlockedMapeUncal", fmt(u.get("uncalibrated_base", {}).get("mape_pct"), 2)),
+        ("UnlockedMaxUncal", fmt(u.get("uncalibrated_base", {}).get("max_abs_err_pct"), 2)),
+        ("UnlockedMapeClk", fmt(u.get("clock_corrected", {}).get("mape_pct"), 2)),
+        ("UnlockedMaxClk", fmt(u.get("clock_corrected", {}).get("max_abs_err_pct"), 2)),
+        ("UnlockedPenaltyMax", fmt(up.get("measured_ratio"), 2)),
+        ("UnlockedPenaltyMaxWorkload", (up["workload"].replace(":", " ") if up else "n/a")),
+        ("UnlockedPenaltyMaxR", fmt_int(up.get("r"))),
+        ("UnlockedPenaltyMaxK", fmt_int(up.get("k"))),
+        ("UnlockedReversals", fmt_int(u.get("reversals_over_1pct")) if unl else "n/a"),
+    ]
     write_numbers(numbers, macros)
 
     # figures
@@ -1139,6 +1339,8 @@ def main():
     fig_timeline(plt, figs, ptable, main_rows)
     fig_slots(plt, figs, sweeps)
     fig_nonuniform(plt, figs, nu_block)
+    if unl_rows:
+        fig_unlocked(plt, figs, unl_rows)
 
     print("\n--- skipped:", len(SKIPPED))
     for s in SKIPPED:

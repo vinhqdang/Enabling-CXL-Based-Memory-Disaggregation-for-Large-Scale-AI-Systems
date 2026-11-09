@@ -220,3 +220,55 @@ def test_schedule_contention_intervals():
         assert en >= st
     assert sorted(u for u, _, _ in s["copy"]) == [0, 2, 3]
     assert all(en >= st for _, st, en in s["copy"])
+
+
+def test_balanced_is_balanced_up_to_130():
+    # every L is covered; for large L a few residents counts per L (cost is quadratic in m)
+    for L in range(1, 131):
+        rs = range(L + 1) if L <= 40 else sorted({0, 1, L // 3, L // 2, L - 2, L - 1, L} & set(range(L + 1)))
+        for r in rs:
+            assert is_balanced(L, balanced(L, r)), (L, r)
+            assert len(balanced(L, r)) == r
+
+
+def test_brute_force_k2_uniform_balanced_optimal():
+    for L in range(4, 13):
+        for fc in (1.1, 1.3, 1.6, 1.9, 2.5, 4.0):
+            c, f = 1.0, fc
+            for r in range(L):
+                best, _ = brute_force_optimal([c] * L, [f] * L, r, 2)
+                p = cycle_time([c] * L, [f] * L, balanced(L, r), 2)
+                assert close(p, best, 1e-9), (L, fc, r, p, best)
+
+
+def test_proposition2_band_k2_balanced_bounds():
+    rng = random.Random(11)
+    done = 0
+    while done < 1000:
+        L = rng.randint(4, 40)
+        r = rng.randint(0, L - 2)  # m >= 2
+        m = L - r
+        c = rng.uniform(0.5, 2.0)
+        f = c * rng.uniform(1.0001, 1.9999)
+        p = cycle_time([c] * L, [f] * L, balanced(L, r), 2)
+        lo = max(L * c, m * f)
+        hi = lo + (m / 2) * (2 * c - f)
+        assert lo * (1 - 1e-9) <= p <= hi * (1 + 1e-9), (L, r, c, f, p, lo, hi)
+        done += 1
+
+
+def test_corollary_contiguous_balanced_ratio_bound():
+    rng = random.Random(12)
+    done = 0
+    while done < 1000:
+        k = rng.randint(2, 5)
+        L = rng.randint(max(4, k), 40)
+        r = rng.randint(0, L - k)  # m >= k
+        c = rng.uniform(0.5, 2.0)
+        f = c * rng.uniform(1.0001, 4.0)
+        if (k - 1) * f < 2 * c:
+            continue
+        cf = cycle_time([c] * L, [f] * L, contiguous_first(L, r), k)
+        bal = cycle_time([c] * L, [f] * L, balanced(L, r), k)
+        assert cf / bal < 2 - c / f + 1e-9, (k, L, r, c, f, cf / bal)
+        done += 1

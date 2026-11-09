@@ -36,11 +36,41 @@ H.~Jang, Y.~Min, S.~Kim, T.~Ahn, H.~Kim, Y.~Joo, H.~Kim, J.~Kim, {ITME}:
   (2026).
 \newblock \href {http://arxiv.org/abs/2606.12556} {\path{arXiv:2606.12556}}.
 
+\bibitem{demystifying2023}
+Y.~Sun, Y.~Yuan, Z.~Yu, R.~Kuper, C.~Song, J.~Huang, H.~Ji, S.~Agarwal, J.~Lou,
+  I.~Jeong, R.~Wang, J.~H. Ahn, T.~Xu, N.~S. Kim,
+  \href{https://doi.org/10.1145/3613424.3614256}{Demystifying cxl memory with
+  genuine cxl-ready systems and devices}, in: Proceedings of the 56th Annual
+  IEEE/ACM International Symposium on Microarchitecture, MICRO '23, ACM, New
+  York, NY, USA, 2023, pp. 105--121.
+\newblock \href {https://doi.org/10.1145/3613424.3614256}
+  {\path{doi:10.1145/3613424.3614256}}.
+\newline\urlprefix\url{https://doi.org/10.1145/3613424.3614256}
+
 \bibitem{sun2025loip}
 M.~Sun, X.~Zhang, S.~Qu, Y.~Li, M.~Xiao, Y.~Zheng, Y.~Yuan, D.~Yu, {LOIP}:
   Collaborative lossless {LLM} inference serving with offloading-based pipeline
   parallelism on edge devices (2025).
 \newblock \href {http://arxiv.org/abs/2512.21835} {\path{arXiv:2512.21835}}.
+
+\bibitem{ren2021zerooffload}
+J.~Ren, S.~Rajbhandari, R.~Y. Aminabadi, O.~Ruwase, S.~Yang, M.~Zhang, D.~Li,
+  Y.~He, {ZeRO-Offload}: Democratizing billion-scale model training, in:
+  Proceedings of the 2021 USENIX Annual Technical Conference (USENIX ATC),
+  2021, pp. 551--564.
+
+\bibitem{aminabadi2022deepspeedinference}
+R.~Y. Aminabadi, S.~Rajbhandari, A.~A. Awan, C.~Li, D.~Li, E.~Zheng, O.~Ruwase,
+  S.~Smith, M.~Zhang, J.~Rasley, Y.~He, {DeepSpeed-Inference}: Enabling
+  efficient inference of transformer models at unprecedented scale, in:
+  Proceedings of the International Conference for High Performance Computing,
+  Networking, Storage and Analysis (SC), 2022.
+
+\bibitem{bai2020pipeswitch}
+Z.~Bai, Z.~Zhang, Y.~Zhu, X.~Jin, {PipeSwitch}: Fast pipelined context
+  switching for deep learning applications, in: Proceedings of the 14th USENIX
+  Symposium on Operating Systems Design and Implementation (OSDI), 2020, pp.
+  499--514.
 
 \bibitem{gerganov2023llamacpp}
 G.~Gerganov, contributors, llama.cpp: {LLM} inference in {C/C++},
@@ -105,6 +135,14 @@ S.~Lin, Z.~Guo, J.~Lin, {DAK}: Direct-access-enabled {GPU} memory offloading
   with optimal efficiency for {LLM} inference (2026).
 \newblock \href {http://arxiv.org/abs/2604.26074} {\path{arXiv:2604.26074}}.
 
+\bibitem{directcxl2022}
+D.~Gouk, S.~Lee, M.~Kwon, M.~Jung,
+  \href{https://www.usenix.org/conference/atc22/presentation/gouk}{Direct
+  access, high-performance memory disaggregation with directcxl}, in: 2022
+  USENIX Annual Technical Conference, USENIX ATC '22, USENIX Association,
+  Berkeley, CA, USA, 2022, pp. 287--294.
+\newline\urlprefix\url{https://www.usenix.org/conference/atc22/presentation/gouk}
+
 \bibitem{rhu2016vdnn}
 M.~Rhu, N.~Gimelshein, J.~Clemons, A.~Zulfiqar, S.~W. Keckler, {vDNN}:
   Virtualized deep neural networks for scalable, memory-efficient neural
@@ -129,6 +167,16 @@ X.~Peng, X.~Shi, H.~Dai, H.~Jin, W.~Ma, Q.~Xiong, F.~Yang, X.~Qian, Capuchin:
   Conf. on Architectural Support for Programming Languages and Operating
   Systems (ASPLOS), 2020, pp. 891--905.
 
+\bibitem{cao1995integrated}
+P.~Cao, E.~W. Felten, A.~R. Karlin, K.~Li, A study of integrated prefetching
+  and caching strategies, in: Proceedings of the 1995 ACM SIGMETRICS Joint
+  International Conference on Measurement and Modeling of Computer Systems,
+  1995, pp. 188--197.
+
+\bibitem{belady1966study}
+L.~A. Belady, A study of replacement algorithms for a virtual-storage computer,
+  IBM Systems Journal 5~(2) (1966) 78--101.
+
 \bibitem{baccelli1992synchronization}
 F.~Baccelli, G.~Cohen, G.~J. Olsder, J.-P. Quadrat, Synchronization and
   Linearity: An Algebra for Discrete Event Systems, Wiley, 1992.
@@ -136,6 +184,14 @@ F.~Baccelli, G.~Cohen, G.~J. Olsder, J.-P. Quadrat, Synchronization and
 \bibitem{karp1978characterization}
 R.~M. Karp, A characterization of the minimum cycle mean in a digraph, Discrete
   Mathematics 23~(3) (1978) 309--311.
+
+\bibitem{heidergott2006maxplus}
+B.~Heidergott, G.~J. Olsder, J.~van~der Woude, Max Plus at Work: Modeling and
+  Analysis of Synchronized Systems, Princeton University Press, 2006.
+
+\bibitem{altman2000balanced}
+E.~Altman, B.~Gaujal, A.~Hordijk, Balanced sequences and optimal routing,
+  Journal of the ACM 47~(4) (2000) 752--775.
 
 \bibitem{lothaire2002algebraic}
 M.~Lothaire, Algebraic Combinatorics on Words, Cambridge University Press,
