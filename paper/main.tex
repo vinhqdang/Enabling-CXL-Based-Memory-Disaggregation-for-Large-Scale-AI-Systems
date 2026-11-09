@@ -76,6 +76,28 @@ The PCIe Gen3 path of the T4 sustains about \nHwBw~GB/s of page-locked copies, t
 \paragraph{Weight offloading for inference}
 FlexGen formulates the placement of weights, activations and the key--value cache over GPU, CPU and disk as a linear program over the fractions of each tensor type kept on each device, applied to every layer, and overlaps I/O with computation \cite{sheng2023flexgen}. ZeRO-Offload and ZeRO-Infinity move parameters and optimizer state between GPU, CPU and NVMe memory in training \cite{ren2021zerooffload,rajbhandari2021infinity}, and DeepSpeed-Inference streams weights from CPU or NVMe memory for inference \cite{aminabadi2022deepspeedinference}. PipeSwitch pipelines the transfer of a model's layers with their execution when switching models on a GPU and groups layers to balance transfer and computation \cite{bai2020pipeswitch}; it loads every layer once per switch rather than streaming a fixed subset every iteration. Hugging Face Accelerate maps modules to devices in model order and moves offloaded weights to the GPU when a module runs \cite{hf2024accelerate}; llama.cpp offloads a chosen number of layers to the GPU and computes the others on the CPU \cite{gerganov2023llamacpp}. PowerInfer \cite{song2024powerinfer}, Fiddler \cite{kamahori2025fiddler} and LIA \cite{kim2025lia} split computation between CPU and GPU instead of moving weights, and LLM in a flash reduces the bytes read from flash \cite{alizadeh2024flash}. LOIP spreads retained and offloaded layers evenly over the stages of an edge pipeline to overlap loading with computation \cite{sun2025loip}. Our results explain why even spreading works, when it is optimal, and what contiguous placement costs, for the single-GPU pipeline that all of these systems contain.
 
+Table~\ref{tab:related} summarises how these systems treat the two decisions studied here.
+
+\begin{table*}[t]
+\centering
+\caption{Resident placement and buffering in systems that run models larger than GPU memory, as described by their authors or documentation.}
+\label{tab:related}
+\small
+\begin{tabular}{p{3.0cm}p{2.6cm}p{3.6cm}p{3.4cm}p{3.0cm}}
+\toprule
+System & Offloaded tier & Resident weights & Transfers & Analysis\\
+\midrule
+FlexGen \cite{sheng2023flexgen} & CPU, disk & same fraction of every layer & overlapped with computation & linear-program cost model\\
+ZeRO-Inference / DeepSpeed-Inference \cite{rajbhandari2021infinity,aminabadi2022deepspeedinference} & CPU, NVMe & none required & layer-wise prefetch & none for placement\\
+HF Accelerate \cite{hf2024accelerate} & CPU, disk & contiguous prefix (model order) & on demand when a module runs & none\\
+llama.cpp \cite{gerganov2023llamacpp} & CPU (computed there) & a chosen number of layers & none (CPU computes) & none\\
+PipeSwitch \cite{bai2020pipeswitch} & host & none (model switched in) & pipelined layer groups & group-size optimisation\\
+LOIP \cite{sun2025loip} & edge device memory & spread evenly over stages & overlapped loading & heuristic\\
+This work & host DRAM or CXL & balanced; optimal for uniform layers & ring of $k$ slots & max-plus model, theorems\\
+\bottomrule
+\end{tabular}
+\end{table*}
+
 \paragraph{Host-attached and CXL memory}
 CXL Type-3 expanders appear to the host as memory without a local processor \cite{pond2023,tpp2023}. A GPU cannot address them directly; weights reach GPU memory by a host-initiated copy from a page-locked region, and TraCT reports that copies from an unpinned CXL region go through a bounce buffer \cite{yoon2025tract}. ITME prefetches model weights layer by layer from a CXL-hybrid memory and reports about 18~GB/s \cite{jang2026itme}. DAK lets the GPU read remote memory directly \cite{lin2026dak}, a different path from the one modelled here. Characterisations of real CXL devices report device-dependent bandwidth and latencies of a few hundred nanoseconds \cite{demystifying2023,directcxl2022}. In our model a CXL expander and host DRAM differ only in the transfer time per layer, which is an assumption we did not test on CXL hardware.
 
