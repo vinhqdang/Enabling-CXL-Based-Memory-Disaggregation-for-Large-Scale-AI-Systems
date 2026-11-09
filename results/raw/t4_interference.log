@@ -85,3 +85,3204 @@ HEARTBEAT t=320s stage=pre:4096/b/locked (t=310s)
 PROGRESS t=326.0s done pre:4096/b/locked dur=16.1s
 REC {"type": "phase", "tag": "pre:4096/b/locked", "workload": "pre:4096", "clock": "locked", "duration_s": 16.06, "compute_ms_per_layer": {"n": 31, "mean": 64.7682, "median": 64.9181, "min": 63.7261, "max": 65.9459}, "nvsmi": {"n": 160, "sm_clock_mhz": {"n": 160, "mean": 561.4688, "median": 555.0, "min": 450.0, "max": 675.0}, "mem_clock_mhz": {"n": 160, "mean": 5000.0, "median": 5000.0, "min": 5000.0, "max": 5000.0}, "power_w": {"n": 160, "mean": 65.9959, "median": 67.97, "min": 53.51, "max": 76.66}, "power_limit_w": {"n": 160, "mean": 70.0, "median": 70.0, "min": 70.0, "max": 70.0}, "temp_c": {"n": 160, "mean": 73.3688, "median": 73.0, "min": 73.0, "max": 74.0}, "util_pct": {"n": 160, "mean": 99.95, "median": 100.0, "min": 96.0, "max": 100.0}, "throttle_reasons": ["sw_power_cap"], "throttle_bits": ["0x4"], "pcie_gen": [3.0]}}
 PROGRESS t=326.0s start pre:4096/d/locked
+HEARTBEAT t=340s stage=pre:4096/d/locked (t=326s)
+PROGRESS t=342.3s done pre:4096/d/locked dur=16.4s
+REC {"type": "phase", "tag": "pre:4096/d/locked", "workload": "pre:4096", "clock": "locked", "duration_s": 16.38, "compute_ms_per_layer": {"n": 31, "mean": 66.033, "median": 66.2331, "min": 63.6913, "max": 67.0162}, "copy_ms": {"n": 916, "mean": 16.458, "median": 16.3614, "min": 16.2925, "max": 18.0918}, "copy_GBps_mean": 12.23, "copy_busy_frac": 0.92, "nvsmi": {"n": 156, "sm_clock_mhz": {"n": 156, "mean": 549.4231, "median": 525.0, "min": 435.0, "max": 660.0}, "mem_clock_mhz": {"n": 156, "mean": 5000.0, "median": 5000.0, "min": 5000.0, "max": 5000.0}, "power_w": {"n": 156, "mean": 66.0854, "median": 68.86, "min": 55.02, "max": 76.08}, "power_limit_w": {"n": 156, "mean": 70.0, "median": 70.0, "min": 70.0, "max": 70.0}, "temp_c": {"n": 156, "mean": 74.0064, "median": 74.0, "min": 74.0, "max": 75.0}, "util_pct": {"n": 156, "mean": 99.9744, "median": 100.0, "min": 96.0, "max": 100.0}, "throttle_reasons": ["sw_power_cap"], "throttle_bits": ["0x4"], "pcie_gen": [3.0]}}
+REC {"type": "ratio", "workload": "pre:4096", "clock": "locked", "compute_d_over_b": 1.02}
+PROGRESS t=342.4s start dec:16:512/b/locked
+PROGRESS t=357.4s done dec:16:512/b/locked dur=15.0s
+REC {"type": "phase", "tag": "dec:16:512/b/locked", "workload": "dec:16:512", "clock": "locked", "duration_s": 15.04, "compute_ms_per_layer": {"n": 780, "mean": 2.4103, "median": 2.4059, "min": 2.3652, "max": 2.6073}, "nvsmi": {"n": 150, "sm_clock_mhz": {"n": 150, "mean": 961.1, "median": 960.0, "min": 900.0, "max": 990.0}, "mem_clock_mhz": {"n": 150, "mean": 5000.0, "median": 5000.0, "min": 5000.0, "max": 5000.0}, "power_w": {"n": 150, "mean": 67.0506, "median": 66.935, "min": 61.69, "max": 68.92}, "power_limit_w": {"n": 150, "mean": 70.0, "median": 70.0, "min": 70.0, "max": 70.0}, "temp_c": {"n": 150, "mean": 74.1, "median": 74.0, "min": 74.0, "max": 75.0}, "util_pct": {"n": 150, "mean": 99.92, "median": 100.0, "min": 94.0, "max": 100.0}, "throttle_reasons": ["sw_power_cap"], "throttle_bits": ["0x4"], "pcie_gen": [3.0]}}
+PROGRESS t=357.4s start dec:16:512/d/locked
+HEARTBEAT t=360s stage=dec:16:512/d/locked (t=357s)
+PROGRESS t=372.5s done dec:16:512/d/locked dur=15.1s
+REC {"type": "phase", "tag": "dec:16:512/d/locked", "workload": "dec:16:512", "clock": "locked", "duration_s": 15.07, "compute_ms_per_layer": {"n": 734, "mean": 2.5613, "median": 2.5552, "min": 2.5103, "max": 2.8724}, "copy_ms": {"n": 907, "mean": 16.6155, "median": 16.43, "min": 16.3296, "max": 20.0153}, "copy_GBps_mean": 12.12, "copy_busy_frac": 1.0, "nvsmi": {"n": 147, "sm_clock_mhz": {"n": 147, "mean": 969.0816, "median": 975.0, "min": 945.0, "max": 1005.0}, "mem_clock_mhz": {"n": 147, "mean": 5000.0, "median": 5000.0, "min": 5000.0, "max": 5000.0}, "power_w": {"n": 147, "mean": 66.8676, "median": 67.12, "min": 52.79, "max": 68.24}, "power_limit_w": {"n": 147, "mean": 70.0, "median": 70.0, "min": 70.0, "max": 70.0}, "temp_c": {"n": 147, "mean": 75.0, "median": 75.0, "min": 75.0, "max": 75.0}, "util_pct": {"n": 147, "mean": 99.9592, "median": 100.0, "min": 97.0, "max": 100.0}, "throttle_reasons": ["sw_power_cap"], "throttle_bits": ["0x4"], "pcie_gen": [3.0]}}
+REC {"type": "ratio", "workload": "dec:16:512", "clock": "locked", "compute_d_over_b": 1.063}
+REC {"type": "clock_reset", "cmd": "nvidia-smi -rgc", "returncode": 0, "stdout": "All done.", "stderr": ""}
+JSON_BEGIN
+{
+ "setup": {
+  "dry": false,
+  "torch": "2.14.1+cu130",
+  "gpu": "Tesla T4",
+  "capability": [
+   7,
+   5
+  ],
+  "attn_mode": "repeat_efficient",
+  "attn_probe": {
+   "enable_gqa": true,
+   "repeat_default": true,
+   "repeat_efficient": true
+  },
+  "layer_bytes": 201338880,
+  "resident_layers": 8,
+  "model": {
+   "d": 3072,
+   "n_heads": 24,
+   "n_kv": 8,
+   "head_dim": 128,
+   "ff": 8192
+  },
+  "phase_s": 15.0,
+  "idle_s": 15.0,
+  "warm_s": 30.0,
+  "budget_s": 540.0,
+  "workloads": [
+   "pre:1024",
+   "pre:4096",
+   "dec:16:512"
+  ]
+ },
+ "nvidia_smi_q": {
+  "cmd": "nvidia-smi -q -d CLOCK,POWER,PERFORMANCE",
+  "returncode": 0,
+  "stdout": "==============NVSMI LOG==============\n\nTimestamp                                 : Mon Nov  9 04:11:57 2026\nDriver Version                            : 580.82.07\nCUDA Version                              : 13.0\n\nAttached GPUs                             : 1\nGPU 00000000:00:04.0\n    Performance State                     : P0\n    Clocks Event Reasons\n        Idle                              : Not Active\n        Applications Clocks Setting       : Not Active\n        SW Power Cap                      : Not Active\n        HW Slowdown                       : Not Active\n            HW Thermal Slowdown           : Not Active\n            HW Power Brake Slowdown       : Not Active\n        Sync Boost                        : Not Active\n        SW Thermal Slowdown               : Not Active\n        Display Clock Setting             : Not Active\n    Clocks Event Reasons Counters\n        SW Power Capping                  : 0 us\n        Sync Boost                        : 0 us\n        SW Thermal Slowdown               : 0 us\n        HW Thermal Slowdown               : 0 us\n        HW Power Braking                  : 0 us\n    Sparse Operation Mode                 : N/A\n    GPU Power Readings\n        Average Power Draw                : N/A\n        Instantaneous Power Draw          : 36.35 W\n        Current Power Limit               : 70.00 W\n        Requested Power Limit             : 70.00 W\n        Default Power Limit               : 70.00 W\n        Min Power Limit                   : 60.00 W\n        Max Power Limit                   : 70.00 W\n    Power Samples\n        Duration                          : 30.67 sec\n        Number of Samples                 : 119\n        Max                               : 38.32 W\n        Min                               : 9.66 W\n        Avg                               : 11.12 W\n    GPU Memory Power Readings \n        Average Power Draw                : N/A\n        Instantaneous Power Draw          : N/A\n    Module Power Readings\n        Average Power Draw                : N/A\n        Instantaneous Power Draw          : N/A\n        Current Power Limit               : N/A\n        Requested Power Limit             : N/A\n        Default Power Limit               : N/A\n        Min Power Limit                   : N/A\n        Max Power Limit                   : N/A\n    Clocks\n        Graphics                          : 1590 MHz\n        SM                                : 1590 MHz\n        Memory                            : 5000 MHz\n        Video                             : 1470 MHz\n    Applications Clocks\n        Graphics                          : 585 MHz\n        Memory                            : 5001 MHz\n    Default Applications Clocks\n        Graphics                          : 585 MHz\n        Memory                            : 5001 MHz\n    Deferred Clocks\n        Memory                            : N/A\n    Max Clocks\n        Graphics                          : 1590 MHz\n        SM                                : 1590 MHz\n        Memory                            : 5001 MHz\n        Video                             : 1470 MHz\n    Max Customer Boost Clocks\n        Graphics                          : 1590 MHz\n    SM Clock Samples\n        Duration                          : Not Found\n        Number of Samples                 : Not Found\n        Max                               : Not Found\n        Min                               : Not Found\n        Avg                               : Not Found\n    Memory Clock Samples\n        Duration                          : Not Found\n        Number of Samples                 : Not Found\n        Max                               : Not Found\n        Min                               : Not Found\n        Avg                               : Not Found\n    Clock Policy\n        Auto Boost                        : N/A\n        Auto Boost Default                : N/A",
+  "stderr": ""
+ },
+ "nvsmi_phases": {
+  "dec:16:512/a/unlocked": {
+   "n": 150,
+   "sm_clock_mhz": {
+    "n": 150,
+    "mean": 668.6,
+    "median": 585.0,
+    "min": 585.0,
+    "max": 1485.0
+   },
+   "mem_clock_mhz": {
+    "n": 150,
+    "mean": 5000.0,
+    "median": 5000.0,
+    "min": 5000.0,
+    "max": 5000.0
+   },
+   "power_w": {
+    "n": 150,
+    "mean": 30.4739,
+    "median": 29.89,
+    "min": 29.5,
+    "max": 65.08
+   },
+   "power_limit_w": {
+    "n": 150,
+    "mean": 70.0,
+    "median": 70.0,
+    "min": 70.0,
+    "max": 70.0
+   },
+   "temp_c": {
+    "n": 150,
+    "mean": 63.0133,
+    "median": 63.0,
+    "min": 61.0,
+    "max": 66.0
+   },
+   "util_pct": {
+    "n": 150,
+    "mean": 1.3333,
+    "median": 0.0,
+    "min": 0.0,
+    "max": 100.0
+   },
+   "throttle_reasons": [
+    "none",
+    "sw_power_cap"
+   ],
+   "throttle_bits": [
+    "0x0",
+    "0x4"
+   ],
+   "pcie_gen": [
+    3.0
+   ]
+  },
+  "dec:16:512/b/locked": {
+   "n": 150,
+   "sm_clock_mhz": {
+    "n": 150,
+    "mean": 961.1,
+    "median": 960.0,
+    "min": 900.0,
+    "max": 990.0
+   },
+   "mem_clock_mhz": {
+    "n": 150,
+    "mean": 5000.0,
+    "median": 5000.0,
+    "min": 5000.0,
+    "max": 5000.0
+   },
+   "power_w": {
+    "n": 150,
+    "mean": 67.0506,
+    "median": 66.935,
+    "min": 61.69,
+    "max": 68.92
+   },
+   "power_limit_w": {
+    "n": 150,
+    "mean": 70.0,
+    "median": 70.0,
+    "min": 70.0,
+    "max": 70.0
+   },
+   "temp_c": {
+    "n": 150,
+    "mean": 74.1,
+    "median": 74.0,
+    "min": 74.0,
+    "max": 75.0
+   },
+   "util_pct": {
+    "n": 150,
+    "mean": 99.92,
+    "median": 100.0,
+    "min": 94.0,
+    "max": 100.0
+   },
+   "throttle_reasons": [
+    "sw_power_cap"
+   ],
+   "throttle_bits": [
+    "0x4"
+   ],
+   "pcie_gen": [
+    3.0
+   ]
+  },
+  "dec:16:512/b/unlocked": {
+   "n": 149,
+   "sm_clock_mhz": {
+    "n": 149,
+    "mean": 1054.1275,
+    "median": 1050.0,
+    "min": 585.0,
+    "max": 1080.0
+   },
+   "mem_clock_mhz": {
+    "n": 149,
+    "mean": 5000.0,
+    "median": 5000.0,
+    "min": 5000.0,
+    "max": 5000.0
+   },
+   "power_w": {
+    "n": 149,
+    "mean": 67.9399,
+    "median": 68.22,
+    "min": 30.09,
+    "max": 69.96
+   },
+   "power_limit_w": {
+    "n": 149,
+    "mean": 70.0,
+    "median": 70.0,
+    "min": 70.0,
+    "max": 70.0
+   },
+   "temp_c": {
+    "n": 149,
+    "mean": 64.7383,
+    "median": 65.0,
+    "min": 62.0,
+    "max": 66.0
+   },
+   "util_pct": {
+    "n": 149,
+    "mean": 98.8456,
+    "median": 100.0,
+    "min": 0.0,
+    "max": 100.0
+   },
+   "throttle_reasons": [
+    "none",
+    "sw_power_cap"
+   ],
+   "throttle_bits": [
+    "0x0",
+    "0x4"
+   ],
+   "pcie_gen": [
+    3.0
+   ]
+  },
+  "dec:16:512/c/unlocked": {
+   "n": 151,
+   "sm_clock_mhz": {
+    "n": 151,
+    "mean": 1588.1126,
+    "median": 1590.0,
+    "min": 1320.0,
+    "max": 1590.0
+   },
+   "mem_clock_mhz": {
+    "n": 151,
+    "mean": 5000.0,
+    "median": 5000.0,
+    "min": 5000.0,
+    "max": 5000.0
+   },
+   "power_w": {
+    "n": 151,
+    "mean": 44.6061,
+    "median": 44.19,
+    "min": 38.62,
+    "max": 68.78
+   },
+   "power_limit_w": {
+    "n": 151,
+    "mean": 70.0,
+    "median": 70.0,
+    "min": 70.0,
+    "max": 70.0
+   },
+   "temp_c": {
+    "n": 151,
+    "mean": 64.7815,
+    "median": 65.0,
+    "min": 64.0,
+    "max": 66.0
+   },
+   "util_pct": {
+    "n": 151,
+    "mean": 99.9603,
+    "median": 100.0,
+    "min": 97.0,
+    "max": 100.0
+   },
+   "throttle_reasons": [
+    "none",
+    "sw_power_cap"
+   ],
+   "throttle_bits": [
+    "0x0",
+    "0x4"
+   ],
+   "pcie_gen": [
+    3.0
+   ]
+  },
+  "dec:16:512/d/locked": {
+   "n": 147,
+   "sm_clock_mhz": {
+    "n": 147,
+    "mean": 969.0816,
+    "median": 975.0,
+    "min": 945.0,
+    "max": 1005.0
+   },
+   "mem_clock_mhz": {
+    "n": 147,
+    "mean": 5000.0,
+    "median": 5000.0,
+    "min": 5000.0,
+    "max": 5000.0
+   },
+   "power_w": {
+    "n": 147,
+    "mean": 66.8676,
+    "median": 67.12,
+    "min": 52.79,
+    "max": 68.24
+   },
+   "power_limit_w": {
+    "n": 147,
+    "mean": 70.0,
+    "median": 70.0,
+    "min": 70.0,
+    "max": 70.0
+   },
+   "temp_c": {
+    "n": 147,
+    "mean": 75.0,
+    "median": 75.0,
+    "min": 75.0,
+    "max": 75.0
+   },
+   "util_pct": {
+    "n": 147,
+    "mean": 99.9592,
+    "median": 100.0,
+    "min": 97.0,
+    "max": 100.0
+   },
+   "throttle_reasons": [
+    "sw_power_cap"
+   ],
+   "throttle_bits": [
+    "0x4"
+   ],
+   "pcie_gen": [
+    3.0
+   ]
+  },
+  "dec:16:512/d/unlocked": {
+   "n": 145,
+   "sm_clock_mhz": {
+    "n": 145,
+    "mean": 1059.4138,
+    "median": 1050.0,
+    "min": 1035.0,
+    "max": 1260.0
+   },
+   "mem_clock_mhz": {
+    "n": 145,
+    "mean": 5000.0,
+    "median": 5000.0,
+    "min": 5000.0,
+    "max": 5000.0
+   },
+   "power_w": {
+    "n": 145,
+    "mean": 67.8957,
+    "median": 67.8,
+    "min": 65.45,
+    "max": 88.65
+   },
+   "power_limit_w": {
+    "n": 145,
+    "mean": 70.0,
+    "median": 70.0,
+    "min": 70.0,
+    "max": 70.0
+   },
+   "temp_c": {
+    "n": 145,
+    "mean": 66.8345,
+    "median": 67.0,
+    "min": 65.0,
+    "max": 68.0
+   },
+   "util_pct": {
+    "n": 145,
+    "mean": 99.9586,
+    "median": 100.0,
+    "min": 97.0,
+    "max": 100.0
+   },
+   "throttle_reasons": [
+    "sw_power_cap"
+   ],
+   "throttle_bits": [
+    "0x4"
+   ],
+   "pcie_gen": [
+    3.0
+   ]
+  },
+  "dec:16:512/e/unlocked": {
+   "n": 150,
+   "sm_clock_mhz": {
+    "n": 150,
+    "mean": 1025.0,
+    "median": 1020.0,
+    "min": 960.0,
+    "max": 1155.0
+   },
+   "mem_clock_mhz": {
+    "n": 150,
+    "mean": 5000.0,
+    "median": 5000.0,
+    "min": 5000.0,
+    "max": 5000.0
+   },
+   "power_w": {
+    "n": 150,
+    "mean": 67.492,
+    "median": 67.375,
+    "min": 65.3,
+    "max": 80.71
+   },
+   "power_limit_w": {
+    "n": 150,
+    "mean": 70.0,
+    "median": 70.0,
+    "min": 70.0,
+    "max": 70.0
+   },
+   "temp_c": {
+    "n": 150,
+    "mean": 69.2267,
+    "median": 69.0,
+    "min": 68.0,
+    "max": 71.0
+   },
+   "util_pct": {
+    "n": 150,
+    "mean": 99.9333,
+    "median": 100.0,
+    "min": 96.0,
+    "max": 100.0
+   },
+   "throttle_reasons": [
+    "sw_power_cap"
+   ],
+   "throttle_bits": [
+    "0x4"
+   ],
+   "pcie_gen": [
+    3.0
+   ]
+  },
+  "gap": {
+   "n": 24,
+   "sm_clock_mhz": {
+    "n": 24,
+    "mean": 639.375,
+    "median": 622.5,
+    "min": 480.0,
+    "max": 1425.0
+   },
+   "mem_clock_mhz": {
+    "n": 24,
+    "mean": 5000.0,
+    "median": 5000.0,
+    "min": 5000.0,
+    "max": 5000.0
+   },
+   "power_w": {
+    "n": 24,
+    "mean": 65.8092,
+    "median": 67.65,
+    "min": 29.2,
+    "max": 82.42
+   },
+   "power_limit_w": {
+    "n": 24,
+    "mean": 70.0,
+    "median": 70.0,
+    "min": 70.0,
+    "max": 70.0
+   },
+   "temp_c": {
+    "n": 24,
+    "mean": 68.0,
+    "median": 71.0,
+    "min": 57.0,
+    "max": 75.0
+   },
+   "util_pct": {
+    "n": 24,
+    "mean": 94.7083,
+    "median": 100.0,
+    "min": 12.0,
+    "max": 100.0
+   },
+   "throttle_reasons": [
+    "none",
+    "sw_power_cap"
+   ],
+   "throttle_bits": [
+    "0x0",
+    "0x4"
+   ],
+   "pcie_gen": [
+    3.0
+   ]
+  },
+  "pre:1024/a/unlocked": {
+   "n": 150,
+   "sm_clock_mhz": {
+    "n": 150,
+    "mean": 725.9,
+    "median": 585.0,
+    "min": 585.0,
+    "max": 1545.0
+   },
+   "mem_clock_mhz": {
+    "n": 150,
+    "mean": 5000.0,
+    "median": 5000.0,
+    "min": 5000.0,
+    "max": 5000.0
+   },
+   "power_w": {
+    "n": 150,
+    "mean": 27.8593,
+    "median": 27.14,
+    "min": 26.64,
+    "max": 33.72
+   },
+   "power_limit_w": {
+    "n": 150,
+    "mean": 70.0,
+    "median": 70.0,
+    "min": 70.0,
+    "max": 70.0
+   },
+   "temp_c": {
+    "n": 150,
+    "mean": 43.0067,
+    "median": 43.0,
+    "min": 43.0,
+    "max": 44.0
+   },
+   "util_pct": {
+    "n": 150,
+    "mean": 0.8267,
+    "median": 0.0,
+    "min": 0.0,
+    "max": 62.0
+   },
+   "throttle_reasons": [
+    "none"
+   ],
+   "throttle_bits": [
+    "0x0"
+   ],
+   "pcie_gen": [
+    3.0
+   ]
+  },
+  "pre:1024/b/locked": {
+   "n": 153,
+   "sm_clock_mhz": {
+    "n": 153,
+    "mean": 647.2549,
+    "median": 645.0,
+    "min": 615.0,
+    "max": 660.0
+   },
+   "mem_clock_mhz": {
+    "n": 153,
+    "mean": 5000.0,
+    "median": 5000.0,
+    "min": 5000.0,
+    "max": 5000.0
+   },
+   "power_w": {
+    "n": 153,
+    "mean": 67.3694,
+    "median": 67.55,
+    "min": 65.69,
+    "max": 68.88
+   },
+   "power_limit_w": {
+    "n": 153,
+    "mean": 70.0,
+    "median": 70.0,
+    "min": 70.0,
+    "max": 70.0
+   },
+   "temp_c": {
+    "n": 153,
+    "mean": 71.2941,
+    "median": 71.0,
+    "min": 71.0,
+    "max": 72.0
+   },
+   "util_pct": {
+    "n": 153,
+    "mean": 99.8497,
+    "median": 100.0,
+    "min": 79.0,
+    "max": 100.0
+   },
+   "throttle_reasons": [
+    "sw_power_cap"
+   ],
+   "throttle_bits": [
+    "0x4"
+   ],
+   "pcie_gen": [
+    3.0
+   ]
+  },
+  "pre:1024/b/unlocked": {
+   "n": 151,
+   "sm_clock_mhz": {
+    "n": 151,
+    "mean": 790.6291,
+    "median": 795.0,
+    "min": 585.0,
+    "max": 810.0
+   },
+   "mem_clock_mhz": {
+    "n": 151,
+    "mean": 5000.0,
+    "median": 5000.0,
+    "min": 5000.0,
+    "max": 5000.0
+   },
+   "power_w": {
+    "n": 151,
+    "mean": 69.7395,
+    "median": 69.91,
+    "min": 59.92,
+    "max": 72.2
+   },
+   "power_limit_w": {
+    "n": 151,
+    "mean": 70.0,
+    "median": 70.0,
+    "min": 70.0,
+    "max": 70.0
+   },
+   "temp_c": {
+    "n": 151,
+    "mean": 49.3576,
+    "median": 50.0,
+    "min": 44.0,
+    "max": 53.0
+   },
+   "util_pct": {
+    "n": 151,
+    "mean": 99.5232,
+    "median": 100.0,
+    "min": 76.0,
+    "max": 100.0
+   },
+   "throttle_reasons": [
+    "none",
+    "sw_power_cap"
+   ],
+   "throttle_bits": [
+    "0x0",
+    "0x4"
+   ],
+   "pcie_gen": [
+    3.0
+   ]
+  },
+  "pre:1024/c/unlocked": {
+   "n": 150,
+   "sm_clock_mhz": {
+    "n": 150,
+    "mean": 1589.6,
+    "median": 1590.0,
+    "min": 1530.0,
+    "max": 1590.0
+   },
+   "mem_clock_mhz": {
+    "n": 150,
+    "mean": 5000.0,
+    "median": 5000.0,
+    "min": 5000.0,
+    "max": 5000.0
+   },
+   "power_w": {
+    "n": 150,
+    "mean": 40.2178,
+    "median": 39.7,
+    "min": 33.72,
+    "max": 43.23
+   },
+   "power_limit_w": {
+    "n": 150,
+    "mean": 70.0,
+    "median": 70.0,
+    "min": 70.0,
+    "max": 70.0
+   },
+   "temp_c": {
+    "n": 150,
+    "mean": 51.48,
+    "median": 51.0,
+    "min": 51.0,
+    "max": 52.0
+   },
+   "util_pct": {
+    "n": 150,
+    "mean": 99.98,
+    "median": 100.0,
+    "min": 97.0,
+    "max": 100.0
+   },
+   "throttle_reasons": [
+    "none",
+    "sw_power_cap"
+   ],
+   "throttle_bits": [
+    "0x0",
+    "0x4"
+   ],
+   "pcie_gen": [
+    3.0
+   ]
+  },
+  "pre:1024/d/locked": {
+   "n": 149,
+   "sm_clock_mhz": {
+    "n": 149,
+    "mean": 618.3221,
+    "median": 615.0,
+    "min": 600.0,
+    "max": 855.0
+   },
+   "mem_clock_mhz": {
+    "n": 149,
+    "mean": 5000.0,
+    "median": 5000.0,
+    "min": 5000.0,
+    "max": 5000.0
+   },
+   "power_w": {
+    "n": 149,
+    "mean": 67.3744,
+    "median": 67.45,
+    "min": 65.4,
+    "max": 73.88
+   },
+   "power_limit_w": {
+    "n": 149,
+    "mean": 70.0,
+    "median": 70.0,
+    "min": 70.0,
+    "max": 70.0
+   },
+   "temp_c": {
+    "n": 149,
+    "mean": 72.5302,
+    "median": 73.0,
+    "min": 72.0,
+    "max": 73.0
+   },
+   "util_pct": {
+    "n": 149,
+    "mean": 99.9597,
+    "median": 100.0,
+    "min": 97.0,
+    "max": 100.0
+   },
+   "throttle_reasons": [
+    "sw_power_cap"
+   ],
+   "throttle_bits": [
+    "0x4"
+   ],
+   "pcie_gen": [
+    3.0
+   ]
+  },
+  "pre:1024/d/unlocked": {
+   "n": 148,
+   "sm_clock_mhz": {
+    "n": 148,
+    "mean": 738.9527,
+    "median": 735.0,
+    "min": 645.0,
+    "max": 795.0
+   },
+   "mem_clock_mhz": {
+    "n": 148,
+    "mean": 5000.0,
+    "median": 5000.0,
+    "min": 5000.0,
+    "max": 5000.0
+   },
+   "power_w": {
+    "n": 148,
+    "mean": 69.0562,
+    "median": 68.92,
+    "min": 67.2,
+    "max": 90.89
+   },
+   "power_limit_w": {
+    "n": 148,
+    "mean": 70.0,
+    "median": 70.0,
+    "min": 70.0,
+    "max": 70.0
+   },
+   "temp_c": {
+    "n": 148,
+    "mean": 56.2432,
+    "median": 56.0,
+    "min": 53.0,
+    "max": 59.0
+   },
+   "util_pct": {
+    "n": 148,
+    "mean": 99.9324,
+    "median": 100.0,
+    "min": 95.0,
+    "max": 100.0
+   },
+   "throttle_reasons": [
+    "sw_power_cap"
+   ],
+   "throttle_bits": [
+    "0x4"
+   ],
+   "pcie_gen": [
+    3.0
+   ]
+  },
+  "pre:1024/e/unlocked": {
+   "n": 151,
+   "sm_clock_mhz": {
+    "n": 151,
+    "mean": 714.9338,
+    "median": 720.0,
+    "min": 690.0,
+    "max": 750.0
+   },
+   "mem_clock_mhz": {
+    "n": 151,
+    "mean": 5000.0,
+    "median": 5000.0,
+    "min": 5000.0,
+    "max": 5000.0
+   },
+   "power_w": {
+    "n": 151,
+    "mean": 68.4877,
+    "median": 68.58,
+    "min": 66.18,
+    "max": 69.9
+   },
+   "power_limit_w": {
+    "n": 151,
+    "mean": 70.0,
+    "median": 70.0,
+    "min": 70.0,
+    "max": 70.0
+   },
+   "temp_c": {
+    "n": 151,
+    "mean": 60.5364,
+    "median": 61.0,
+    "min": 59.0,
+    "max": 62.0
+   },
+   "util_pct": {
+    "n": 151,
+    "mean": 99.9603,
+    "median": 100.0,
+    "min": 97.0,
+    "max": 100.0
+   },
+   "throttle_reasons": [
+    "sw_power_cap"
+   ],
+   "throttle_bits": [
+    "0x4"
+   ],
+   "pcie_gen": [
+    3.0
+   ]
+  },
+  "pre:1024/warm_idle/unlocked": {
+   "n": 150,
+   "sm_clock_mhz": {
+    "n": 150,
+    "mean": 707.7,
+    "median": 585.0,
+    "min": 585.0,
+    "max": 1485.0
+   },
+   "mem_clock_mhz": {
+    "n": 150,
+    "mean": 5000.0,
+    "median": 5000.0,
+    "min": 5000.0,
+    "max": 5000.0
+   },
+   "power_w": {
+    "n": 150,
+    "mean": 31.7777,
+    "median": 30.5,
+    "min": 30.09,
+    "max": 67.7
+   },
+   "power_limit_w": {
+    "n": 150,
+    "mean": 70.0,
+    "median": 70.0,
+    "min": 70.0,
+    "max": 70.0
+   },
+   "temp_c": {
+    "n": 150,
+    "mean": 66.6,
+    "median": 66.0,
+    "min": 65.0,
+    "max": 70.0
+   },
+   "util_pct": {
+    "n": 150,
+    "mean": 1.1067,
+    "median": 0.0,
+    "min": 0.0,
+    "max": 83.0
+   },
+   "throttle_reasons": [
+    "none",
+    "sw_power_cap"
+   ],
+   "throttle_bits": [
+    "0x0",
+    "0x4"
+   ],
+   "pcie_gen": [
+    3.0
+   ]
+  },
+  "pre:1024/warm_run/unlocked": {
+   "n": 302,
+   "sm_clock_mhz": {
+    "n": 302,
+    "mean": 666.1093,
+    "median": 660.0,
+    "min": 585.0,
+    "max": 705.0
+   },
+   "mem_clock_mhz": {
+    "n": 302,
+    "mean": 5000.0,
+    "median": 5000.0,
+    "min": 5000.0,
+    "max": 5000.0
+   },
+   "power_w": {
+    "n": 302,
+    "mean": 67.4495,
+    "median": 67.65,
+    "min": 30.78,
+    "max": 69.17
+   },
+   "power_limit_w": {
+    "n": 302,
+    "mean": 70.0,
+    "median": 70.0,
+    "min": 70.0,
+    "max": 70.0
+   },
+   "temp_c": {
+    "n": 302,
+    "mean": 68.9536,
+    "median": 69.0,
+    "min": 65.0,
+    "max": 71.0
+   },
+   "util_pct": {
+    "n": 302,
+    "mean": 99.351,
+    "median": 100.0,
+    "min": 0.0,
+    "max": 100.0
+   },
+   "throttle_reasons": [
+    "none",
+    "sw_power_cap"
+   ],
+   "throttle_bits": [
+    "0x0",
+    "0x4"
+   ],
+   "pcie_gen": [
+    3.0
+   ]
+  },
+  "pre:4096/a/unlocked": {
+   "n": 150,
+   "sm_clock_mhz": {
+    "n": 150,
+    "mean": 700.6,
+    "median": 585.0,
+    "min": 585.0,
+    "max": 1500.0
+   },
+   "mem_clock_mhz": {
+    "n": 150,
+    "mean": 5000.0,
+    "median": 5000.0,
+    "min": 5000.0,
+    "max": 5000.0
+   },
+   "power_w": {
+    "n": 150,
+    "mean": 30.1349,
+    "median": 29.12,
+    "min": 28.62,
+    "max": 66.86
+   },
+   "power_limit_w": {
+    "n": 150,
+    "mean": 70.0,
+    "median": 70.0,
+    "min": 70.0,
+    "max": 70.0
+   },
+   "temp_c": {
+    "n": 150,
+    "mean": 58.3333,
+    "median": 58.0,
+    "min": 56.0,
+    "max": 61.0
+   },
+   "util_pct": {
+    "n": 150,
+    "mean": 1.6133,
+    "median": 0.0,
+    "min": 0.0,
+    "max": 100.0
+   },
+   "throttle_reasons": [
+    "none",
+    "sw_power_cap"
+   ],
+   "throttle_bits": [
+    "0x0",
+    "0x4"
+   ],
+   "pcie_gen": [
+    3.0
+   ]
+  },
+  "pre:4096/b/locked": {
+   "n": 160,
+   "sm_clock_mhz": {
+    "n": 160,
+    "mean": 561.4688,
+    "median": 555.0,
+    "min": 450.0,
+    "max": 675.0
+   },
+   "mem_clock_mhz": {
+    "n": 160,
+    "mean": 5000.0,
+    "median": 5000.0,
+    "min": 5000.0,
+    "max": 5000.0
+   },
+   "power_w": {
+    "n": 160,
+    "mean": 65.9959,
+    "median": 67.97,
+    "min": 53.51,
+    "max": 76.66
+   },
+   "power_limit_w": {
+    "n": 160,
+    "mean": 70.0,
+    "median": 70.0,
+    "min": 70.0,
+    "max": 70.0
+   },
+   "temp_c": {
+    "n": 160,
+    "mean": 73.3688,
+    "median": 73.0,
+    "min": 73.0,
+    "max": 74.0
+   },
+   "util_pct": {
+    "n": 160,
+    "mean": 99.95,
+    "median": 100.0,
+    "min": 96.0,
+    "max": 100.0
+   },
+   "throttle_reasons": [
+    "sw_power_cap"
+   ],
+   "throttle_bits": [
+    "0x4"
+   ],
+   "pcie_gen": [
+    3.0
+   ]
+  },
+  "pre:4096/b/unlocked": {
+   "n": 160,
+   "sm_clock_mhz": {
+    "n": 160,
+    "mean": 639.2812,
+    "median": 615.0,
+    "min": 510.0,
+    "max": 810.0
+   },
+   "mem_clock_mhz": {
+    "n": 160,
+    "mean": 5000.0,
+    "median": 5000.0,
+    "min": 5000.0,
+    "max": 5000.0
+   },
+   "power_w": {
+    "n": 160,
+    "mean": 66.7982,
+    "median": 68.29,
+    "min": 53.19,
+    "max": 77.0
+   },
+   "power_limit_w": {
+    "n": 160,
+    "mean": 70.0,
+    "median": 70.0,
+    "min": 70.0,
+    "max": 70.0
+   },
+   "temp_c": {
+    "n": 160,
+    "mean": 60.3563,
+    "median": 61.0,
+    "min": 58.0,
+    "max": 62.0
+   },
+   "util_pct": {
+    "n": 160,
+    "mean": 99.45,
+    "median": 100.0,
+    "min": 12.0,
+    "max": 100.0
+   },
+   "throttle_reasons": [
+    "none",
+    "sw_power_cap"
+   ],
+   "throttle_bits": [
+    "0x0",
+    "0x4"
+   ],
+   "pcie_gen": [
+    3.0
+   ]
+  },
+  "pre:4096/c/unlocked": {
+   "n": 151,
+   "sm_clock_mhz": {
+    "n": 151,
+    "mean": 1588.7086,
+    "median": 1590.0,
+    "min": 1410.0,
+    "max": 1590.0
+   },
+   "mem_clock_mhz": {
+    "n": 151,
+    "mean": 5000.0,
+    "median": 5000.0,
+    "min": 5000.0,
+    "max": 5000.0
+   },
+   "power_w": {
+    "n": 151,
+    "mean": 42.2435,
+    "median": 41.75,
+    "min": 41.16,
+    "max": 56.82
+   },
+   "power_limit_w": {
+    "n": 151,
+    "mean": 70.0,
+    "median": 70.0,
+    "min": 70.0,
+    "max": 70.0
+   },
+   "temp_c": {
+    "n": 151,
+    "mean": 60.9272,
+    "median": 61.0,
+    "min": 60.0,
+    "max": 61.0
+   },
+   "util_pct": {
+    "n": 151,
+    "mean": 99.9338,
+    "median": 100.0,
+    "min": 95.0,
+    "max": 100.0
+   },
+   "throttle_reasons": [
+    "none",
+    "sw_power_cap"
+   ],
+   "throttle_bits": [
+    "0x0",
+    "0x4"
+   ],
+   "pcie_gen": [
+    3.0
+   ]
+  },
+  "pre:4096/d/locked": {
+   "n": 157,
+   "sm_clock_mhz": {
+    "n": 157,
+    "mean": 550.2229,
+    "median": 525.0,
+    "min": 435.0,
+    "max": 675.0
+   },
+   "mem_clock_mhz": {
+    "n": 157,
+    "mean": 5000.0,
+    "median": 5000.0,
+    "min": 5000.0,
+    "max": 5000.0
+   },
+   "power_w": {
+    "n": 157,
+    "mean": 66.1157,
+    "median": 68.88,
+    "min": 55.02,
+    "max": 76.08
+   },
+   "power_limit_w": {
+    "n": 157,
+    "mean": 70.0,
+    "median": 70.0,
+    "min": 70.0,
+    "max": 70.0
+   },
+   "temp_c": {
+    "n": 157,
+    "mean": 74.0064,
+    "median": 74.0,
+    "min": 74.0,
+    "max": 75.0
+   },
+   "util_pct": {
+    "n": 157,
+    "mean": 99.9745,
+    "median": 100.0,
+    "min": 96.0,
+    "max": 100.0
+   },
+   "throttle_reasons": [
+    "sw_power_cap"
+   ],
+   "throttle_bits": [
+    "0x4"
+   ],
+   "pcie_gen": [
+    3.0
+   ]
+  },
+  "pre:4096/d/unlocked": {
+   "n": 153,
+   "sm_clock_mhz": {
+    "n": 153,
+    "mean": 606.7647,
+    "median": 555.0,
+    "min": 525.0,
+    "max": 750.0
+   },
+   "mem_clock_mhz": {
+    "n": 153,
+    "mean": 5000.0,
+    "median": 5000.0,
+    "min": 5000.0,
+    "max": 5000.0
+   },
+   "power_w": {
+    "n": 153,
+    "mean": 66.0201,
+    "median": 67.02,
+    "min": 57.41,
+    "max": 78.66
+   },
+   "power_limit_w": {
+    "n": 153,
+    "mean": 70.0,
+    "median": 70.0,
+    "min": 70.0,
+    "max": 70.0
+   },
+   "temp_c": {
+    "n": 153,
+    "mean": 63.2026,
+    "median": 63.0,
+    "min": 61.0,
+    "max": 65.0
+   },
+   "util_pct": {
+    "n": 153,
+    "mean": 99.9608,
+    "median": 100.0,
+    "min": 97.0,
+    "max": 100.0
+   },
+   "throttle_reasons": [
+    "sw_power_cap"
+   ],
+   "throttle_bits": [
+    "0x4"
+   ],
+   "pcie_gen": [
+    3.0
+   ]
+  },
+  "pre:4096/e/unlocked": {
+   "n": 159,
+   "sm_clock_mhz": {
+    "n": 159,
+    "mean": 596.7925,
+    "median": 555.0,
+    "min": 510.0,
+    "max": 735.0
+   },
+   "mem_clock_mhz": {
+    "n": 159,
+    "mean": 5000.0,
+    "median": 5000.0,
+    "min": 5000.0,
+    "max": 5000.0
+   },
+   "power_w": {
+    "n": 159,
+    "mean": 65.8383,
+    "median": 63.53,
+    "min": 58.0,
+    "max": 75.15
+   },
+   "power_limit_w": {
+    "n": 159,
+    "mean": 70.0,
+    "median": 70.0,
+    "min": 70.0,
+    "max": 70.0
+   },
+   "temp_c": {
+    "n": 159,
+    "mean": 65.8113,
+    "median": 66.0,
+    "min": 65.0,
+    "max": 67.0
+   },
+   "util_pct": {
+    "n": 159,
+    "mean": 99.9371,
+    "median": 100.0,
+    "min": 95.0,
+    "max": 100.0
+   },
+   "throttle_reasons": [
+    "sw_power_cap"
+   ],
+   "throttle_bits": [
+    "0x4"
+   ],
+   "pcie_gen": [
+    3.0
+   ]
+  },
+  "startup": {
+   "n": 6,
+   "sm_clock_mhz": {
+    "n": 6,
+    "mean": 1352.5,
+    "median": 1590.0,
+    "min": 825.0,
+    "max": 1590.0
+   },
+   "mem_clock_mhz": {
+    "n": 6,
+    "mean": 5000.0,
+    "median": 5000.0,
+    "min": 5000.0,
+    "max": 5000.0
+   },
+   "power_w": {
+    "n": 6,
+    "mean": 53.275,
+    "median": 36.065,
+    "min": 34.49,
+    "max": 111.32
+   },
+   "power_limit_w": {
+    "n": 6,
+    "mean": 70.0,
+    "median": 70.0,
+    "min": 70.0,
+    "max": 70.0
+   },
+   "temp_c": {
+    "n": 6,
+    "mean": 42.5,
+    "median": 42.0,
+    "min": 42.0,
+    "max": 44.0
+   },
+   "util_pct": {
+    "n": 6,
+    "mean": 8.3333,
+    "median": 8.0,
+    "min": 7.0,
+    "max": 10.0
+   },
+   "throttle_reasons": [
+    "none",
+    "sw_power_cap"
+   ],
+   "throttle_bits": [
+    "0x0",
+    "0x4"
+   ],
+   "pcie_gen": [
+    3.0
+   ]
+  }
+ },
+ "nvsmi_failures": [],
+ "records": [
+  {
+   "type": "setup",
+   "dry": false,
+   "torch": "2.14.1+cu130",
+   "gpu": "Tesla T4",
+   "capability": [
+    7,
+    5
+   ],
+   "attn_mode": "repeat_efficient",
+   "attn_probe": {
+    "enable_gqa": true,
+    "repeat_default": true,
+    "repeat_efficient": true
+   },
+   "layer_bytes": 201338880,
+   "resident_layers": 8,
+   "model": {
+    "d": 3072,
+    "n_heads": 24,
+    "n_kv": 8,
+    "head_dim": 128,
+    "ff": 8192
+   },
+   "phase_s": 15.0,
+   "idle_s": 15.0,
+   "warm_s": 30.0,
+   "budget_s": 540.0,
+   "workloads": [
+    "pre:1024",
+    "pre:4096",
+    "dec:16:512"
+   ]
+  },
+  {
+   "type": "nvsmi_query",
+   "returncode": 0,
+   "error": null,
+   "chars": 3885
+  },
+  {
+   "type": "phase",
+   "tag": "pre:1024/a/unlocked",
+   "workload": "pre:1024",
+   "clock": "unlocked",
+   "duration_s": 15.0,
+   "nvsmi": {
+    "n": 149,
+    "sm_clock_mhz": {
+     "n": 149,
+     "mean": 726.8456,
+     "median": 585.0,
+     "min": 585.0,
+     "max": 1545.0
+    },
+    "mem_clock_mhz": {
+     "n": 149,
+     "mean": 5000.0,
+     "median": 5000.0,
+     "min": 5000.0,
+     "max": 5000.0
+    },
+    "power_w": {
+     "n": 149,
+     "mean": 27.8675,
+     "median": 27.14,
+     "min": 26.66,
+     "max": 33.72
+    },
+    "power_limit_w": {
+     "n": 149,
+     "mean": 70.0,
+     "median": 70.0,
+     "min": 70.0,
+     "max": 70.0
+    },
+    "temp_c": {
+     "n": 149,
+     "mean": 43.0,
+     "median": 43.0,
+     "min": 43.0,
+     "max": 43.0
+    },
+    "util_pct": {
+     "n": 149,
+     "mean": 0.8322,
+     "median": 0.0,
+     "min": 0.0,
+     "max": 62.0
+    },
+    "throttle_reasons": [
+     "none"
+    ],
+    "throttle_bits": [
+     "0x0"
+    ],
+    "pcie_gen": [
+     3.0
+    ]
+   }
+  },
+  {
+   "type": "phase",
+   "tag": "pre:1024/b/unlocked",
+   "workload": "pre:1024",
+   "clock": "unlocked",
+   "duration_s": 15.24,
+   "compute_ms_per_layer": {
+    "n": 187,
+    "mean": 10.1838,
+    "median": 10.1187,
+    "min": 9.9599,
+    "max": 13.2519
+   },
+   "nvsmi": {
+    "n": 150,
+    "sm_clock_mhz": {
+     "n": 150,
+     "mean": 790.8,
+     "median": 795.0,
+     "min": 585.0,
+     "max": 810.0
+    },
+    "mem_clock_mhz": {
+     "n": 150,
+     "mean": 5000.0,
+     "median": 5000.0,
+     "min": 5000.0,
+     "max": 5000.0
+    },
+    "power_w": {
+     "n": 150,
+     "mean": 69.7401,
+     "median": 69.935,
+     "min": 59.92,
+     "max": 72.2
+    },
+    "power_limit_w": {
+     "n": 150,
+     "mean": 70.0,
+     "median": 70.0,
+     "min": 70.0,
+     "max": 70.0
+    },
+    "temp_c": {
+     "n": 150,
+     "mean": 49.3333,
+     "median": 50.0,
+     "min": 44.0,
+     "max": 53.0
+    },
+    "util_pct": {
+     "n": 150,
+     "mean": 99.52,
+     "median": 100.0,
+     "min": 76.0,
+     "max": 100.0
+    },
+    "throttle_reasons": [
+     "none",
+     "sw_power_cap"
+    ],
+    "throttle_bits": [
+     "0x0",
+     "0x4"
+    ],
+    "pcie_gen": [
+     3.0
+    ]
+   }
+  },
+  {
+   "type": "phase",
+   "tag": "pre:1024/c/unlocked",
+   "workload": "pre:1024",
+   "clock": "unlocked",
+   "duration_s": 15.07,
+   "copy_ms": {
+    "n": 910,
+    "mean": 16.5569,
+    "median": 16.3615,
+    "min": 16.2668,
+    "max": 19.9094
+   },
+   "copy_GBps_mean": 12.16,
+   "copy_busy_frac": 1.0,
+   "nvsmi": {
+    "n": 149,
+    "sm_clock_mhz": {
+     "n": 149,
+     "mean": 1589.5973,
+     "median": 1590.0,
+     "min": 1530.0,
+     "max": 1590.0
+    },
+    "mem_clock_mhz": {
+     "n": 149,
+     "mean": 5000.0,
+     "median": 5000.0,
+     "min": 5000.0,
+     "max": 5000.0
+    },
+    "power_w": {
+     "n": 149,
+     "mean": 40.2285,
+     "median": 39.7,
+     "min": 33.72,
+     "max": 43.23
+    },
+    "power_limit_w": {
+     "n": 149,
+     "mean": 70.0,
+     "median": 70.0,
+     "min": 70.0,
+     "max": 70.0
+    },
+    "temp_c": {
+     "n": 149,
+     "mean": 51.4765,
+     "median": 51.0,
+     "min": 51.0,
+     "max": 52.0
+    },
+    "util_pct": {
+     "n": 149,
+     "mean": 99.9799,
+     "median": 100.0,
+     "min": 97.0,
+     "max": 100.0
+    },
+    "throttle_reasons": [
+     "none",
+     "sw_power_cap"
+    ],
+    "throttle_bits": [
+     "0x0",
+     "0x4"
+    ],
+    "pcie_gen": [
+     3.0
+    ]
+   }
+  },
+  {
+   "type": "phase",
+   "tag": "pre:1024/d/unlocked",
+   "workload": "pre:1024",
+   "clock": "unlocked",
+   "duration_s": 15.26,
+   "compute_ms_per_layer": {
+    "n": 176,
+    "mean": 10.8342,
+    "median": 10.8645,
+    "min": 8.2003,
+    "max": 11.7052
+   },
+   "copy_ms": {
+    "n": 914,
+    "mean": 16.4786,
+    "median": 16.3692,
+    "min": 16.292,
+    "max": 19.9587
+   },
+   "copy_GBps_mean": 12.22,
+   "copy_busy_frac": 0.987,
+   "nvsmi": {
+    "n": 148,
+    "sm_clock_mhz": {
+     "n": 148,
+     "mean": 738.9527,
+     "median": 735.0,
+     "min": 645.0,
+     "max": 795.0
+    },
+    "mem_clock_mhz": {
+     "n": 148,
+     "mean": 5000.0,
+     "median": 5000.0,
+     "min": 5000.0,
+     "max": 5000.0
+    },
+    "power_w": {
+     "n": 148,
+     "mean": 69.0562,
+     "median": 68.92,
+     "min": 67.2,
+     "max": 90.89
+    },
+    "power_limit_w": {
+     "n": 148,
+     "mean": 70.0,
+     "median": 70.0,
+     "min": 70.0,
+     "max": 70.0
+    },
+    "temp_c": {
+     "n": 148,
+     "mean": 56.2432,
+     "median": 56.0,
+     "min": 53.0,
+     "max": 59.0
+    },
+    "util_pct": {
+     "n": 148,
+     "mean": 99.9324,
+     "median": 100.0,
+     "min": 95.0,
+     "max": 100.0
+    },
+    "throttle_reasons": [
+     "sw_power_cap"
+    ],
+    "throttle_bits": [
+     "0x4"
+    ],
+    "pcie_gen": [
+     3.0
+    ]
+   }
+  },
+  {
+   "type": "phase",
+   "tag": "pre:1024/e/unlocked",
+   "workload": "pre:1024",
+   "clock": "unlocked",
+   "duration_s": 15.19,
+   "compute_ms_per_layer": {
+    "n": 171,
+    "mean": 11.0994,
+    "median": 11.104,
+    "min": 10.7128,
+    "max": 11.4268
+   },
+   "copy_ms": {
+    "n": 436,
+    "mean": 16.5291,
+    "median": 16.4109,
+    "min": 16.3332,
+    "max": 18.097
+   },
+   "copy_GBps_mean": 12.18,
+   "copy_busy_frac": 0.475,
+   "nvsmi": {
+    "n": 151,
+    "sm_clock_mhz": {
+     "n": 151,
+     "mean": 714.9338,
+     "median": 720.0,
+     "min": 690.0,
+     "max": 750.0
+    },
+    "mem_clock_mhz": {
+     "n": 151,
+     "mean": 5000.0,
+     "median": 5000.0,
+     "min": 5000.0,
+     "max": 5000.0
+    },
+    "power_w": {
+     "n": 151,
+     "mean": 68.4877,
+     "median": 68.58,
+     "min": 66.18,
+     "max": 69.9
+    },
+    "power_limit_w": {
+     "n": 151,
+     "mean": 70.0,
+     "median": 70.0,
+     "min": 70.0,
+     "max": 70.0
+    },
+    "temp_c": {
+     "n": 151,
+     "mean": 60.5364,
+     "median": 61.0,
+     "min": 59.0,
+     "max": 62.0
+    },
+    "util_pct": {
+     "n": 151,
+     "mean": 99.9603,
+     "median": 100.0,
+     "min": 97.0,
+     "max": 100.0
+    },
+    "throttle_reasons": [
+     "sw_power_cap"
+    ],
+    "throttle_bits": [
+     "0x4"
+    ],
+    "pcie_gen": [
+     3.0
+    ]
+   }
+  },
+  {
+   "type": "ratio",
+   "workload": "pre:1024",
+   "clock": "unlocked",
+   "compute_d_over_b": 1.064,
+   "compute_e_over_b": 1.09,
+   "copy_d_over_c": 0.995,
+   "copy_e_over_c": 0.998
+  },
+  {
+   "type": "phase",
+   "tag": "pre:4096/a/unlocked",
+   "workload": "pre:4096",
+   "clock": "unlocked",
+   "duration_s": 15.0,
+   "nvsmi": {
+    "n": 150,
+    "sm_clock_mhz": {
+     "n": 150,
+     "mean": 700.6,
+     "median": 585.0,
+     "min": 585.0,
+     "max": 1500.0
+    },
+    "mem_clock_mhz": {
+     "n": 150,
+     "mean": 5000.0,
+     "median": 5000.0,
+     "min": 5000.0,
+     "max": 5000.0
+    },
+    "power_w": {
+     "n": 150,
+     "mean": 30.1349,
+     "median": 29.12,
+     "min": 28.62,
+     "max": 66.86
+    },
+    "power_limit_w": {
+     "n": 150,
+     "mean": 70.0,
+     "median": 70.0,
+     "min": 70.0,
+     "max": 70.0
+    },
+    "temp_c": {
+     "n": 150,
+     "mean": 58.3333,
+     "median": 58.0,
+     "min": 56.0,
+     "max": 61.0
+    },
+    "util_pct": {
+     "n": 150,
+     "mean": 1.6133,
+     "median": 0.0,
+     "min": 0.0,
+     "max": 100.0
+    },
+    "throttle_reasons": [
+     "none",
+     "sw_power_cap"
+    ],
+    "throttle_bits": [
+     "0x0",
+     "0x4"
+    ],
+    "pcie_gen": [
+     3.0
+    ]
+   }
+  },
+  {
+   "type": "phase",
+   "tag": "pre:4096/b/unlocked",
+   "workload": "pre:4096",
+   "clock": "unlocked",
+   "duration_s": 16.12,
+   "compute_ms_per_layer": {
+    "n": 35,
+    "mean": 57.5859,
+    "median": 57.2468,
+    "min": 55.2784,
+    "max": 60.8448
+   },
+   "nvsmi": {
+    "n": 159,
+    "sm_clock_mhz": {
+     "n": 159,
+     "mean": 639.717,
+     "median": 615.0,
+     "min": 510.0,
+     "max": 810.0
+    },
+    "mem_clock_mhz": {
+     "n": 159,
+     "mean": 5000.0,
+     "median": 5000.0,
+     "min": 5000.0,
+     "max": 5000.0
+    },
+    "power_w": {
+     "n": 159,
+     "mean": 66.8609,
+     "median": 68.29,
+     "min": 53.19,
+     "max": 77.0
+    },
+    "power_limit_w": {
+     "n": 159,
+     "mean": 70.0,
+     "median": 70.0,
+     "min": 70.0,
+     "max": 70.0
+    },
+    "temp_c": {
+     "n": 159,
+     "mean": 60.3459,
+     "median": 61.0,
+     "min": 58.0,
+     "max": 62.0
+    },
+    "util_pct": {
+     "n": 159,
+     "mean": 99.4465,
+     "median": 100.0,
+     "min": 12.0,
+     "max": 100.0
+    },
+    "throttle_reasons": [
+     "none",
+     "sw_power_cap"
+    ],
+    "throttle_bits": [
+     "0x0",
+     "0x4"
+    ],
+    "pcie_gen": [
+     3.0
+    ]
+   }
+  },
+  {
+   "type": "phase",
+   "tag": "pre:4096/c/unlocked",
+   "workload": "pre:4096",
+   "clock": "unlocked",
+   "duration_s": 15.07,
+   "copy_ms": {
+    "n": 917,
+    "mean": 16.4328,
+    "median": 16.3371,
+    "min": 16.2729,
+    "max": 17.9871
+   },
+   "copy_GBps_mean": 12.25,
+   "copy_busy_frac": 1.0,
+   "nvsmi": {
+    "n": 151,
+    "sm_clock_mhz": {
+     "n": 151,
+     "mean": 1588.7086,
+     "median": 1590.0,
+     "min": 1410.0,
+     "max": 1590.0
+    },
+    "mem_clock_mhz": {
+     "n": 151,
+     "mean": 5000.0,
+     "median": 5000.0,
+     "min": 5000.0,
+     "max": 5000.0
+    },
+    "power_w": {
+     "n": 151,
+     "mean": 42.2435,
+     "median": 41.75,
+     "min": 41.16,
+     "max": 56.82
+    },
+    "power_limit_w": {
+     "n": 151,
+     "mean": 70.0,
+     "median": 70.0,
+     "min": 70.0,
+     "max": 70.0
+    },
+    "temp_c": {
+     "n": 151,
+     "mean": 60.9272,
+     "median": 61.0,
+     "min": 60.0,
+     "max": 61.0
+    },
+    "util_pct": {
+     "n": 151,
+     "mean": 99.9338,
+     "median": 100.0,
+     "min": 95.0,
+     "max": 100.0
+    },
+    "throttle_reasons": [
+     "none",
+     "sw_power_cap"
+    ],
+    "throttle_bits": [
+     "0x0",
+     "0x4"
+    ],
+    "pcie_gen": [
+     3.0
+    ]
+   }
+  },
+  {
+   "type": "phase",
+   "tag": "pre:4096/d/unlocked",
+   "workload": "pre:4096",
+   "clock": "unlocked",
+   "duration_s": 16.01,
+   "compute_ms_per_layer": {
+    "n": 33,
+    "mean": 60.6298,
+    "median": 60.9174,
+    "min": 55.5988,
+    "max": 61.4819
+   },
+   "copy_ms": {
+    "n": 916,
+    "mean": 16.4577,
+    "median": 16.3596,
+    "min": 16.2922,
+    "max": 18.0051
+   },
+   "copy_GBps_mean": 12.23,
+   "copy_busy_frac": 0.942,
+   "nvsmi": {
+    "n": 152,
+    "sm_clock_mhz": {
+     "n": 152,
+     "mean": 607.2039,
+     "median": 562.5,
+     "min": 525.0,
+     "max": 750.0
+    },
+    "mem_clock_mhz": {
+     "n": 152,
+     "mean": 5000.0,
+     "median": 5000.0,
+     "min": 5000.0,
+     "max": 5000.0
+    },
+    "power_w": {
+     "n": 152,
+     "mean": 65.991,
+     "median": 66.99,
+     "min": 57.41,
+     "max": 78.66
+    },
+    "power_limit_w": {
+     "n": 152,
+     "mean": 70.0,
+     "median": 70.0,
+     "min": 70.0,
+     "max": 70.0
+    },
+    "temp_c": {
+     "n": 152,
+     "mean": 63.1974,
+     "median": 63.0,
+     "min": 61.0,
+     "max": 65.0
+    },
+    "util_pct": {
+     "n": 152,
+     "mean": 99.9605,
+     "median": 100.0,
+     "min": 97.0,
+     "max": 100.0
+    },
+    "throttle_reasons": [
+     "sw_power_cap"
+    ],
+    "throttle_bits": [
+     "0x4"
+    ],
+    "pcie_gen": [
+     3.0
+    ]
+   }
+  },
+  {
+   "type": "phase",
+   "tag": "pre:4096/e/unlocked",
+   "workload": "pre:4096",
+   "clock": "unlocked",
+   "duration_s": 16.07,
+   "compute_ms_per_layer": {
+    "n": 33,
+    "mean": 60.8728,
+    "median": 60.9779,
+    "min": 57.4065,
+    "max": 61.3292
+   },
+   "copy_ms": {
+    "n": 436,
+    "mean": 16.5037,
+    "median": 16.4086,
+    "min": 16.3235,
+    "max": 18.0547
+   },
+   "copy_GBps_mean": 12.2,
+   "copy_busy_frac": 0.448,
+   "nvsmi": {
+    "n": 158,
+    "sm_clock_mhz": {
+     "n": 158,
+     "mean": 596.1076,
+     "median": 555.0,
+     "min": 510.0,
+     "max": 735.0
+    },
+    "mem_clock_mhz": {
+     "n": 158,
+     "mean": 5000.0,
+     "median": 5000.0,
+     "min": 5000.0,
+     "max": 5000.0
+    },
+    "power_w": {
+     "n": 158,
+     "mean": 65.8722,
+     "median": 63.53,
+     "min": 58.0,
+     "max": 75.15
+    },
+    "power_limit_w": {
+     "n": 158,
+     "mean": 70.0,
+     "median": 70.0,
+     "min": 70.0,
+     "max": 70.0
+    },
+    "temp_c": {
+     "n": 158,
+     "mean": 65.8101,
+     "median": 66.0,
+     "min": 65.0,
+     "max": 67.0
+    },
+    "util_pct": {
+     "n": 158,
+     "mean": 99.9367,
+     "median": 100.0,
+     "min": 95.0,
+     "max": 100.0
+    },
+    "throttle_reasons": [
+     "sw_power_cap"
+    ],
+    "throttle_bits": [
+     "0x4"
+    ],
+    "pcie_gen": [
+     3.0
+    ]
+   }
+  },
+  {
+   "type": "ratio",
+   "workload": "pre:4096",
+   "clock": "unlocked",
+   "compute_d_over_b": 1.053,
+   "compute_e_over_b": 1.057,
+   "copy_d_over_c": 1.002,
+   "copy_e_over_c": 1.004
+  },
+  {
+   "type": "phase",
+   "tag": "dec:16:512/a/unlocked",
+   "workload": "dec:16:512",
+   "clock": "unlocked",
+   "duration_s": 15.0,
+   "nvsmi": {
+    "n": 150,
+    "sm_clock_mhz": {
+     "n": 150,
+     "mean": 668.6,
+     "median": 585.0,
+     "min": 585.0,
+     "max": 1485.0
+    },
+    "mem_clock_mhz": {
+     "n": 150,
+     "mean": 5000.0,
+     "median": 5000.0,
+     "min": 5000.0,
+     "max": 5000.0
+    },
+    "power_w": {
+     "n": 150,
+     "mean": 30.4739,
+     "median": 29.89,
+     "min": 29.5,
+     "max": 65.08
+    },
+    "power_limit_w": {
+     "n": 150,
+     "mean": 70.0,
+     "median": 70.0,
+     "min": 70.0,
+     "max": 70.0
+    },
+    "temp_c": {
+     "n": 150,
+     "mean": 63.0133,
+     "median": 63.0,
+     "min": 61.0,
+     "max": 66.0
+    },
+    "util_pct": {
+     "n": 150,
+     "mean": 1.3333,
+     "median": 0.0,
+     "min": 0.0,
+     "max": 100.0
+    },
+    "throttle_reasons": [
+     "none",
+     "sw_power_cap"
+    ],
+    "throttle_bits": [
+     "0x0",
+     "0x4"
+    ],
+    "pcie_gen": [
+     3.0
+    ]
+   }
+  },
+  {
+   "type": "phase",
+   "tag": "dec:16:512/b/unlocked",
+   "workload": "dec:16:512",
+   "clock": "unlocked",
+   "duration_s": 15.04,
+   "compute_ms_per_layer": {
+    "n": 813,
+    "mean": 2.3119,
+    "median": 2.3119,
+    "min": 2.2702,
+    "max": 3.091
+   },
+   "nvsmi": {
+    "n": 149,
+    "sm_clock_mhz": {
+     "n": 149,
+     "mean": 1054.1275,
+     "median": 1050.0,
+     "min": 585.0,
+     "max": 1080.0
+    },
+    "mem_clock_mhz": {
+     "n": 149,
+     "mean": 5000.0,
+     "median": 5000.0,
+     "min": 5000.0,
+     "max": 5000.0
+    },
+    "power_w": {
+     "n": 149,
+     "mean": 67.9399,
+     "median": 68.22,
+     "min": 30.09,
+     "max": 69.96
+    },
+    "power_limit_w": {
+     "n": 149,
+     "mean": 70.0,
+     "median": 70.0,
+     "min": 70.0,
+     "max": 70.0
+    },
+    "temp_c": {
+     "n": 149,
+     "mean": 64.7383,
+     "median": 65.0,
+     "min": 62.0,
+     "max": 66.0
+    },
+    "util_pct": {
+     "n": 149,
+     "mean": 98.8456,
+     "median": 100.0,
+     "min": 0.0,
+     "max": 100.0
+    },
+    "throttle_reasons": [
+     "none",
+     "sw_power_cap"
+    ],
+    "throttle_bits": [
+     "0x0",
+     "0x4"
+    ],
+    "pcie_gen": [
+     3.0
+    ]
+   }
+  },
+  {
+   "type": "phase",
+   "tag": "dec:16:512/c/unlocked",
+   "workload": "dec:16:512",
+   "clock": "unlocked",
+   "duration_s": 15.07,
+   "copy_ms": {
+    "n": 913,
+    "mean": 16.5071,
+    "median": 16.3528,
+    "min": 16.273,
+    "max": 19.9343
+   },
+   "copy_GBps_mean": 12.2,
+   "copy_busy_frac": 1.0,
+   "nvsmi": {
+    "n": 151,
+    "sm_clock_mhz": {
+     "n": 151,
+     "mean": 1588.1126,
+     "median": 1590.0,
+     "min": 1320.0,
+     "max": 1590.0
+    },
+    "mem_clock_mhz": {
+     "n": 151,
+     "mean": 5000.0,
+     "median": 5000.0,
+     "min": 5000.0,
+     "max": 5000.0
+    },
+    "power_w": {
+     "n": 151,
+     "mean": 44.6061,
+     "median": 44.19,
+     "min": 38.62,
+     "max": 68.78
+    },
+    "power_limit_w": {
+     "n": 151,
+     "mean": 70.0,
+     "median": 70.0,
+     "min": 70.0,
+     "max": 70.0
+    },
+    "temp_c": {
+     "n": 151,
+     "mean": 64.7815,
+     "median": 65.0,
+     "min": 64.0,
+     "max": 66.0
+    },
+    "util_pct": {
+     "n": 151,
+     "mean": 99.9603,
+     "median": 100.0,
+     "min": 97.0,
+     "max": 100.0
+    },
+    "throttle_reasons": [
+     "none",
+     "sw_power_cap"
+    ],
+    "throttle_bits": [
+     "0x0",
+     "0x4"
+    ],
+    "pcie_gen": [
+     3.0
+    ]
+   }
+  },
+  {
+   "type": "phase",
+   "tag": "dec:16:512/d/unlocked",
+   "workload": "dec:16:512",
+   "clock": "unlocked",
+   "duration_s": 15.07,
+   "compute_ms_per_layer": {
+    "n": 758,
+    "mean": 2.4788,
+    "median": 2.4778,
+    "min": 2.2116,
+    "max": 3.4166
+   },
+   "copy_ms": {
+    "n": 907,
+    "mean": 16.6127,
+    "median": 16.4289,
+    "min": 16.2893,
+    "max": 19.9897
+   },
+   "copy_GBps_mean": 12.12,
+   "copy_busy_frac": 1.0,
+   "nvsmi": {
+    "n": 145,
+    "sm_clock_mhz": {
+     "n": 145,
+     "mean": 1059.4138,
+     "median": 1050.0,
+     "min": 1035.0,
+     "max": 1260.0
+    },
+    "mem_clock_mhz": {
+     "n": 145,
+     "mean": 5000.0,
+     "median": 5000.0,
+     "min": 5000.0,
+     "max": 5000.0
+    },
+    "power_w": {
+     "n": 145,
+     "mean": 67.8957,
+     "median": 67.8,
+     "min": 65.45,
+     "max": 88.65
+    },
+    "power_limit_w": {
+     "n": 145,
+     "mean": 70.0,
+     "median": 70.0,
+     "min": 70.0,
+     "max": 70.0
+    },
+    "temp_c": {
+     "n": 145,
+     "mean": 66.8345,
+     "median": 67.0,
+     "min": 65.0,
+     "max": 68.0
+    },
+    "util_pct": {
+     "n": 145,
+     "mean": 99.9586,
+     "median": 100.0,
+     "min": 97.0,
+     "max": 100.0
+    },
+    "throttle_reasons": [
+     "sw_power_cap"
+    ],
+    "throttle_bits": [
+     "0x4"
+    ],
+    "pcie_gen": [
+     3.0
+    ]
+   }
+  },
+  {
+   "type": "phase",
+   "tag": "dec:16:512/e/unlocked",
+   "workload": "dec:16:512",
+   "clock": "unlocked",
+   "duration_s": 15.04,
+   "compute_ms_per_layer": {
+    "n": 777,
+    "mean": 2.4188,
+    "median": 2.4193,
+    "min": 2.1319,
+    "max": 2.519
+   },
+   "copy_ms": {
+    "n": 436,
+    "mean": 16.5411,
+    "median": 16.4364,
+    "min": 16.363,
+    "max": 18.2788
+   },
+   "copy_GBps_mean": 12.17,
+   "copy_busy_frac": 0.48,
+   "nvsmi": {
+    "n": 149,
+    "sm_clock_mhz": {
+     "n": 149,
+     "mean": 1025.4362,
+     "median": 1020.0,
+     "min": 990.0,
+     "max": 1155.0
+    },
+    "mem_clock_mhz": {
+     "n": 149,
+     "mean": 5000.0,
+     "median": 5000.0,
+     "min": 5000.0,
+     "max": 5000.0
+    },
+    "power_w": {
+     "n": 149,
+     "mean": 67.4958,
+     "median": 67.4,
+     "min": 65.3,
+     "max": 80.71
+    },
+    "power_limit_w": {
+     "n": 149,
+     "mean": 70.0,
+     "median": 70.0,
+     "min": 70.0,
+     "max": 70.0
+    },
+    "temp_c": {
+     "n": 149,
+     "mean": 69.2148,
+     "median": 69.0,
+     "min": 68.0,
+     "max": 70.0
+    },
+    "util_pct": {
+     "n": 149,
+     "mean": 99.9597,
+     "median": 100.0,
+     "min": 97.0,
+     "max": 100.0
+    },
+    "throttle_reasons": [
+     "sw_power_cap"
+    ],
+    "throttle_bits": [
+     "0x4"
+    ],
+    "pcie_gen": [
+     3.0
+    ]
+   }
+  },
+  {
+   "type": "ratio",
+   "workload": "dec:16:512",
+   "clock": "unlocked",
+   "compute_d_over_b": 1.072,
+   "compute_e_over_b": 1.046,
+   "copy_d_over_c": 1.006,
+   "copy_e_over_c": 1.002
+  },
+  {
+   "type": "phase",
+   "tag": "pre:1024/warm_idle/unlocked",
+   "workload": "pre:1024",
+   "clock": "unlocked",
+   "duration_s": 15.0,
+   "nvsmi": {
+    "n": 150,
+    "sm_clock_mhz": {
+     "n": 150,
+     "mean": 707.7,
+     "median": 585.0,
+     "min": 585.0,
+     "max": 1485.0
+    },
+    "mem_clock_mhz": {
+     "n": 150,
+     "mean": 5000.0,
+     "median": 5000.0,
+     "min": 5000.0,
+     "max": 5000.0
+    },
+    "power_w": {
+     "n": 150,
+     "mean": 31.7777,
+     "median": 30.5,
+     "min": 30.09,
+     "max": 67.7
+    },
+    "power_limit_w": {
+     "n": 150,
+     "mean": 70.0,
+     "median": 70.0,
+     "min": 70.0,
+     "max": 70.0
+    },
+    "temp_c": {
+     "n": 150,
+     "mean": 66.6,
+     "median": 66.0,
+     "min": 65.0,
+     "max": 70.0
+    },
+    "util_pct": {
+     "n": 150,
+     "mean": 1.1067,
+     "median": 0.0,
+     "min": 0.0,
+     "max": 83.0
+    },
+    "throttle_reasons": [
+     "none",
+     "sw_power_cap"
+    ],
+    "throttle_bits": [
+     "0x0",
+     "0x4"
+    ],
+    "pcie_gen": [
+     3.0
+    ]
+   }
+  },
+  {
+   "type": "phase",
+   "tag": "pre:1024/warm_run/unlocked",
+   "workload": "pre:1024",
+   "clock": "unlocked",
+   "duration_s": 30.21,
+   "compute_ms_per_layer": {
+    "n": 320,
+    "mean": 11.7999,
+    "median": 11.8355,
+    "min": 11.2483,
+    "max": 13.3409
+   },
+   "nvsmi": {
+    "n": 301,
+    "sm_clock_mhz": {
+     "n": 301,
+     "mean": 666.1794,
+     "median": 660.0,
+     "min": 585.0,
+     "max": 705.0
+    },
+    "mem_clock_mhz": {
+     "n": 301,
+     "mean": 5000.0,
+     "median": 5000.0,
+     "min": 5000.0,
+     "max": 5000.0
+    },
+    "power_w": {
+     "n": 301,
+     "mean": 67.4467,
+     "median": 67.65,
+     "min": 30.78,
+     "max": 69.17
+    },
+    "power_limit_w": {
+     "n": 301,
+     "mean": 70.0,
+     "median": 70.0,
+     "min": 70.0,
+     "max": 70.0
+    },
+    "temp_c": {
+     "n": 301,
+     "mean": 68.9502,
+     "median": 69.0,
+     "min": 65.0,
+     "max": 71.0
+    },
+    "util_pct": {
+     "n": 301,
+     "mean": 99.3488,
+     "median": 100.0,
+     "min": 0.0,
+     "max": 100.0
+    },
+    "throttle_reasons": [
+     "none",
+     "sw_power_cap"
+    ],
+    "throttle_bits": [
+     "0x0",
+     "0x4"
+    ],
+    "pcie_gen": [
+     3.0
+    ]
+   }
+  },
+  {
+   "type": "warm",
+   "workload": "pre:1024",
+   "bucket_s": 3.0,
+   "first_edge_ms_per_layer": 11.551,
+   "last_edge_ms_per_layer": 11.99,
+   "last_over_first": 1.038,
+   "bucket_ms_per_layer": [
+    11.551,
+    11.614,
+    11.692,
+    11.754,
+    11.813,
+    11.835,
+    11.904,
+    11.926,
+    11.957,
+    11.99
+   ]
+  },
+  {
+   "type": "clock_lock",
+   "cmd": "nvidia-smi -lgc 1200,1200",
+   "returncode": 0,
+   "stdout": "GPU clocks set to \"(gpuClkMin 1200, gpuClkMax 1200)\" for GPU 00000000:00:04.0\n\nWarning: persistence mode is disabled on device 00000000:00:04.0. See the Known Issues section of the nvidia-smi(1) man page for more information. Run with [--help | -h] switch to get more information on how to enable persistence mode.\nAll done.",
+   "stderr": ""
+  },
+  {
+   "type": "phase",
+   "tag": "pre:1024/b/locked",
+   "workload": "pre:1024",
+   "clock": "locked",
+   "duration_s": 15.28,
+   "compute_ms_per_layer": {
+    "n": 158,
+    "mean": 12.0898,
+    "median": 12.085,
+    "min": 11.8646,
+    "max": 12.3329
+   },
+   "nvsmi": {
+    "n": 152,
+    "sm_clock_mhz": {
+     "n": 152,
+     "mean": 647.3684,
+     "median": 645.0,
+     "min": 615.0,
+     "max": 660.0
+    },
+    "mem_clock_mhz": {
+     "n": 152,
+     "mean": 5000.0,
+     "median": 5000.0,
+     "min": 5000.0,
+     "max": 5000.0
+    },
+    "power_w": {
+     "n": 152,
+     "mean": 67.3672,
+     "median": 67.53,
+     "min": 65.69,
+     "max": 68.88
+    },
+    "power_limit_w": {
+     "n": 152,
+     "mean": 70.0,
+     "median": 70.0,
+     "min": 70.0,
+     "max": 70.0
+    },
+    "temp_c": {
+     "n": 152,
+     "mean": 71.2895,
+     "median": 71.0,
+     "min": 71.0,
+     "max": 72.0
+    },
+    "util_pct": {
+     "n": 152,
+     "mean": 99.8487,
+     "median": 100.0,
+     "min": 79.0,
+     "max": 100.0
+    },
+    "throttle_reasons": [
+     "sw_power_cap"
+    ],
+    "throttle_bits": [
+     "0x4"
+    ],
+    "pcie_gen": [
+     3.0
+    ]
+   }
+  },
+  {
+   "type": "phase",
+   "tag": "pre:1024/d/locked",
+   "workload": "pre:1024",
+   "clock": "locked",
+   "duration_s": 15.23,
+   "compute_ms_per_layer": {
+    "n": 150,
+    "mean": 12.6875,
+    "median": 12.6878,
+    "min": 11.1417,
+    "max": 13.0115
+   },
+   "copy_ms": {
+    "n": 916,
+    "mean": 16.4584,
+    "median": 16.3606,
+    "min": 16.3021,
+    "max": 18.0789
+   },
+   "copy_GBps_mean": 12.23,
+   "copy_busy_frac": 0.99,
+   "nvsmi": {
+    "n": 148,
+    "sm_clock_mhz": {
+     "n": 148,
+     "mean": 616.723,
+     "median": 615.0,
+     "min": 600.0,
+     "max": 630.0
+    },
+    "mem_clock_mhz": {
+     "n": 148,
+     "mean": 5000.0,
+     "median": 5000.0,
+     "min": 5000.0,
+     "max": 5000.0
+    },
+    "power_w": {
+     "n": 148,
+     "mean": 67.3726,
+     "median": 67.45,
+     "min": 65.4,
+     "max": 73.88
+    },
+    "power_limit_w": {
+     "n": 148,
+     "mean": 70.0,
+     "median": 70.0,
+     "min": 70.0,
+     "max": 70.0
+    },
+    "temp_c": {
+     "n": 148,
+     "mean": 72.527,
+     "median": 73.0,
+     "min": 72.0,
+     "max": 73.0
+    },
+    "util_pct": {
+     "n": 148,
+     "mean": 99.9595,
+     "median": 100.0,
+     "min": 97.0,
+     "max": 100.0
+    },
+    "throttle_reasons": [
+     "sw_power_cap"
+    ],
+    "throttle_bits": [
+     "0x4"
+    ],
+    "pcie_gen": [
+     3.0
+    ]
+   }
+  },
+  {
+   "type": "ratio",
+   "workload": "pre:1024",
+   "clock": "locked",
+   "compute_d_over_b": 1.049
+  },
+  {
+   "type": "phase",
+   "tag": "pre:4096/b/locked",
+   "workload": "pre:4096",
+   "clock": "locked",
+   "duration_s": 16.06,
+   "compute_ms_per_layer": {
+    "n": 31,
+    "mean": 64.7682,
+    "median": 64.9181,
+    "min": 63.7261,
+    "max": 65.9459
+   },
+   "nvsmi": {
+    "n": 160,
+    "sm_clock_mhz": {
+     "n": 160,
+     "mean": 561.4688,
+     "median": 555.0,
+     "min": 450.0,
+     "max": 675.0
+    },
+    "mem_clock_mhz": {
+     "n": 160,
+     "mean": 5000.0,
+     "median": 5000.0,
+     "min": 5000.0,
+     "max": 5000.0
+    },
+    "power_w": {
+     "n": 160,
+     "mean": 65.9959,
+     "median": 67.97,
+     "min": 53.51,
+     "max": 76.66
+    },
+    "power_limit_w": {
+     "n": 160,
+     "mean": 70.0,
+     "median": 70.0,
+     "min": 70.0,
+     "max": 70.0
+    },
+    "temp_c": {
+     "n": 160,
+     "mean": 73.3688,
+     "median": 73.0,
+     "min": 73.0,
+     "max": 74.0
+    },
+    "util_pct": {
+     "n": 160,
+     "mean": 99.95,
+     "median": 100.0,
+     "min": 96.0,
+     "max": 100.0
+    },
+    "throttle_reasons": [
+     "sw_power_cap"
+    ],
+    "throttle_bits": [
+     "0x4"
+    ],
+    "pcie_gen": [
+     3.0
+    ]
+   }
+  },
+  {
+   "type": "phase",
+   "tag": "pre:4096/d/locked",
+   "workload": "pre:4096",
+   "clock": "locked",
+   "duration_s": 16.38,
+   "compute_ms_per_layer": {
+    "n": 31,
+    "mean": 66.033,
+    "median": 66.2331,
+    "min": 63.6913,
+    "max": 67.0162
+   },
+   "copy_ms": {
+    "n": 916,
+    "mean": 16.458,
+    "median": 16.3614,
+    "min": 16.2925,
+    "max": 18.0918
+   },
+   "copy_GBps_mean": 12.23,
+   "copy_busy_frac": 0.92,
+   "nvsmi": {
+    "n": 156,
+    "sm_clock_mhz": {
+     "n": 156,
+     "mean": 549.4231,
+     "median": 525.0,
+     "min": 435.0,
+     "max": 660.0
+    },
+    "mem_clock_mhz": {
+     "n": 156,
+     "mean": 5000.0,
+     "median": 5000.0,
+     "min": 5000.0,
+     "max": 5000.0
+    },
+    "power_w": {
+     "n": 156,
+     "mean": 66.0854,
+     "median": 68.86,
+     "min": 55.02,
+     "max": 76.08
+    },
+    "power_limit_w": {
+     "n": 156,
+     "mean": 70.0,
+     "median": 70.0,
+     "min": 70.0,
+     "max": 70.0
+    },
+    "temp_c": {
+     "n": 156,
+     "mean": 74.0064,
+     "median": 74.0,
+     "min": 74.0,
+     "max": 75.0
+    },
+    "util_pct": {
+     "n": 156,
+     "mean": 99.9744,
+     "median": 100.0,
+     "min": 96.0,
+     "max": 100.0
+    },
+    "throttle_reasons": [
+     "sw_power_cap"
+    ],
+    "throttle_bits": [
+     "0x4"
+    ],
+    "pcie_gen": [
+     3.0
+    ]
+   }
+  },
+  {
+   "type": "ratio",
+   "workload": "pre:4096",
+   "clock": "locked",
+   "compute_d_over_b": 1.02
+  },
+  {
+   "type": "phase",
+   "tag": "dec:16:512/b/locked",
+   "workload": "dec:16:512",
+   "clock": "locked",
+   "duration_s": 15.04,
+   "compute_ms_per_layer": {
+    "n": 780,
+    "mean": 2.4103,
+    "median": 2.4059,
+    "min": 2.3652,
+    "max": 2.6073
+   },
+   "nvsmi": {
+    "n": 150,
+    "sm_clock_mhz": {
+     "n": 150,
+     "mean": 961.1,
+     "median": 960.0,
+     "min": 900.0,
+     "max": 990.0
+    },
+    "mem_clock_mhz": {
+     "n": 150,
+     "mean": 5000.0,
+     "median": 5000.0,
+     "min": 5000.0,
+     "max": 5000.0
+    },
+    "power_w": {
+     "n": 150,
+     "mean": 67.0506,
+     "median": 66.935,
+     "min": 61.69,
+     "max": 68.92
+    },
+    "power_limit_w": {
+     "n": 150,
+     "mean": 70.0,
+     "median": 70.0,
+     "min": 70.0,
+     "max": 70.0
+    },
+    "temp_c": {
+     "n": 150,
+     "mean": 74.1,
+     "median": 74.0,
+     "min": 74.0,
+     "max": 75.0
+    },
+    "util_pct": {
+     "n": 150,
+     "mean": 99.92,
+     "median": 100.0,
+     "min": 94.0,
+     "max": 100.0
+    },
+    "throttle_reasons": [
+     "sw_power_cap"
+    ],
+    "throttle_bits": [
+     "0x4"
+    ],
+    "pcie_gen": [
+     3.0
+    ]
+   }
+  },
+  {
+   "type": "phase",
+   "tag": "dec:16:512/d/locked",
+   "workload": "dec:16:512",
+   "clock": "locked",
+   "duration_s": 15.07,
+   "compute_ms_per_layer": {
+    "n": 734,
+    "mean": 2.5613,
+    "median": 2.5552,
+    "min": 2.5103,
+    "max": 2.8724
+   },
+   "copy_ms": {
+    "n": 907,
+    "mean": 16.6155,
+    "median": 16.43,
+    "min": 16.3296,
+    "max": 20.0153
+   },
+   "copy_GBps_mean": 12.12,
+   "copy_busy_frac": 1.0,
+   "nvsmi": {
+    "n": 147,
+    "sm_clock_mhz": {
+     "n": 147,
+     "mean": 969.0816,
+     "median": 975.0,
+     "min": 945.0,
+     "max": 1005.0
+    },
+    "mem_clock_mhz": {
+     "n": 147,
+     "mean": 5000.0,
+     "median": 5000.0,
+     "min": 5000.0,
+     "max": 5000.0
+    },
+    "power_w": {
+     "n": 147,
+     "mean": 66.8676,
+     "median": 67.12,
+     "min": 52.79,
+     "max": 68.24
+    },
+    "power_limit_w": {
+     "n": 147,
+     "mean": 70.0,
+     "median": 70.0,
+     "min": 70.0,
+     "max": 70.0
+    },
+    "temp_c": {
+     "n": 147,
+     "mean": 75.0,
+     "median": 75.0,
+     "min": 75.0,
+     "max": 75.0
+    },
+    "util_pct": {
+     "n": 147,
+     "mean": 99.9592,
+     "median": 100.0,
+     "min": 97.0,
+     "max": 100.0
+    },
+    "throttle_reasons": [
+     "sw_power_cap"
+    ],
+    "throttle_bits": [
+     "0x4"
+    ],
+    "pcie_gen": [
+     3.0
+    ]
+   }
+  },
+  {
+   "type": "ratio",
+   "workload": "dec:16:512",
+   "clock": "locked",
+   "compute_d_over_b": 1.063
+  },
+  {
+   "type": "clock_reset",
+   "cmd": "nvidia-smi -rgc",
+   "returncode": 0,
+   "stdout": "All done.",
+   "stderr": ""
+  }
+ ],
+ "elapsed_s": 372.6
+}
+JSON_END
+PROGRESS t=372.6s finished in 372.6s
+[colab] Stopping session 'run-bb8273'...
+[colab] Session terminated.
