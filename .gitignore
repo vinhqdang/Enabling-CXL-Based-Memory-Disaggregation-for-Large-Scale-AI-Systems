@@ -219,3 +219,4 @@ manuscript/*.fdb_latexmk
 __pycache__/
 *.pyc
 .pytest_cache/
+!results/raw/*.log
