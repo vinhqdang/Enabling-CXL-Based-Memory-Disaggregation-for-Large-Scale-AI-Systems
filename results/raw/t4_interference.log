@@ -63,3 +63,7 @@ REC {"type": "phase", "tag": "dec:16:512/e/unlocked", "workload": "dec:16:512", 
 REC {"type": "ratio", "workload": "dec:16:512", "clock": "unlocked", "compute_d_over_b": 1.072, "compute_e_over_b": 1.046, "copy_d_over_c": 1.006, "copy_e_over_c": 1.002}
 PROGRESS t=232.9s start pre:1024/warm_idle/unlocked
 HEARTBEAT t=240s stage=pre:1024/warm_idle/unlocked (t=233s)
+PROGRESS t=247.9s done pre:1024/warm_idle/unlocked dur=15.0s
+REC {"type": "phase", "tag": "pre:1024/warm_idle/unlocked", "workload": "pre:1024", "clock": "unlocked", "duration_s": 15.0, "nvsmi": {"n": 150, "sm_clock_mhz": {"n": 150, "mean": 707.7, "median": 585.0, "min": 585.0, "max": 1485.0}, "mem_clock_mhz": {"n": 150, "mean": 5000.0, "median": 5000.0, "min": 5000.0, "max": 5000.0}, "power_w": {"n": 150, "mean": 31.7777, "median": 30.5, "min": 30.09, "max": 67.7}, "power_limit_w": {"n": 150, "mean": 70.0, "median": 70.0, "min": 70.0, "max": 70.0}, "temp_c": {"n": 150, "mean": 66.6, "median": 66.0, "min": 65.0, "max": 70.0}, "util_pct": {"n": 150, "mean": 1.1067, "median": 0.0, "min": 0.0, "max": 83.0}, "throttle_reasons": ["none", "sw_power_cap"], "throttle_bits": ["0x0", "0x4"], "pcie_gen": [3.0]}}
+PROGRESS t=247.9s start pre:1024/warm_run/unlocked
+HEARTBEAT t=260s stage=pre:1024/warm_run/unlocked (t=248s)
