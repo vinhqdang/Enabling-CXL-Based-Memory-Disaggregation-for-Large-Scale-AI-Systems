@@ -34,7 +34,7 @@ Figure~\ref{fig:timeline} shows why. In the contiguous configuration the copy en
 \subsection{Number of slots}
 \label{sec:res-slots}
 
-At $T=768$ a layer copies in \nSweepRatio{} times its compute time, inside the band $c<f<2c$ of Proposition~\ref{prop:two}. Figure~\ref{fig:slots} shows the slot sweep for $r=14$. One slot serialises copy and computation. With two slots the balanced placement is \nSweepTwoOverThreePct\% slower than with three, as the proposition allows, and more slots do not help, as Theorem~\ref{thm:balanced} predicts. The model reproduces the sweep with a mean error of \nSweepMape\%.
+At $T=768$ a layer copies in \nSweepRatio{} times its compute time, inside the band $c<f<2c$ of Proposition~\ref{prop:two}. Figure~\ref{fig:slots} shows the slot sweep for $r=14$. One slot serialises copy and computation for both placements. The balanced placement reaches the lower bound with two slots already: the excess that Proposition~\ref{prop:two} allows in this band does not occur for these 14 resident layers. The contiguous placement improves with every additional slot, because each slot lets one more copy proceed during the resident block, and needs six slots to reach the bound, four more than the balanced placement. Since a slot occupies as much memory as a resident layer, the balanced placement reaches the same speed with four layers' worth of memory to spare. The model reproduces the sweep with a mean error of \nSweepMape\%.
 
 \begin{figure}[t]
 \centering
