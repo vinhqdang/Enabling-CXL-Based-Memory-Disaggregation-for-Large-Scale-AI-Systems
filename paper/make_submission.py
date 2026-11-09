@@ -9,7 +9,7 @@ import zipfile
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = sys.argv[1] if len(sys.argv) > 1 else os.path.join(HERE, "..", "submission_fgcs")
 BUILD = os.path.join(OUT, "build_anon")
-FIGS = ["fig_overview", "fig_schedule", "fig_accuracy", "fig_penalty", "fig_timeline", "fig_slots", "fig_nonuniform"]
+FIGS = ["fig_overview", "fig_eventgraph", "fig_schedule", "fig_regime", "fig_accuracy", "fig_penalty", "fig_decode8b", "fig_timeline", "fig_slots", "fig_nonuniform", "fig_unlocked", "fig_bandwidth"]
 
 src = open(os.path.join(HERE, "main.tex")).read()
 for _ in range(3):

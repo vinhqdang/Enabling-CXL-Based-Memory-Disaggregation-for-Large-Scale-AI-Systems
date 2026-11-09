@@ -2,10 +2,10 @@
 
 | File | Use |
 |------|-----|
-| `manuscript.pdf` | Anonymised manuscript (no author names, affiliations, CRediT or repository link), elsarticle double column, 12 pages (limit 18) |
+| `manuscript.pdf` | Anonymised manuscript (no author names, affiliations, CRediT or repository link), elsarticle double column, 14 pages (limit 18) |
 | `title_page.pdf` / `title_page.tex` | Title page with authors, affiliations, corresponding author, CRediT and data link (upload as the separate title page) |
-| `manuscript_source.zip` | Anonymised LaTeX source: exactly one `manuscript.tex` (all inputs, numbers and the bibliography inlined) and `Figure_1.png` ... `Figure_7.png` (300 dpi); verified to compile from the unzipped folder. Rebuild with `python3 paper/make_submission.py` |
-| `Figure_1.png` ... `Figure_7.png` | Figures as separate files (300 dpi PNG), in order of appearance: overview, schedule, accuracy, penalty, timeline, slots, non-uniform |
+| `manuscript_source.zip` | Anonymised LaTeX source: exactly one `manuscript.tex` (all inputs, numbers and the bibliography inlined) and `Figure_1.png` ... `Figure_12.png` (300 dpi); verified to compile from the unzipped folder. Rebuild with `python3 paper/make_submission.py` |
+| `Figure_1.png` ... `Figure_12.png` | Figures as separate files (300 dpi PNG), in order of appearance: overview, event graph, schedule, regime map, accuracy, penalty, decode and 8B, timeline, slots, non-uniform, default clocks, bandwidth |
 | `highlights.txt` | 5 highlights, each at most 85 characters |
 | `cover_letter.pdf` | Cover letter |
 | `title_abstract_keywords.txt` | Title, authors, abstract (248 words, limit 250), 8 keywords (6-10 required) |

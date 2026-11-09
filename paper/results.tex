@@ -22,6 +22,15 @@ Figure~\ref{fig:penalty} shows, for each prefill length, the iteration time of t
 \label{fig:penalty}
 \end{figure*}
 
+Figure~\ref{fig:decode8b} shows the same comparison for decode and for the Llama-3.1-8B layer shapes. In decode with 16 sequences copies dominate ($f/c\approx5.4$), and placement matters only when most layers are resident, where the resident computation becomes comparable with the remaining copies: the contiguous placement is 1.32$\times$ slower than the balanced one at $r=21$ with two slots (model 1.32). With 64 sequences ($f/c=1.87$, in the band) the gap appears already at fewer resident layers and reaches 1.36$\times$ at $r=14$ with two slots (model 1.38). The 8B shapes show the same pattern with fewer layers, and the model follows the measurements in all four panels.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.95\textwidth]{figs/fig_decode8b.pdf}
+\caption{Iteration time relative to the lower bound versus the number of resident layers for decode (Llama-3.2-3B, batch 16 and 64) and prefill (Llama-3.1-8B shapes, 16 layers, $T=512$ and $1\,024$). Filled markers and solid lines: three slots; hollow markers and dashed lines: two slots. Markers are measurements, lines the calibrated model.}
+\label{fig:decode8b}
+\end{figure*}
+
 Figure~\ref{fig:timeline} shows why. In the contiguous configuration the copy engine fills the slots while the resident block computes and then waits for most of the block; afterwards the streamed layers run at the copy rate. In the balanced configuration the copy engine is never idle and the iteration ends when the last copy has been consumed.
 
 \begin{figure}[t]
@@ -58,6 +67,13 @@ With the Llama-3.2 output head as an extra unit (788~MB, four times a layer, but
 \subsection{Clock changes and default clocks}
 \label{sec:res-power}
 
-\input{unlocked.tex}
+\input{unlocked.tex} Figure~\ref{fig:unlocked} shows the measured ratios.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{figs/fig_unlocked.pdf}
+\caption{Default clocks (no lock): measured iteration time relative to the lower bound for contiguous-first and balanced placement, Llama-3.2-3B prefill of 256, 512 and 1\,024 tokens. Filled: three slots; hollow: two slots.}
+\label{fig:unlocked}
+\end{figure}
 
 In two earlier runs locked at \nClockHighMHz~MHz, the heavier workloads reached the power limit and the clock fell below the lock during the streaming runs. With compute times measured before the clock fell, the model errs by up to \nCapMaxErrInt\% (mean \nCapMape\%). Scaling each configuration's compute times by the ratio of the clock during the compute measurement to the clock during the run removes almost all of it (mean \nCapClockMape\%, maximum \nCapClockMax\%), so the error is the clock, not the pipeline model. In our very first runs, at default clocks and without clock sampling, the effect changed a conclusion: for a 1\,024-token prefill with 14 resident layers the balanced placement measured 374~ms against 364~ms for the contiguous one, although the model predicts the opposite. Without clock samples we cannot confirm the cause. A plausible mechanism, consistent with the diagnostic run of Section~\ref{sec:method}, is that with a balanced placement copies overlap computation for the whole iteration, which raises power draw and lowers the clock while the computation is on the critical path.

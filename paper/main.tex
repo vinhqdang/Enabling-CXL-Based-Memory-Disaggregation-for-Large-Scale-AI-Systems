@@ -177,6 +177,15 @@ Every circuit spanning $w$ iterations either uses only transfer nodes, in which 
 A circuit that visits no execution node uses only arcs $X_j\to X_{j+1}$; it closes after $wm$ transfers and has the stated weight. Otherwise, consider two consecutive visits of the circuit to execution nodes, $Y_n$ and then $Y_{n'}$. Either the circuit takes the arc $Y_n\to Y_{n+1}$, so $n'=n+1$ and execution $n'$ is a single; or execution $n$ uses some transfer $j$ and the circuit leaves by the slot arc to $X_{j+k}$, follows $t\ge0$ arcs $X\to X$ to $X_{j+k+t}$ (it cannot reach another execution node without passing $X\to Y$) and returns by $X_{j+k+t}\to Y_{\nu(j+k+t)}$, so $n'=\nu(j+k+t)$. In the second case the executions $n+1,\dots,n'$ form a segment with the stated weight: the arcs used contribute the copy times of transfers $j+k,\dots,j+k+t$ and the compute time of execution $n'$, and the executions strictly between $n$ and $n'$ contribute nothing. Since the circuit returns to its first execution node after $w$ iterations, these pieces partition the $wL$ executions. Conversely, a partition into singles and segments defines, piece by piece, a sequence of arcs that closes after $w$ iterations.
 \end{proof}
 
+Figure~\ref{fig:eventgraph} shows the event graph of a small example and one segment.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{figs/fig_eventgraph.pdf}
+\caption{Event graph for $L=4$ units, of which units 1 and 3 are streamed, with $k=2$ slots, over two iterations. Grey: transfers $X_j$; blue and orange: executions $Y_n$ of resident and streamed units. Dashed arcs are slot arcs. The shaded path is a segment: it leaves the execution that used transfer 0 by the slot arc to transfer 2 and returns to the execution that uses transfer 2, skipping the executions in between.}
+\label{fig:eventgraph}
+\end{figure}
+
 A segment contains $k+t$ streamed executions and all resident executions between them; compared with covering the same executions by singles it changes the weight by its \emph{gain}. For uniform units ($c_i=c$, $f_i=f$) and a segment that contains $q=k+t$ streamed units and $G$ resident units,
 \begin{equation}
 \mathrm{gain} = (t+1)f + c - c\,(q+G) = (q-k+1)(f-c) - (k-2)\,c - c\,G. \label{eq:gain}
@@ -264,7 +273,14 @@ The bound is approached when $Lc=mf$ and $m\to\infty$ with $k$ fixed.
 Because $kf>2c$, the numerator is less than $N=rc+mf$ unless it equals one of the first two terms, in which case the factor is 1. If $mf\ge Lc$, then $rc\le m(f-c)$ and $N/(mf)\le 2-c/f$. If $Lc>mf$, then $N/(Lc)=1+m(f-c)/(Lc)<1+m(f-c)/(mf)=2-c/f$. For the limit take $r=m(f/c-1)$, so that $Lc=mf$; the factor is $(rc+2c+(m-k)f)/(mf)\to 2-c/f$ as $m\to\infty$.
 \end{proof}
 
-The penalty therefore peaks when the total computation equals the total copy time, that is, when a balanced placement just hides every copy behind computation; a contiguous one then exposes the copies that cannot be prefetched during the resident block. For $f/c=4.16$, the ratio of our shortest prefill, the bound is 1.76.
+The penalty therefore peaks when the total computation equals the total copy time, that is, when a balanced placement just hides every copy behind computation; a contiguous one then exposes the copies that cannot be prefetched during the resident block. For $f/c=4.16$, the ratio of our shortest prefill, the bound is 1.76. Figure~\ref{fig:regime} maps both quantities for a 28-layer model with three slots: the cost of contiguous placement relative to balanced placement, and the slowdown of a balanced placement relative to keeping every layer resident. The cost of contiguous placement is concentrated around the curve $Lc=mf$, where the balanced placement just reaches compute speed; far below the curve both placements are limited by copies, and to the left of $f/c=1$ both run at compute speed.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.95\textwidth]{figs/fig_regime.pdf}
+\caption{Theory for $L=28$ uniform layers and $k=3$ slots, as a function of $f/c$ and the resident fraction $r/L$. (a) Iteration time of the contiguous placement relative to the balanced one. (b) Iteration time of the balanced placement relative to keeping all layers resident. Dashed: $Lc=mf$. Dotted vertical lines: the measured Llama-3.2-3B workloads at their mean $f/c$ (prefill $T$ and decode batch $B$).}
+\label{fig:regime}
+\end{figure*}
 
 \begin{proposition}[Two slots in the band $c<f<2c$]\label{prop:two}
 If $c<f<2c$, $k=2$ and the placement is balanced, then $\max(Lc,mf)\le\per(\Res,2)\le\max(Lc,mf)+\tfrac{m}{2}(2c-f)$.

@@ -2,7 +2,8 @@
 """Schematic and timeline figures of the placement model.
 
 Writes paper/figs/fig_overview.pdf (system schematic and the two example placements) and
-paper/figs/fig_schedule.pdf (one steady-state iteration for L=12, r=6, k=2, c=1, f=2).
+paper/figs/fig_schedule.pdf (one steady-state iteration for L=12, r=6, k=2, c=1, f=2) and
+paper/figs/fig_eventgraph.pdf (event graph of L=4, streamed units 1 and 3, k=2, two iterations).
 The timelines come from placement.schedule, and the iteration times are checked against
 placement.cycle_time and the closed forms of Theorems 3 and 4.
 
@@ -20,7 +21,7 @@ import matplotlib  # noqa: E402
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
-from matplotlib.patches import FancyArrowPatch, Rectangle  # noqa: E402
+from matplotlib.patches import Circle, FancyArrowPatch, FancyBboxPatch, Rectangle  # noqa: E402
 
 from placement import balanced, contiguous_first, cycle_time, schedule  # noqa: E402
 from placement.placements import gaps  # noqa: E402
@@ -283,10 +284,105 @@ def fig_schedule(out):
     print("wrote", out, f"(T_contiguous={win_a['T']:g}, T_balanced={win_b['T']:g})")
 
 
+# ------------------------------------------------------------------ event graph
+
+def fig_eventgraph(out):
+    """Event graph of L=4 units (streamed: 1 and 3), k=2, two consecutive iterations.
+
+    Coordinates are in inches. Transfer j carries streamed unit j mod 2 of iteration j // 2; its
+    arrival arc goes to that unit's execution Y_n with n = 4 (j // 2) + unit.
+    """
+    W, H = 3.4, 2.4
+    Le, me, ke = 4, 2, 2  # units, streamed units per iteration, slots
+    streamed = (1, 3)
+    n_tr = 2 * me  # transfers in two iterations
+    R = 0.085  # node radius (inches)
+    R_pt = R * 72
+    yX, yY = 1.85, 0.62
+
+    fig = plt.figure(figsize=(W, H))
+    ax = fig.add_axes([0, 0, 1, 1])
+    ax.set_xlim(0, W)
+    ax.set_ylim(0, H)
+    ax.axis("off")
+
+    def xY(n):
+        return 0.75 + 0.34 * n
+
+    def xX(j):
+        return 0.75 + 0.34 * (2 * j + 1)
+
+    def exec_of(j):
+        it, s = divmod(j, me)
+        return it * Le + streamed[s]
+
+    def arc(p0, p1, color=INK, lw=0.8, ls="-"):
+        ax.add_patch(FancyArrowPatch(p0, p1, arrowstyle="-|>", mutation_scale=6, linewidth=lw,
+                                     color=color, linestyle=ls, shrinkA=R_pt, shrinkB=R_pt, zorder=2))
+
+    def node(x, y, s, fc, tc):
+        ax.add_patch(Circle((x, y), R, facecolor=fc, edgecolor="white", linewidth=0.5, zorder=4))
+        text(ax, x, y, s, color=tc, z=5, fontsize=6.5)
+
+    # segment band: from the execution of transfer 0 to the execution of transfer 2
+    band = "#ffd966"
+    ax.add_patch(FancyBboxPatch((xY(1) - 0.15, yY - 0.16), xY(5) - xY(1) + 0.30, 0.32,
+                                boxstyle="round,pad=0,rounding_size=0.14", facecolor=band,
+                                alpha=0.45, edgecolor="none", zorder=0.5))
+    ax.plot([xY(1), xX(2)], [yY, yX], color=band, alpha=0.6, lw=6, solid_capstyle="round", zorder=0.6)
+    ax.plot([xX(2), xY(5)], [yX, yY], color=band, alpha=0.6, lw=6, solid_capstyle="round", zorder=0.6)
+    ax.annotate("segment", xy=(xY(1) - 0.12, yY + 0.12), xytext=(0.12, 1.22), fontsize=7,
+                color=INK, ha="left", va="center",
+                arrowprops=dict(arrowstyle="-|>", lw=0.7, color=INK, shrinkA=0, shrinkB=1,
+                                mutation_scale=7))
+
+    # execution chain Y_n -> Y_{n+1} (c)
+    for n in range(Le * ke - 1):
+        arc((xY(n), yY), (xY(n + 1), yY))
+        text(ax, (xY(n) + xY(n + 1)) / 2, yY - 0.19, "c", ha="center")
+    # transfer chain X_j -> X_{j+1} (f)
+    for j in range(n_tr - 1):
+        arc((xX(j), yX), (xX(j + 1), yX))
+        text(ax, (xX(j) + xX(j + 1)) / 2, yX + 0.16, "f", ha="center")
+    # arrival arcs X_j -> Y_{exec_of(j)} (c)
+    for j in range(n_tr):
+        n = exec_of(j)
+        arc((xX(j), yX), (xY(n), yY))
+        text(ax, xX(j) + 0.07, 1.42, "c", ha="left")
+    # slot arcs Y_{exec_of(j)} -> X_{j+k} (f), dashed
+    for j in range(n_tr - ke):
+        n = exec_of(j)
+        arc((xY(n), yY), (xX(j + ke), yX), ls="--")
+    for j in range(n_tr - ke):  # label each slot arc at 30 % of its length
+        x0, x1 = xY(exec_of(j)), xX(j + ke)
+        text(ax, x0 + 0.3 * (x1 - x0), yY + 0.3 * (yX - yY), "f", ha="center", color=INK, z=5,
+             bbox=dict(facecolor="white", edgecolor="none", pad=0.4))
+
+    # nodes
+    for j in range(n_tr):
+        node(xX(j), yX, str(j), GREY, "white")
+    for n in range(Le * ke):
+        if n % Le in streamed:
+            node(xY(n), yY, str(n), ORANGE, INK)
+        else:
+            node(xY(n), yY, str(n), BLUE, "white")
+
+    text(ax, 0.02, yX, "transfers $X_j$", ha="left")
+    text(ax, 0.02, 0.25, "executions $Y_n$", ha="left")
+    text(ax, 0.02, 2.22, "$L=4$, streamed units 1 and 3, $k=2$", ha="left")
+    text(ax, xY(1.5), 0.10, "iteration 0", ha="center")
+    text(ax, xY(5.5), 0.10, "iteration 1", ha="center")
+
+    fig.savefig(out)
+    plt.close(fig)
+    print("wrote", out)
+
+
 def main():
     os.makedirs(FIGS, exist_ok=True)
     fig_overview(os.path.join(FIGS, "fig_overview.pdf"))
     fig_schedule(os.path.join(FIGS, "fig_schedule.pdf"))
+    fig_eventgraph(os.path.join(FIGS, "fig_eventgraph.pdf"))
 
 
 if __name__ == "__main__":

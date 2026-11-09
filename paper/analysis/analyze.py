@@ -889,29 +889,39 @@ def fig_unlocked(plt, figs, unl_rows):
         skip("fig_unlocked.pdf: no calibrated grid records in the unlocked group")
         return
     wls = sorted({r["workload"] for r in grid}, key=lambda w: prefill_t(w) or 0)
-    fig, axes = plt.subplots(len(wls), 1, figsize=(3.4, 1.9 * len(wls) + 1.1), squeeze=False)
-    cols = {"contiguous_first": COLORS[0], "balanced": COLORS[1]}
-    for ax, wl in zip(axes[:, 0], wls):
-        sel = [r for r in grid if r["workload"] == wl]
-        ks = sorted({r["k"] for r in sel})
-        for p in ("contiguous_first", "balanced"):
-            for r in sorted([x for x in sel if x["placement"] == p], key=lambda x: x["r"]):
-                ax.scatter([r["r"]], [r["period_ms"] / r["lb_cal_ms"]], s=16,
-                           marker="o" if r["k"] == ks[0] else "s", color=cols[p],
-                           edgecolor="black", linewidth=0.3, zorder=3)
-        ax.axhline(1.0, color="black", linewidth=0.5, linestyle=":")
-        ax.set_xlabel("Resident units r")
-        ax.set_ylabel("Period / lower bound")
-        ax.text(0.02, 0.96, wl.replace(":", " "), transform=ax.transAxes, va="top", fontsize=6)
-    handles = [plt.Line2D([], [], color=cols["contiguous_first"], marker="o", linestyle="", label="contiguous first"),
-               plt.Line2D([], [], color=cols["balanced"], marker="o", linestyle="", label="balanced"),
-               plt.Line2D([], [], color="black", marker="o", linestyle="", label="smaller k"),
-               plt.Line2D([], [], color="black", marker="s", linestyle="", label="larger k")]
-    fig.legend(handles=handles, frameon=False, fontsize=5.5, loc="lower center", ncol=2)
-    fig.tight_layout(rect=[0, 0.12, 1, 1])
-    out = os.path.join(figs, "fig_unlocked.pdf")
-    fig.savefig(out)
-    plt.close(fig)
+    cols = {"contiguous_first": "#ff7f0e", "balanced": "#1f77b4"}  # streamed orange, resident blue
+    dodge = {"contiguous_first": -0.3, "balanced": 0.3}  # offsets keep coinciding markers apart
+    ks = sorted({r["k"] for r in grid})
+    with plt.rc_context({"font.size": 8, "xtick.labelsize": 7, "ytick.labelsize": 7}):
+        fig, axes = plt.subplots(1, len(wls), figsize=(3.4, 2.6), sharey=True, squeeze=False)
+        for ax, wl in zip(axes[0], wls):
+            sel = [r for r in grid if r["workload"] == wl]
+            for p in ("contiguous_first", "balanced"):
+                for r in sorted([x for x in sel if x["placement"] == p], key=lambda x: x["r"]):
+                    filled = r["k"] == ks[-1]
+                    ax.scatter([r["r"] + dodge[p]], [r["period_ms"] / r["lb_cal_ms"]], s=14,
+                               marker="o", facecolor=cols[p] if filled else "white",
+                               edgecolor=cols[p], linewidth=0.9, zorder=3)
+            ax.axhline(1.0, color="black", linewidth=0.5, linestyle=":")
+            ax.set_xticks(sorted({r["r"] for r in sel}))
+            ax.set_xlim(min(r["r"] for r in sel) - 2, max(r["r"] for r in sel) + 2)
+            ax.set_title(f"prefill $T$={prefill_t(wl)}", fontsize=7, pad=3)
+        ymax = max(r["period_ms"] / r["lb_cal_ms"] for r in grid)
+        axes[0, 0].set_ylim(0.98, ymax + 0.02)
+        axes[0, 0].set_ylabel("period / lower bound")
+        handles = [
+            plt.Line2D([], [], color=cols["contiguous_first"], marker="o", linestyle="", label="contiguous first"),
+            plt.Line2D([], [], color=cols["balanced"], marker="o", linestyle="", label="balanced"),
+            plt.Line2D([], [], color="#555555", marker="o", markerfacecolor="white", linestyle="", label=f"k={ks[0]}"),
+            plt.Line2D([], [], color="#555555", marker="o", linestyle="", label=f"k={ks[-1]}"),
+        ]
+        fig.legend(handles=handles, frameon=False, fontsize=7, loc="lower center", ncol=2,
+                   bbox_to_anchor=(0.5, 0.0))
+        fig.supxlabel("resident units $r$", fontsize=8, y=0.23)
+        fig.subplots_adjust(left=0.2, right=0.985, bottom=0.36, top=0.9, wspace=0.12)
+        out = os.path.join(figs, "fig_unlocked.pdf")
+        fig.savefig(out)
+        plt.close(fig)
     print("wrote", out, f"({len(wls)} panels)")
 
 
