@@ -3,12 +3,12 @@
 
 Figure~\ref{fig:accuracy} compares the predicted and measured iteration times of all \nAccN{} streaming configurations of the main runs (clocks locked, both model shapes, prefill and decode). The prediction uses the per-layer compute times scaled so that their sum equals the measured all-resident iteration (scale factors between \nCalScaleMin{} and \nCalScaleMax), and the per-layer copy times; nothing is fitted to the streaming runs. The mean absolute error is \nAccMape\% and the largest error \nAccMax\%; without the scaling the mean error is \nAccMapeUncal\%. The average includes configurations that are easy to predict, so we also give it by regime: \nMapeTransferPre\% for prefill with $f>c$, where placement matters, \nMapeComputePre\% for prefill with $f\le c$, where every placement runs at compute speed, and \nMapeDecode\% for decode. For the Llama-3.1-8B layer shapes the mean error is \nEightBMape\%. Eleven configurations have errors above 2\%. Five of them, including the largest (\nEightBMax\%), are 8B prefill runs with 12 resident layers whose clock fell to 433--437~MHz despite the 450~MHz lock; the model uses compute times measured at 450~MHz. Most of the others are short decode iterations with many resident layers, which last less than about 120~ms and in which the host enqueue time is close to the iteration time; the model contains no host overhead. Two runs of the same \nRepeatN{} configurations in separate Colab sessions differed by \nRepeatMeanPct\% on average (at most \nRepeatMaxPct\%). The model is more precise than this variation between sessions only because its inputs are measured in the same session as the iterations it predicts. Over the \nAccRankPairs{} pairs of placements with the same workload, resident count and slots whose measured times differ by more than 2\%, the model orders all but \nAccRankWrong{} correctly (\nAccRankExact\%).
 
-\begin{figure}[t]
+\begin{figure*}[t]
 \centering
-\includegraphics[width=\linewidth]{figs/fig_accuracy.pdf}
-\caption{Predicted versus measured iteration time for all streaming configurations of the main runs (Tesla T4, locked clocks). The line is $y=x$.}
+\includegraphics[width=0.95\textwidth]{figs/fig_accuracy.pdf}
+\caption{Accuracy of the model over all streaming configurations of the main runs (Tesla T4, locked clocks). (a) Measured versus predicted iteration time; colour: regime, marker: placement; the line is $y=x$. (b) Distribution of the relative error per regime.}
 \label{fig:accuracy}
-\end{figure}
+\end{figure*}
 
 \subsection{Placement}
 \label{sec:res-placement}

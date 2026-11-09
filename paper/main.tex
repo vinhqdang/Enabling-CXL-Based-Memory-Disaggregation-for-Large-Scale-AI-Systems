@@ -3,6 +3,8 @@
 \usepackage{amsmath,amssymb,amsthm}
 \usepackage{graphicx}
 \usepackage{booktabs}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
 \usepackage[hidelinks]{hyperref}
 \usepackage{xurl}
 \usepackage{microtype}
@@ -86,6 +88,35 @@ Synchronised discrete-event systems such as pipelines with buffers are linear in
 %% ===================================================================
 \section{Model}
 \label{sec:model}
+
+Figure~\ref{fig:overview} shows the system and Table~\ref{tab:notation} the notation.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.95\textwidth]{figs/fig_overview.pdf}
+\caption{System model. Resident layers (blue) stay in GPU memory; the other layers (orange) are copied from host-attached memory into a ring of $k$ slots by one copy engine while earlier layers compute. Bottom: the same 6 resident layers out of 12 placed as a contiguous block, as model-order filling does, and spread evenly (balanced), with the gaps $g_j$ between consecutive streamed layers.}
+\label{fig:overview}
+\end{figure*}
+
+\begin{table}[t]
+\centering
+\caption{Notation.}
+\label{tab:notation}
+\small
+\begin{tabular}{ll}
+\toprule
+$L$ & units (layers) per iteration\\
+$\Res$, $r$ & resident set and its size\\
+$m=L-r$ & streamed units per iteration\\
+$k$ & GPU slots for streamed units ($k\le m$)\\
+$c_i$, $f_i$ & compute and copy time of unit $i$\\
+$c$, $f$ & the same for uniform units\\
+$X_j$, $Y_n$ & completion of transfer $j$, execution $n$\\
+$\per(\Res,k)$ & steady-state iteration time\\
+$g_j$ & resident units between streamed $u_j$, $u_{j+1}$\\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \paragraph{Units and iterations}
 An inference iteration (one prefill chunk or one decode step of a batch) executes $L$ \emph{units} in a fixed order $0,1,\dots,L-1$; a unit is a transformer layer, or any other block whose weights move as one piece, such as the output head. Iterations repeat. Unit $i$ takes $c_i>0$ to compute once its weights are in GPU memory and $f_i>0$ to copy from host-attached memory to the GPU; $c_i$ depends on the number of tokens in the iteration and $f_i=a+s_i/B$ on the unit's size $s_i$, the path bandwidth $B$ and a per-copy cost $a$.
@@ -191,7 +222,14 @@ If $f>c$, $k\ge2$ and the resident units form one contiguous block, then
 so its weight per iteration is at most $mf+(rc+2c-kf)/v\le\max\bigl(mf,\ rc+2c+(m-k)f\bigr)$. If no occurrence is uncovered, all $w$ block occurrences lie in segments, $\sum_\ell q_\ell\le wm$, and the same computation without the $-1$ terms gives at most $w\,mf$. Every circuit thus has mean at most $\max(Lc,mf,rc+2c+(m-k)f)$.
 \end{proof}
 
-The third term has a direct reading. While the resident block computes, the copy engine can load only the $k$ streamed units that fit in the slots and then waits; the remaining $m-k$ copies happen while streamed units run at the copy rate, so the resident computation is not hidden behind copies.
+The third term has a direct reading, which Figure~\ref{fig:schedule} shows for $L=12$, $r=6$, $k=2$, $c=1$ and $f=2$. While the resident block computes, the copy engine can load only the $k$ streamed units that fit in the slots and then waits; the remaining $m-k$ copies happen while streamed units run at the copy rate, so the resident computation is not hidden behind copies. The contiguous placement takes $rc+2c+(m-k)f=16$, the balanced one $\max(Lc,mf)=12$, in which the copy engine never waits.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.95\textwidth]{figs/fig_schedule.pdf}
+\caption{One steady-state iteration computed with the model for $L=12$, $r=6$, $k=2$, $c=1$, $f=2$. (a) Contiguous placement: the copy engine is idle while the resident block computes, and the iteration takes 16. (b) Balanced placement: copies never stop, and the iteration takes the lower bound 12. Hatched: idle copy engine or GPU waiting for a copy.}
+\label{fig:schedule}
+\end{figure*}
 
 \begin{corollary}[Cost of contiguous placement]\label{cor:ratio}
 Under the assumptions of Theorems~\ref{thm:balanced} and~\ref{thm:contig}, the contiguous placement is slower than the balanced one by the factor
@@ -216,7 +254,27 @@ In the proof of Theorem~\ref{thm:balanced} the second term of each gain is $2c-f
 In the band the bound is loose: in the random instances of the test suite the excess stays well below it, and for $L\le12$ an exhaustive search over all placements finds no placement better than the balanced one (both checks are part of the test suite). Because a slot uses the same memory as a resident layer, two slots plus one more resident layer is often faster than three slots; the exact evaluator of Lemma~\ref{lem:cycle} decides this in each case (Section~\ref{sec:res-slots}).
 
 \paragraph{Guidelines}
-For a dense model with layers of equal size the analysis gives a complete recipe. (i) If a layer's computation is at least its copy time, use two slots and no resident layers beyond what is free. (ii) Otherwise use two slots if $f\ge2c$ and three if $c<f<2c$ (or evaluate both), fill the remaining memory with resident layers, and spread them evenly. (iii) The resulting iteration time is $\max(Lc,mf)$, so reaching compute speed requires $r\ge L(1-c/f)$ resident layers in addition to the slots.
+For a dense model with layers of equal size the analysis gives a complete recipe. (i) If a layer's computation is at least its copy time, use two slots and no resident layers beyond what is free. (ii) Otherwise use two slots if $f\ge2c$ and three if $c<f<2c$ (or evaluate both), fill the remaining memory with resident layers, and spread them evenly. (iii) The resulting iteration time is $\max(Lc,mf)$, so reaching compute speed requires $r\ge L(1-c/f)$ resident layers in addition to the slots. Algorithm~\ref{alg:place} summarises the procedure, including the non-uniform case of Section~\ref{sec:nonuniform}.
+
+\begin{algorithm}[t]
+\caption{Choosing slots and resident layers for a memory budget of $M$ layers.}
+\label{alg:place}
+\small
+\begin{algorithmic}[1]
+\Require per-layer times $c_i$, $f_i$ measured in one all-resident iteration and one copy per layer; budget $M$
+\If{all units have equal size}
+  \If{$f\le c$} \State $k\gets 2$, $r\gets 0$ \Comment{Theorem~\ref{thm:compute}: residents do not help}
+  \ElsIf{$f\ge 2c$} \State $k\gets 2$, $r\gets M-2$ \Comment{Theorem~\ref{thm:balanced}}
+  \Else \State evaluate $k\in\{2,3\}$ with $r=M-k$ by Lemma~\ref{lem:cycle}; keep the faster \Comment{Prop.~\ref{prop:two}}
+  \EndIf
+  \State $\Res\gets\{\lfloor (j+\frac12)L/r\rfloor : 0\le j<r\}$ \Comment{balanced placement}
+\Else
+  \State start from the uniform rule applied to the layers; keep large, rarely computed units resident if they fit
+  \State improve $\Res$ by local search (swap, add, remove) using the evaluator of Lemma~\ref{lem:cycle}
+\EndIf
+\State \Return $k$, $\Res$, predicted $\per(\Res,k)$
+\end{algorithmic}
+\end{algorithm}
 
 \subsection{Non-uniform units}
 \label{sec:nonuniform}
