@@ -29,3 +29,9 @@ Manuscript: "Streaming LLM Weights from CXL Memory: Regimes, Placement and Pipel
 * The compute-time estimate is obtained at runtime and its sensitivity is quantified.
 * Related work was cut to the directly relevant material.
 * After the JPDC desk rejection the manuscript was reframed as a simulation study and extended with a pool-sizing rule for several GPUs per expander (E12) and a consistency check against ITME's published weight-streaming result (E13).
+
+## Version 3 (rebuilt from scratch)
+
+| Date | Venue | Outcome |
+|------|-------|---------|
+| 2026-11-09 | Future Generation Computer Systems (Elsevier) | New manuscript "Where Should Resident Layers Go? Optimal Placement for Weight Streaming in Offloaded LLM Inference" (Dang, Le, Dinh): max-plus model with proofs plus 605 measured configurations on a Tesla T4. Package in `submission_fgcs/`. Not yet submitted. |

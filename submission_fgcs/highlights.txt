@@ -1,0 +1,5 @@
+A max-plus model characterises the iteration time of layer streaming exactly
+Evenly spread resident layers attain the lower bound when (k-1)f >= 2c
+Contiguous resident blocks, as in model-order filling, cost up to 2 - c/f times more
+On a Tesla T4 the model reproduces 605 measured iterations with 0.29% mean error
+Even spreading is up to 1.50x faster; contiguous needs 5 buffers instead of 2

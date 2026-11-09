@@ -1,0 +1,24 @@
+\documentclass[11pt]{article}
+\usepackage[margin=2.5cm]{geometry}
+\setlength{\parskip}{6pt}\setlength{\parindent}{0pt}
+\begin{document}
+\begin{flushright}November 2026\end{flushright}
+
+Dear Editor-in-Chief and Editors,
+
+Please find enclosed the manuscript \textbf{``Where Should Resident Layers Go? Optimal Placement for Weight Streaming in Offloaded LLM Inference''} for consideration as a Full Length Article in \emph{Future Generation Computer Systems}.
+
+\textbf{Problem.} Large language models that exceed GPU memory are served by keeping some layers resident and streaming the others from host-attached memory (page-locked DRAM or a CXL memory expander) through a ring of GPU buffers. Widely used tools fill GPU memory in model order, so the resident layers form a contiguous block. We ask where the resident layers should be placed and how many buffers are needed.
+
+\textbf{Contributions.} (1) A max-plus model of the streaming pipeline whose iteration time is the maximum mean of a family of tilings of the layer sequence, with proofs. (2) For layers of equal cost: resident layers are useless when a layer computes at least as long as it copies; evenly spread resident layers attain the lower bound whenever $(k-1)f\ge2c$; and a contiguous block takes $\max(Lc,mf,rc+2c+(m-k)f)$, up to $2-c/f$ times the optimum. (3) A GPU runtime and 605 measured configurations on a Tesla T4 with real layer kernels of two model shapes: given per-layer times measured on the same GPU, the model reproduces the iteration time with a mean error of 0.29\%, even spreading is up to 1.50$\times$ faster than the contiguous block, and it reaches the bound with two buffers where the contiguous block needs at least five. (4) An honest account of the limits: the power-limited T4 requires clock locking for the quantitative results, and at default clocks the model still ranks placements correctly but overstates their difference.
+
+\textbf{Fit with the journal.} The work contributes to the scaling and performance theory of high-performance systems and to resource management and scheduling for AI inference infrastructure, both within the scope of FGCS. Code, raw measurements and the scripts that generate every number and figure are publicly available.
+
+The manuscript is original, is not under consideration elsewhere, and all authors have approved the submission. The authors declare no competing interests. The generative-AI declaration required by the journal is included in the manuscript.
+
+Sincerely,
+
+Quang-Vinh Dang (corresponding author), on behalf of Dat Le and Minh Ngoc Dinh\\
+British University Vietnam, Hung Yen, Vietnam\\
+vinh.dq4@buv.edu.vn \quad ORCID 0000-0002-3877-8024
+\end{document}

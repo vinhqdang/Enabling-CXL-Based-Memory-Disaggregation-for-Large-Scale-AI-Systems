@@ -5,7 +5,7 @@ Figure~\ref{fig:accuracy} compares the predicted and measured iteration times of
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.75\linewidth]{figs/fig_accuracy.pdf}
+\includegraphics[width=\linewidth]{figs/fig_accuracy.pdf}
 \caption{Predicted versus measured iteration time for all streaming configurations of the main runs (Tesla T4, locked clocks). The line is $y=x$.}
 \label{fig:accuracy}
 \end{figure}
@@ -15,12 +15,12 @@ Figure~\ref{fig:accuracy} compares the predicted and measured iteration times of
 
 Figure~\ref{fig:penalty} shows, for each prefill length, the iteration time of the contiguous and balanced placements relative to the lower bound $\max(\sum c_i,\sum_{\text{streamed}} f_i)$ as the number of resident layers grows. The regimes of Section~\ref{sec:theory} are visible. For $T=256$ and $512$ ($f/c$ of \nRatioTransferMax{} and 2.32, so $f\ge 2c$) the balanced placement stays at the bound for every $r$ and both slot counts, as Theorem~\ref{thm:balanced} states, while the contiguous one leaves the bound as soon as the resident computation exceeds what $k$ slots can prefetch, and the gap widens until the total computation matches the total copy time. The largest measured gap is \nMeasPenaltyMax$\times$ (prefill of 256 tokens, $r=\nMeasPenaltyMaxR$, $k=\nMeasPenaltyMaxK$); Theorem~\ref{thm:contig} predicts \nPredPenaltyAtMax$\times$ for this configuration, and Corollary~\ref{cor:ratio} bounds the gap at this ratio by 1.76. At $T=768$ ($f/c=\nSweepRatio$, inside the band $c<f<2c$) the balanced placement with three slots stays within \nBandKThreeMaxPct\% of the bound, but with two slots it exceeds the bound by up to \nBandExcessMaxPct\% (at $r=\nBandExcessR$; the model predicts \nBandExcessPredPct\%), the excess that Proposition~\ref{prop:two} allows. Contiguous-last behaves like contiguous-first, as the theory expects for any single block. Random placements usually come close to balanced ones but not always: the worst random placement (decode with 64 sequences, $r=14$, $k=2$) was \nRandomWorstPct\% slower than the balanced one. When a layer computes at least as long as it copies ($T\ge\nComputeBoundMinT$ for Llama-3.2-3B; at $T=1\,024$ the two times are equal within the measurement noise, so this workload is only a boundary case), every placement, including streaming every layer, is within \nComputeBoundDevMaxPct\% of the all-resident time, as Theorem~\ref{thm:compute} states. For the 8B shapes at $T=1\,024$, $f/c=\nEightBRatioTenTwentyFour$ and placement matters again. In decode the copies dominate unless almost all layers are resident, and placement matters only in the few configurations in which $rc$ approaches $mf$.
 
-\begin{figure}[t]
+\begin{figure*}[t]
 \centering
-\includegraphics[width=\linewidth]{figs/fig_penalty.pdf}
+\includegraphics[width=0.9\textwidth]{figs/fig_penalty.pdf}
 \caption{Iteration time relative to the lower bound versus the number of resident layers, Llama-3.2-3B prefill. Colours: contiguous-first and balanced placement. Circles and dotted or dashed lines: two slots; squares and solid or dash-dotted lines: three slots. Markers are measurements, lines the calibrated model (plain and with the contention variant, which nearly coincide).}
 \label{fig:penalty}
-\end{figure}
+\end{figure*}
 
 Figure~\ref{fig:timeline} shows why. In the contiguous configuration the copy engine fills the slots while the resident block computes and then waits for most of the block; afterwards the streamed layers run at the copy rate. In the balanced configuration the copy engine is never idle and the iteration ends when the last copy has been consumed.
 
@@ -38,7 +38,7 @@ At $T=768$ a layer copies in \nSweepRatio{} times its compute time, inside the b
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.75\linewidth]{figs/fig_slots.pdf}
+\includegraphics[width=\linewidth]{figs/fig_slots.pdf}
 \caption{Iteration time versus the number of slots at $T=768$, $r=14$ (markers: measured; lines: model).}
 \label{fig:slots}
 \end{figure}
@@ -50,7 +50,7 @@ With the Llama-3.2 output head as an extra unit (788~MB, four times a layer, but
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.75\linewidth]{figs/fig_nonuniform.pdf}
+\includegraphics[width=\linewidth]{figs/fig_nonuniform.pdf}
 \caption{Predicted iteration time versus memory budget (in layer equivalents, including the slots) with the output head as a unit, Llama-3.2-3B prefill of 512 tokens, for two and three slots: contiguous layers, balanced layers, head resident plus balanced layers, and local search.}
 \label{fig:nonuniform}
 \end{figure}
