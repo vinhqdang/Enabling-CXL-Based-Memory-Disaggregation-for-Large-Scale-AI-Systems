@@ -1,0 +1,148 @@
+\begin{thebibliography}{10}
+\expandafter\ifx\csname url\endcsname\relax
+  \def\url#1{\texttt{#1}}\fi
+\expandafter\ifx\csname urlprefix\endcsname\relax\def\urlprefix{URL }\fi
+\expandafter\ifx\csname href\endcsname\relax
+  \def\href#1#2{#2} \def\path#1{#1}\fi
+
+\bibitem{sheng2023flexgen}
+Y.~Sheng, L.~Zheng, B.~Yuan, Z.~Li, M.~Ryabinin, B.~Chen, P.~Liang, C.~R\'{e},
+  I.~Stoica, C.~Zhang,
+  \href{https://proceedings.mlr.press/v202/sheng23a.html}{{FlexGen}:
+  High-throughput generative inference of large language models with a single
+  {GPU}}, in: Proceedings of the 40th International Conference on Machine
+  Learning ({ICML} '23), 2023.
+\newline\urlprefix\url{https://proceedings.mlr.press/v202/sheng23a.html}
+
+\bibitem{rajbhandari2021infinity}
+S.~Rajbhandari, O.~Ruwase, J.~Rasley, S.~Smith, Y.~He, {ZeRO-Infinity}:
+  Breaking the {GPU} memory wall for extreme scale deep learning, in:
+  Proceedings of the International Conference for High Performance Computing,
+  Networking, Storage and Analysis (SC), 2021.
+
+\bibitem{hf2024accelerate}
+{Hugging Face}, Accelerate documentation: Loading big models into memory,
+  \url{https://huggingface.co/docs/accelerate/en/concept_guides/big_model_inference},
+  accessed 8 November 2026 (2026).
+
+\bibitem{yoon2025tract}
+D.~Yoon, Y.~Min, H.~Kim, S.~H. Noh, J.~Kim, {TraCT}: Disaggregated {LLM}
+  serving with {CXL} shared memory {KV} cache at rack-scale (2025).
+\newblock \href {http://arxiv.org/abs/2512.18194} {\path{arXiv:2512.18194}}.
+
+\bibitem{jang2026itme}
+H.~Jang, Y.~Min, S.~Kim, T.~Ahn, H.~Kim, Y.~Joo, H.~Kim, J.~Kim, {ITME}:
+  Inference tiered memory expansion with disaggregated {CXL}-hybrid memories
+  (2026).
+\newblock \href {http://arxiv.org/abs/2606.12556} {\path{arXiv:2606.12556}}.
+
+\bibitem{sun2025loip}
+M.~Sun, X.~Zhang, S.~Qu, Y.~Li, M.~Xiao, Y.~Zheng, Y.~Yuan, D.~Yu, {LOIP}:
+  Collaborative lossless {LLM} inference serving with offloading-based pipeline
+  parallelism on edge devices (2025).
+\newblock \href {http://arxiv.org/abs/2512.21835} {\path{arXiv:2512.21835}}.
+
+\bibitem{gerganov2023llamacpp}
+G.~Gerganov, contributors, llama.cpp: {LLM} inference in {C/C++},
+  \url{https://github.com/ggml-org/llama.cpp} (2023).
+
+\bibitem{song2024powerinfer}
+Y.~Song, Z.~Mi, H.~Xie, H.~Chen,
+  \href{https://arxiv.org/abs/2312.12456}{{PowerInfer}: Fast large language
+  model serving with a consumer-grade {GPU}}, in: Proceedings of the 30th
+  Symposium on Operating Systems Principles ({SOSP} '24), {ACM}, New York, NY,
+  USA, 2024, pp. 590--606.
+\newblock \href {https://doi.org/10.1145/3694715.3695964}
+  {\path{doi:10.1145/3694715.3695964}}.
+\newline\urlprefix\url{https://arxiv.org/abs/2312.12456}
+
+\bibitem{kamahori2025fiddler}
+K.~Kamahori, T.~Tang, Y.~Gu, K.~Zhu, B.~Kasikci, Fiddler: {CPU-GPU}
+  orchestration for fast inference of mixture-of-experts models, in: Proc. Int.
+  Conf. on Learning Representations (ICLR), 2025.
+
+\bibitem{kim2025lia}
+H.~Kim, N.~Wang, Q.~Xia, J.~Huang, A.~Yazdanbakhsh, N.~S. Kim, {LIA}: A
+  single-{GPU} {LLM} inference acceleration with cooperative {AMX}-enabled
+  {CPU}--{GPU} computation and {CXL} offloading, in: Proceedings of the 52nd
+  Annual International Symposium on Computer Architecture (ISCA), 2025, pp.
+  544--558.
+\newblock \href {https://doi.org/10.1145/3695053.3731092}
+  {\path{doi:10.1145/3695053.3731092}}.
+
+\bibitem{alizadeh2024flash}
+K.~Alizadeh, S.~I. Mirzadeh, D.~Belenko, S.~K. Khatamifard, M.~Cho, C.~C.
+  Del~Mundo, M.~Rastegari, M.~Farajtabar, {LLM} in a flash: Efficient large
+  language model inference with limited memory, in: Proc. 62nd Annual Meeting
+  of the Association for Computational Linguistics (ACL), 2024, pp.
+  12562--12584.
+
+\bibitem{pond2023}
+H.~Li, D.~S. Berger, L.~Hsu, D.~Ernst, P.~Zardoshti, S.~Novakovic, M.~Shah,
+  S.~Rajadnya, S.~Lee, I.~Agarwal, M.~D. Hill, M.~Fontoura, R.~Bianchini,
+  \href{https://doi.org/10.1145/3575693.3578835}{Pond: Cxl-based memory pooling
+  systems for cloud platforms}, in: Proceedings of the 28th ACM International
+  Conference on Architectural Support for Programming Languages and Operating
+  Systems, Volume 2, ASPLOS '23, ACM, New York, NY, USA, 2023, pp. 574--587.
+\newblock \href {https://doi.org/10.1145/3575693.3578835}
+  {\path{doi:10.1145/3575693.3578835}}.
+\newline\urlprefix\url{https://doi.org/10.1145/3575693.3578835}
+
+\bibitem{tpp2023}
+H.~A. Maruf, H.~Wang, A.~Dhanotia, J.~Weiner, N.~Agarwal, P.~Bhattacharya,
+  C.~Petersen, M.~Chowdhury, S.~Kanaujia, P.~Chauhan,
+  \href{https://doi.org/10.1145/3582016.3582063}{Tpp: Transparent page
+  placement for cxl-enabled tiered-memory}, in: Proceedings of the 28th ACM
+  International Conference on Architectural Support for Programming Languages
+  and Operating Systems, Volume 3, ASPLOS '23, ACM, New York, NY, USA, 2023,
+  pp. 742--755.
+\newblock \href {https://doi.org/10.1145/3582016.3582063}
+  {\path{doi:10.1145/3582016.3582063}}.
+\newline\urlprefix\url{https://doi.org/10.1145/3582016.3582063}
+
+\bibitem{lin2026dak}
+S.~Lin, Z.~Guo, J.~Lin, {DAK}: Direct-access-enabled {GPU} memory offloading
+  with optimal efficiency for {LLM} inference (2026).
+\newblock \href {http://arxiv.org/abs/2604.26074} {\path{arXiv:2604.26074}}.
+
+\bibitem{rhu2016vdnn}
+M.~Rhu, N.~Gimelshein, J.~Clemons, A.~Zulfiqar, S.~W. Keckler, {vDNN}:
+  Virtualized deep neural networks for scalable, memory-efficient neural
+  network design, in: Proc. 49th IEEE/ACM Int. Symp. on Microarchitecture
+  (MICRO), 2016, pp. 1--13.
+
+\bibitem{huang2020swapadvisor}
+C.-C. Huang, G.~Jin, J.~Li, {SwapAdvisor}: Pushing deep learning beyond the
+  {GPU} memory limit via smart swapping, in: Proc. 25th Int. Conf. on
+  Architectural Support for Programming Languages and Operating Systems
+  (ASPLOS), 2020, pp. 1341--1355.
+
+\bibitem{hildebrand2020autotm}
+M.~Hildebrand, J.~Khan, S.~Trika, J.~Lowe-Power, V.~Akella, {AutoTM}: Automatic
+  tensor movement in heterogeneous memory systems using integer linear
+  programming, in: Proc. 25th Int. Conf. on Architectural Support for
+  Programming Languages and Operating Systems (ASPLOS), 2020, pp. 875--890.
+
+\bibitem{peng2020capuchin}
+X.~Peng, X.~Shi, H.~Dai, H.~Jin, W.~Ma, Q.~Xiong, F.~Yang, X.~Qian, Capuchin:
+  Tensor-based {GPU} memory management for deep learning, in: Proc. 25th Int.
+  Conf. on Architectural Support for Programming Languages and Operating
+  Systems (ASPLOS), 2020, pp. 891--905.
+
+\bibitem{baccelli1992synchronization}
+F.~Baccelli, G.~Cohen, G.~J. Olsder, J.-P. Quadrat, Synchronization and
+  Linearity: An Algebra for Discrete Event Systems, Wiley, 1992.
+
+\bibitem{karp1978characterization}
+R.~M. Karp, A characterization of the minimum cycle mean in a digraph, Discrete
+  Mathematics 23~(3) (1978) 309--311.
+
+\bibitem{lothaire2002algebraic}
+M.~Lothaire, Algebraic Combinatorics on Words, Cambridge University Press,
+  2002.
+
+\bibitem{dubey2024llama3}
+A.~Dubey, et~al., The llama 3 herd of models (2024).
+\newblock \href {http://arxiv.org/abs/2407.21783} {\path{arXiv:2407.21783}}.
+
+\end{thebibliography}
