@@ -16,6 +16,7 @@
       "repeat": [
         "t4_repeat_B768.log"
       ],
+      "unlocked": [],
       "capped": [
         "t4_power_capped_B.log",
         "t4_power_capped_C.log"
@@ -53,7 +54,8 @@
           "cuda": "13.0",
           "torch": "2.14.1+cu130",
           "capability": "7.5",
-          "pcie_max": "3, 16"
+          "pcie_max": "3, 16",
+          "lock_mhz": 570
         }
       },
       "t4_full_B.log": {
@@ -84,7 +86,8 @@
           "cuda": "13.0",
           "torch": "2.14.1+cu130",
           "capability": "7.5",
-          "pcie_max": "3, 16"
+          "pcie_max": "3, 16",
+          "lock_mhz": 450
         }
       },
       "t4_full_C1536.log": {
@@ -115,7 +118,8 @@
           "cuda": "13.0",
           "torch": "2.14.1+cu130",
           "capability": "7.5",
-          "pcie_max": "3, 16"
+          "pcie_max": "3, 16",
+          "lock_mhz": 450
         }
       },
       "t4_full_C2048.log": {
@@ -146,7 +150,8 @@
           "cuda": "13.0",
           "torch": "2.14.1+cu130",
           "capability": "7.5",
-          "pcie_max": "3, 16"
+          "pcie_max": "3, 16",
+          "lock_mhz": 450
         }
       },
       "t4_full_D.log": {
@@ -177,7 +182,8 @@
           "cuda": "13.0",
           "torch": "2.14.1+cu130",
           "capability": "7.5",
-          "pcie_max": "3, 16"
+          "pcie_max": "3, 16",
+          "lock_mhz": 570
         }
       },
       "t4_full_E.log": {
@@ -208,7 +214,8 @@
           "cuda": "13.0",
           "torch": "2.14.1+cu130",
           "capability": "7.5",
-          "pcie_max": "3, 16"
+          "pcie_max": "3, 16",
+          "lock_mhz": 450
         }
       },
       "t4_full_Edec.log": {
@@ -239,7 +246,8 @@
           "cuda": "13.0",
           "torch": "2.14.1+cu130",
           "capability": "7.5",
-          "pcie_max": "3, 16"
+          "pcie_max": "3, 16",
+          "lock_mhz": 450
         }
       },
       "t4_full_F512.log": {
@@ -270,7 +278,8 @@
           "cuda": "13.0",
           "torch": "2.14.1+cu130",
           "capability": "7.5",
-          "pcie_max": "3, 16"
+          "pcie_max": "3, 16",
+          "lock_mhz": 450
         }
       },
       "t4_full_Fdec.log": {
@@ -301,7 +310,8 @@
           "cuda": "13.0",
           "torch": "2.14.1+cu130",
           "capability": "7.5",
-          "pcie_max": "3, 16"
+          "pcie_max": "3, 16",
+          "lock_mhz": 450
         }
       },
       "t4_full_Sweep.log": {
@@ -332,7 +342,8 @@
           "cuda": "13.0",
           "torch": "2.14.1+cu130",
           "capability": "7.5",
-          "pcie_max": "3, 16"
+          "pcie_max": "3, 16",
+          "lock_mhz": 450
         }
       },
       "t4_repeat_B768.log": {
@@ -363,7 +374,8 @@
           "cuda": "13.0",
           "torch": "2.14.1+cu130",
           "capability": "7.5",
-          "pcie_max": "3, 16"
+          "pcie_max": "3, 16",
+          "lock_mhz": 450
         }
       },
       "t4_power_capped_B.log": {
@@ -394,7 +406,8 @@
           "cuda": "13.0",
           "torch": "2.14.1+cu130",
           "capability": "7.5",
-          "pcie_max": "3, 16"
+          "pcie_max": "3, 16",
+          "lock_mhz": 570
         }
       },
       "t4_power_capped_C.log": {
@@ -425,7 +438,8 @@
           "cuda": "13.0",
           "torch": "2.14.1+cu130",
           "capability": "7.5",
-          "pcie_max": "3, 16"
+          "pcie_max": "3, 16",
+          "lock_mhz": 570
         }
       },
       "t4_quick.log": {
@@ -454,7 +468,8 @@
           "cuda": "13.0",
           "torch": "2.14.1+cu130",
           "capability": "7.5",
-          "pcie_max": "3, 16"
+          "pcie_max": "3, 16",
+          "lock_mhz": null
         }
       }
     },
@@ -1069,6 +1084,7 @@
     "ranking_calibrated": {
       "threshold_rel": 0.02,
       "pairs": 285,
+      "agree": 281,
       "agree_pct": 98.59649122807016,
       "pairs_cont": 285,
       "agree_cont_pct": 98.59649122807016
@@ -1076,6 +1092,7 @@
     "ranking_uncalibrated": {
       "threshold_rel": 0.02,
       "pairs": 285,
+      "agree": 281,
       "agree_pct": 98.59649122807016,
       "pairs_cont": 0,
       "agree_cont_pct": null
@@ -1272,6 +1289,125 @@
     "mean_pct": 1.742,
     "max_pct": 3.051
   },
+  "diagnostics": {
+    "interference": {
+      "unlocked_slowdown_min_pct": 4.600000000000004,
+      "unlocked_slowdown_max_pct": 9.000000000000007,
+      "locked_slowdown_max_pct": 6.2999999999999945,
+      "n_unlocked": 6,
+      "n_locked": 3
+    },
+    "clock_lock_MHz": {
+      "low": 450,
+      "high": 570
+    },
+    "clock_by_file": {
+      "t4_full_A.log": {
+        "group": "main",
+        "lock_mhz": 570,
+        "stream_sm_clock_mean_MHz": 570.0
+      },
+      "t4_full_B.log": {
+        "group": "main",
+        "lock_mhz": 450,
+        "stream_sm_clock_mean_MHz": 450.0
+      },
+      "t4_full_C1536.log": {
+        "group": "main",
+        "lock_mhz": 450,
+        "stream_sm_clock_mean_MHz": 450.0
+      },
+      "t4_full_C2048.log": {
+        "group": "main",
+        "lock_mhz": 450,
+        "stream_sm_clock_mean_MHz": 450.0
+      },
+      "t4_full_D.log": {
+        "group": "main",
+        "lock_mhz": 570,
+        "stream_sm_clock_mean_MHz": 570.0
+      },
+      "t4_full_E.log": {
+        "group": "main",
+        "lock_mhz": 450,
+        "stream_sm_clock_mean_MHz": 447.9
+      },
+      "t4_full_Edec.log": {
+        "group": "main",
+        "lock_mhz": 450,
+        "stream_sm_clock_mean_MHz": 450.0
+      },
+      "t4_full_F512.log": {
+        "group": "main",
+        "lock_mhz": 450,
+        "stream_sm_clock_mean_MHz": 450.0
+      },
+      "t4_full_Fdec.log": {
+        "group": "main",
+        "lock_mhz": 450,
+        "stream_sm_clock_mean_MHz": 450.0
+      },
+      "t4_full_Sweep.log": {
+        "group": "main",
+        "lock_mhz": 450,
+        "stream_sm_clock_mean_MHz": 450.0
+      },
+      "t4_repeat_B768.log": {
+        "group": "repeat",
+        "lock_mhz": 450,
+        "stream_sm_clock_mean_MHz": 450.0
+      },
+      "t4_power_capped_B.log": {
+        "group": "capped",
+        "lock_mhz": 570,
+        "stream_sm_clock_mean_MHz": 524.6
+      },
+      "t4_power_capped_C.log": {
+        "group": "capped",
+        "lock_mhz": 570,
+        "stream_sm_clock_mean_MHz": 522.9
+      },
+      "t4_quick.log": {
+        "group": "quick",
+        "lock_mhz": null,
+        "stream_sm_clock_mean_MHz": null
+      }
+    },
+    "compute_bound_deviation_max_pct": 0.41855553914247334,
+    "eight_b_ratio_pre1024": 1.056042608584587,
+    "band_excess_k2": {
+      "k": 2,
+      "measured_pct": 8.271537391507966,
+      "r_at_measured_max": 7,
+      "predicted_pct": 7.95783302203561,
+      "r_at_predicted_max": 7,
+      "n": 7
+    },
+    "band_excess_k3": {
+      "k": 3,
+      "measured_pct": 0.40127584548990125,
+      "r_at_measured_max": 7,
+      "predicted_pct": 5.995204332975845e-13,
+      "r_at_predicted_max": 10,
+      "n": 8
+    },
+    "slot_model_cf_r14": {
+      "r": 14,
+      "ratio_to_bound": {
+        "1": 1.596587914829662,
+        "2": 1.1218999946611545,
+        "3": 1.0760012108801278,
+        "4": 1.030132932626062,
+        "5": 1.000000000000003,
+        "6": 1.000000000000003,
+        "7": 1.000000000000003,
+        "8": 1.000000000000003
+      },
+      "smallest_k_within_tol": 5,
+      "tol_pct": 0.5
+    }
+  },
+  "unlocked": null,
   "penalty": {
     "table": [
       {
@@ -6695,6 +6831,8 @@
     "t4_full_Fdec.log|llama3.2-3b|dec:16:512": 0.01720776093029568,
     "t4_full_Sweep.log|llama3.2-3b|pre:768": 0.003264100846360085
   },
-  "skipped": [],
+  "skipped": [
+    "unlocked group: results/raw/t4_unlocked_*.log not present yet"
+  ],
   "notes": []
 }
