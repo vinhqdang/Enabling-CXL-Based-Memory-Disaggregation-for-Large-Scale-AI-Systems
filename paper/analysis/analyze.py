@@ -45,6 +45,10 @@ MARKERS = {"contiguous_first": "o", "contiguous_last": "s", "balanced": "^", "ra
            "random1": "v", "none": "x", "all_resident": "P"}
 # Okabe-Ito hues (CVD-checked with scripts/validate_palette.js).
 COLORS = ["#0072B2", "#E69F00", "#009E73", "#CC79A7", "#D55E00", "#56B4E9"]
+SWEEP_SOURCE = "t4_full_Sweep.log"
+REPEAT_BASE = "t4_full_B.log"
+REPEAT_CHECK_SOURCE = "t4_repeat_B768.log"
+MEDIAN_BUDGET = 15.0  # median of BUDGETS_LAYERS (14 and 16 bracket it; periods interpolated)
 SKIPPED, NOTES = [], []
 
 
@@ -171,8 +175,10 @@ def stream_row(ctx, r):
     sum_f = sum(f[u] for u in streamed)
     cal = calibration(ctx, model, wl, um)
     s = cal["s"] if cal else None
+    minfo = ctx["models"].get(model, {})
+    is_head = bool(minfo.get("head")) and N == (minfo.get("L") or N) + 1
     row = {
-        "group": ctx["group"], "source": ctx["source"], "model": model, "workload": wl,
+        "group": ctx["group"], "source": ctx["source"], "model": model, "workload": wl, "head": is_head,
         "exp": r.get("exp"), "placement": r.get("placement"), "r": r.get("r"), "k": k,
         "m": len(streamed), "N": N, "period_ms": r["period_ms"],
         "period_median_ms": r.get("period_median_ms"), "host_enqueue_ms": r.get("host_enqueue_ms"),
@@ -280,6 +286,7 @@ def penalty_table(rows):
             continue
         cf, bal = g["contiguous_first"], g["balanced"]
         ent = {"group": key[0], "source": key[1], "model": key[2], "workload": key[3], "r": key[4], "k": key[5],
+               "head": cf["head"],
                "measured_cf_ms": cf["period_ms"], "measured_bal_ms": bal["period_ms"],
                "measured_ratio": cf["period_ms"] / bal["period_ms"],
                "pred_cal_cf_ms": cf["pred_cal_ms"], "pred_cal_bal_ms": bal["pred_cal_ms"],
@@ -339,9 +346,13 @@ def dense_curves(ctx, model, wl, k, placement):
 
 def nonuniform_study(ctx, model, wl, iters, seeds):
     um = unit_maps(ctx, model, wl)
-    cal = calibration(ctx, model, wl, um) if um else None
-    if um is None or cal is None:
-        return None, "missing per-unit c/f or allres calibration"
+    if um is None:
+        return None, "missing per-unit c or f"
+    cal = calibration(ctx, model, wl, um)
+    calibrated = cal is not None
+    if not calibrated:
+        note(f"{ctx['source']}: no all_resident record for {wl}; non-uniform study uses s = 1")
+        cal = {"s": 1.0, "allres_ms": None}
     minfo = ctx["models"][model]
     L = minfo["L"]
     N = um["N"]
@@ -407,6 +418,7 @@ def nonuniform_study(ctx, model, wl, iters, seeds):
                 f"{x}={row[x]['period_ms']:.1f}" if row[x].get("feasible") else f"{x}=infeasible"
                 for x in ("a", "b", "c", "d")))
     info = {"source": ctx["source"], "model": model, "workload": wl, "L": L, "N": N, "head": head,
+            "calibrated_from_allres": calibrated,
             "layer_bytes": lb, "head_bytes": hb, "head_over_layer": (hb / lb) if head else None,
             "scale_s": s, "seeds": list(seeds), "iters": iters, "rows": rows}
     return info, None
@@ -463,8 +475,18 @@ def fig_accuracy(plt, figs, rows):
 
 
 def fig_penalty(plt, figs, ctx_by_source, ptable):
-    ents = [e for e in ptable if e["group"] == "main" and e["workload"].startswith("pre:")]
-    keys = sorted({(e["source"], e["model"], e["workload"]) for e in ents})
+    ents = [e for e in ptable if e["group"] == "main" and e["workload"].startswith("pre:")
+            and e["model"] == "llama3.2-3b" and not e["head"]]
+    # one panel per prefill T; when a T appears in two files, use the file with more grid points
+    best = {}
+    for e in ents:
+        best.setdefault(e["workload"], {}).setdefault(e["source"], []).append(e)
+    keys = []
+    for wl, per_src in best.items():
+        src = max(per_src, key=lambda x: len(per_src[x]))
+        keys.append((src, "llama3.2-3b", wl))
+    keys.sort(key=lambda x: prefill_t(x[2]))
+    ents = [e for e in ents if (e["source"], e["model"], e["workload"]) in set(keys)]
     if not keys:
         skip("fig_penalty.pdf: no prefill workload with contiguous_first and balanced in the main group")
         return
@@ -492,7 +514,7 @@ def fig_penalty(plt, figs, ctx_by_source, ptable):
         ax.axhline(1.0, color="black", linewidth=0.5, linestyle=":")
         ax.set_xlabel("Resident units r")
         ax.set_ylabel("Period / lower bound")
-        ax.text(0.02, 0.96, f"{model}, {wl.replace(':', ' ')}", transform=ax.transAxes, va="top", fontsize=6)
+        ax.text(0.02, 0.96, f"prefill T = {prefill_t(wl)}", transform=ax.transAxes, va="top", fontsize=6)
     handles = [plt.Line2D([], [], color=COLORS[0], label="contiguous first"),
                plt.Line2D([], [], color=COLORS[1], label="balanced"),
                plt.Line2D([], [], color="black", linestyle="-", label="calibrated model, contention"),
@@ -641,6 +663,78 @@ def fmt_int(x):
     return "n/a" if x is None else str(int(round(x)))
 
 
+# ---------------------------------------------------------------- additional analyses
+
+def interp_at(nu_rows, cfg, k, B):
+    """Period of configuration cfg at budget B, linearly interpolated between grid budgets."""
+    pts = sorted((r["budget_layers"], r[cfg]["period_ms"]) for r in nu_rows
+                 if r["k"] == k and r[cfg].get("feasible"))
+    lo = [p for p in pts if p[0] <= B]
+    hi = [p for p in pts if p[0] >= B]
+    if not lo or not hi:
+        return None
+    (b0, y0), (b1, y1) = lo[-1], hi[0]
+    return y0 if b1 == b0 else y0 + (y1 - y0) * (B - b0) / (b1 - b0)
+
+
+def prefill_t(wl):
+    return int(wl.split(":")[1]) if wl.startswith("pre:") else None
+
+
+def repeat_check(rows):
+    base = {(r["model"], r["workload"], r["placement"], r["r"], r["k"]): r["period_ms"]
+            for r in rows if r["group"] == "main" and r["source"] == REPEAT_BASE and r["exp"] == "grid"}
+    diffs = []
+    for r in rows:
+        if r["group"] == "repeat" and r["exp"] == "grid":
+            key = (r["model"], r["workload"], r["placement"], r["r"], r["k"])
+            if key in base:
+                diffs.append(100 * abs(r["period_ms"] / base[key] - 1))
+    return {"base": REPEAT_BASE, "repeat": REPEAT_CHECK_SOURCE, "n": len(diffs),
+            "mean_pct": round(mean(diffs), 3) if diffs else None,
+            "max_pct": round(max(diffs), 3) if diffs else None}
+
+
+def regime_table(rows):
+    fc = defaultdict(list)
+    for r in rows:
+        fc[(r["model"], r["workload"], r["head"])].append(r["f_over_c"])
+    fc = {k: mean(v) for k, v in fc.items()}
+
+    def regime(r):
+        if r["workload"].startswith("dec:"):
+            return "decode"
+        return ("prefill transfer-bound (f/c > 1)" if fc[(r["model"], r["workload"], r["head"])] > 1
+                else "prefill compute-bound (f/c <= 1)")
+
+    out = {}
+    for name in ("prefill transfer-bound (f/c > 1)", "prefill compute-bound (f/c <= 1)", "decode"):
+        sel = [r for r in rows if regime(r) == name]
+        cal_cont = [r for r in sel if r["err_cal_cont"] is not None]
+        out[name] = {"n": len(sel), "models": sorted({r["model"] for r in sel}),
+                     "calibrated": {k: v for k, v in err_block(sel, "err_cal").items() if k != "worst"},
+                     "calibrated_contention": {k: v for k, v in err_block(cal_cont, "err_cal_cont").items()
+                                               if k != "worst"},
+                     "uncalibrated_base": {k: v for k, v in err_block(sel, "err_base_raw").items() if k != "worst"}}
+    return out
+
+
+def spread_and_worst(rows):
+    """Placement spread for compute-bound 3B prefill, and random0 vs balanced worst case."""
+    groups = defaultdict(dict)
+    for r in rows:
+        if r["exp"] == "grid" and r["placement"] in PLACEMENTS_GRID:
+            groups[(r["source"], r["model"], r["workload"], r["r"], r["k"])][r["placement"]] = r["period_ms"]
+    compute_spread = []
+    worst_rb = []
+    for key, pl in groups.items():
+        if len(pl) >= 2:
+            compute_spread.append((100 * (max(pl.values()) / min(pl.values()) - 1), key))
+        if "random0" in pl and "balanced" in pl:
+            worst_rb.append((100 * (pl["random0"] / pl["balanced"] - 1), key))
+    return compute_spread, worst_rb
+
+
 # ---------------------------------------------------------------- main
 
 def main():
@@ -659,6 +753,7 @@ def main():
     os.makedirs(figs, exist_ok=True)
 
     groups = {"main": sorted(glob.glob(os.path.join(raw, "t4_full_*.log"))),
+              "repeat": sorted(glob.glob(os.path.join(raw, "t4_repeat_*.log"))),
               "capped": sorted(glob.glob(os.path.join(raw, "t4_power_capped_*.log"))),
               "quick": [p for p in [os.path.join(raw, "t4_quick.log")] if os.path.exists(p)]}
     all_files = [f for g in groups.values() for f in g]
@@ -684,6 +779,9 @@ def main():
             if not ctx["stream"]:
                 note(f"{ctx['source']}: no stream records yet (kinds: {dict(ctx['kinds'])})")
             for r in ctx["stream"]:
+                if r.get("exp") == "sweep" and os.path.basename(path) != SWEEP_SOURCE:
+                    stats["sweep_outside_sweep_file"] += 1
+                    continue
                 row = stream_row(ctx, r)
                 if row is not None:
                     rows.append(row)
@@ -748,7 +846,7 @@ def main():
           "| uncal", accuracy["uncalibrated_base"]["mape_pct"], "| n", len(main_eval))
 
     # head and 8B validation
-    head_rows = [r for r in main_eval if ctx_by_source.get(r["source"], {}).get("models", {}).get(r["model"], {}).get("head")]
+    head_rows = [r for r in main_eval if r["head"]]
     eightb_rows = [r for r in main_eval if "8b" in r["model"]]
     head_block = {"n": len(head_rows), "calibrated": err_block(head_rows, "err_cal"),
                   "by_placement": err_by(head_rows, "err_cal", "placement")}
@@ -850,13 +948,12 @@ def main():
 
     # non-uniform study on the head file
     nu_info = None
-    head_src = [r for r in main_eval if ctx_by_source[r["source"]]["models"].get(r["model"], {}).get("head")]
+    head_src = [r for r in main_eval if r["head"] and r["workload"] == "pre:512"]
     if head_src:
         src = head_src[0]["source"]
         ctx = ctx_by_source[src]
         model = head_src[0]["model"]
-        wl = max({r["workload"] for r in head_src if r["source"] == src and r["model"] == model},
-                 key=lambda w: sum(1 for r in head_src if r["workload"] == w))
+        wl = "pre:512"
         print(f"non-uniform study: {src} {model} {wl} (iters {args.nonuniform_iters}, seeds {args.nonuniform_seeds})")
         nu_info, why = nonuniform_study(ctx, model, wl, args.nonuniform_iters, list(range(args.nonuniform_seeds)))
         if nu_info is None:
@@ -865,17 +962,48 @@ def main():
         skip("non-uniform study: no head model with measured streaming records in the main group")
     nu_block = None
     if nu_info:
-        def gain(a, b):
-            return None if a is None or b is None else 100 * (a / b - 1)
-        head_gain, local_gain = [], []
-        for r in nu_info["rows"]:
-            if r["b"].get("feasible") and r["c"].get("feasible"):
-                head_gain.append(gain(r["b"]["period_ms"], r["c"]["period_ms"]))
-            heur = [r[x]["period_ms"] for x in ("a", "b", "c") if r[x].get("feasible")]
-            if heur and r["d"].get("feasible"):
-                local_gain.append(gain(min(heur), r["d"]["period_ms"]))
-        nu_block = dict(nu_info, head_resident_gain_max_pct=max(head_gain) if head_gain else None,
-                        local_search_gain_max_pct=max(local_gain) if local_gain else None)
+        # gains at the median budget (interpolated between 14 and 16 layer equivalents)
+        gains = {}
+        for k in KS_NONUNIFORM:
+            pb = interp_at(nu_info["rows"], "b", k, MEDIAN_BUDGET)
+            pc = interp_at(nu_info["rows"], "c", k, MEDIAN_BUDGET)
+            pd = interp_at(nu_info["rows"], "d", k, MEDIAN_BUDGET)
+            gains[k] = {"b_over_c_minus_1_pct": None if None in (pb, pc) else 100 * (pb / pc - 1),
+                        "c_over_d_minus_1_pct": None if None in (pc, pd) else 100 * (pc / pd - 1),
+                        "period_ms": {"b": pb, "c": pc, "d": pd}}
+        nu_block = dict(nu_info, median_budget_layers=MEDIAN_BUDGET,
+                        definition=("at budget 15 layer equivalents (median of the grid, linearly interpolated "
+                                    "between 14 and 16), (b)/(c)-1 and (c)/(d)-1 in percent; "
+                                    "macros use k=2"),
+                        gains_at_median=gains,
+                        head_resident_gain_pct=gains[2]["b_over_c_minus_1_pct"],
+                        local_search_gain_pct=gains[2]["c_over_d_minus_1_pct"])
+
+    # regimes, repeatability, prefill T and worst-case placements, decode
+    base3b = [r for r in main_rows if r["model"] == "llama3.2-3b" and not r["head"]]
+    regimes_table = regime_table(main_eval)
+    repeat = repeat_check(rows)
+    fc3 = {}
+    for r in base3b:
+        if prefill_t(r["workload"]) is not None:
+            fc3.setdefault(r["workload"], []).append(r["f_over_c"])
+    fc3 = {w: mean(v) for w, v in fc3.items()}
+    transfer3 = {prefill_t(w): v for w, v in fc3.items() if v > 1}
+    compute3 = {prefill_t(w): v for w, v in fc3.items() if v <= 1}
+    spread, worst_rb = spread_and_worst(main_rows)
+    head_sources = {r["source"] for r in main_rows if r["head"]}
+    comp_spread = [v for v, key in spread if key[1] == "llama3.2-3b" and key[0] not in head_sources
+                   and prefill_t(key[2]) in compute3]
+    rb_max = max(worst_rb, key=lambda x: x[0]) if worst_rb else None
+    dec_rows = [r for r in main_eval if r["workload"].startswith("dec:")]
+    dec_block = {"n": len(dec_rows), "calibrated": err_block(dec_rows, "err_cal")}
+    prefill_T = {"f_over_c_by_T": {prefill_t(w): round(v, 4) for w, v in sorted(fc3.items(), key=lambda x: prefill_t(x[0]))},
+                 "transfer_bound_max_T": max(transfer3) if transfer3 else None,
+                 "transfer_ratio_min": min(transfer3.values()) if transfer3 else None,
+                 "transfer_ratio_max": max(transfer3.values()) if transfer3 else None,
+                 "compute_bound_min_T": min(compute3) if compute3 else None,
+                 "compute_bound_spread_max_pct": max(comp_spread) if comp_spread else None,
+                 "random_vs_balanced_worst": {"pct": rb_max[0], "where": rb_max[1]} if rb_max else None}
 
     summary = {
         "inputs": {"groups": {g: [os.path.basename(x) for x in fl] for g, fl in groups.items()},
@@ -886,7 +1014,9 @@ def main():
                     "by_model": {m: {"values": v, "mean": mean(v)} for m, v in s_by_model.items()},
                     "min": min(s_vals) if s_vals else None, "max": max(s_vals) if s_vals else None},
         "main": {"accuracy": accuracy, "ranking_calibrated": rank, "ranking_uncalibrated": rank_uncal,
-                 "head_validation": head_block, "eight_b_validation": eight_block},
+                 "head_validation": head_block, "eight_b_validation": eight_block,
+                 "regimes": regimes_table, "decode": dec_block, "prefill_T_3B": prefill_T},
+        "repeatability": repeat,
         "penalty": penalty,
         "slot_sweep": {"points": sweeps, "summary": sweep_summary, "calibrated_mape_pct": sweep_mape},
         "nonuniform": nu_block,
@@ -916,6 +1046,14 @@ def main():
     # numbers
     cal = accuracy["calibrated"]
     unc = accuracy["uncalibrated_base"]
+    def sweep_point(placement, k):
+        for sw in sweeps:
+            if sw["placement"] == placement:
+                for pt in sw["points"]:
+                    if pt["k"] == k:
+                        return pt["measured_ms"]
+        return None
+
     macros = [
         ("AccMape", fmt(cal["mape_pct"], 2)),
         ("AccMax", fmt(cal["max_abs_err_pct"], 2)),
@@ -952,8 +1090,27 @@ def main():
         ("SweepCfMinK", str(sweep_summary.get("contiguous_min_k", "n/a"))),
         ("CalScaleMin", fmt(summary["scale_s"]["min"], 2)),
         ("CalScaleMax", fmt(summary["scale_s"]["max"], 2)),
-        ("NonUnifHeadGainPct", fmt(nu_block["head_resident_gain_max_pct"] if nu_block else None, 1)),
-        ("NonUnifLocalGainPct", fmt(nu_block["local_search_gain_max_pct"] if nu_block else None, 1)),
+        ("NonUnifHeadGainPct", fmt(nu_block["head_resident_gain_pct"] if nu_block else None, 1)),
+        ("NonUnifLocalGainPct", fmt(nu_block["local_search_gain_pct"] if nu_block else None, 1)),
+        ("RepeatMeanPct", fmt(repeat["mean_pct"], 2)),
+        ("RepeatMaxPct", fmt(repeat["max_pct"], 2)),
+        ("RepeatN", str(repeat["n"])),
+        ("TransferBoundMaxT", fmt_int(prefill_T["transfer_bound_max_T"])),
+        ("RatioTransferMin", fmt(prefill_T["transfer_ratio_min"], 2)),
+        ("RatioTransferMax", fmt(prefill_T["transfer_ratio_max"], 2)),
+        ("ComputeBoundMinT", fmt_int(prefill_T["compute_bound_min_T"])),
+        ("ComputeBoundSpreadPct", fmt(prefill_T["compute_bound_spread_max_pct"], 1)),
+        ("RandomWorstPct", fmt_int(prefill_T["random_vs_balanced_worst"]["pct"]
+                                   if prefill_T["random_vs_balanced_worst"] else None)),
+        ("DecodeHostMaxErr", fmt(dec_block["calibrated"]["max_abs_err_pct"], 2)),
+        ("DecodeMape", fmt(dec_block["calibrated"]["mape_pct"], 2)),
+        ("SweepBalTwoMs", fmt(sweep_point("balanced", 2), 1)),
+        ("SweepBalThreeMs", fmt(sweep_point("balanced", 3), 1)),
+        ("SweepCfTwoMs", fmt(sweep_point("contiguous_first", 2), 1)),
+        ("SweepCfSixMs", fmt(sweep_point("contiguous_first", 6), 1)),
+        ("SweepCfSixOverTwo", fmt(None if sweep_point("contiguous_first", 6) is None or sweep_point("contiguous_first", 2) is None
+                                  else sweep_point("contiguous_first", 6) / sweep_point("contiguous_first", 2), 2)),
+        ("SweepRatio", fmt(fc3.get("pre:768"), 2)),
     ]
     if max_pen:
         macros += [
