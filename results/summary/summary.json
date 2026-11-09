@@ -13,7 +13,6 @@
         "t4_quick.log"
       ]
     },
-    "include_quick_in_main": false,
     "files": {
       "t4_full_A.log": {
         "group": "main",

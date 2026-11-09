@@ -2,8 +2,8 @@
 """Compare measured T4 weight-streaming periods with the placement model.
 
 Usage:
-    python3 paper/analysis/analyze.py [--include-quick] [--raw-dir DIR] [--out-root DIR]
-                                      [--nonuniform-iters N]
+    python3 paper/analysis/analyze.py [--raw-dir DIR] [--out-root DIR]
+                                      [--nonuniform-iters N] [--nonuniform-seeds N]
 
 Inputs (groups):
     main    results/raw/t4_full_*.log          locked clocks
@@ -363,6 +363,7 @@ def nonuniform_study(ctx, model, wl, iters, seeds):
             # (a) contiguous layers, head streamed
             ra = min(L, math.floor((budget - k * slot_all) / lb)) if head else \
                 min(L, math.floor((budget - k * lb) / lb))
+            res_a = res_b = res_c = None
             if ra >= 0:
                 res_a = contiguous_first(L, ra)
                 row["a"] = {"feasible": True, "r": ra, "period_ms": cycle_time(cs, f, res_a, k)}
@@ -384,16 +385,18 @@ def nonuniform_study(ctx, model, wl, iters, seeds):
                     row["c"] = {"feasible": False}
             else:
                 row["c"] = {"feasible": False, "note": "no head unit"}
-            # (d) local search over all units with the memory model of placement.local_search
+            # (d) local search over all units, started from the best feasible heuristic (a, b or c)
+            starts = [res for res, key in ((res_c if head and row["c"].get("feasible") else None, "c"),
+                                           (res_b if row["b"].get("feasible") else None, "b"),
+                                           (res_a if row["a"].get("feasible") else None, "a"))
+                      if res is not None]
             best = None
-            for seed in seeds:
-                try:
-                    p, res_d = local_search(cs, f, sizes, budget, k, start=None, iters=iters, seed=seed)
-                except ValueError:
-                    best = None
-                    break
-                if best is None or p < best[0]:
-                    best = (p, res_d)
+            if starts:
+                start_set = min(starts, key=lambda st: cycle_time(cs, f, st, k))
+                for seed in seeds:
+                    p, res_d = local_search(cs, f, sizes, budget, k, start=set(start_set), iters=iters, seed=seed)
+                    if best is None or p < best[0]:
+                        best = (p, res_d)
             if best is None:
                 row["d"] = {"feasible": False}
             else:
@@ -611,7 +614,7 @@ def fig_nonuniform(plt, figs, nu):
     ax.set_ylabel("Calibrated period (ms)")
     handles, labels = ax.get_legend_handles_labels()
     fig.legend(handles, labels, loc="lower center", ncol=2, frameon=False, fontsize=5)
-    fig.tight_layout(rect=[0, 0.36, 1, 1])
+    fig.tight_layout(rect=[0, 0.3, 1, 1])
     out = os.path.join(figs, "fig_nonuniform.pdf")
     fig.savefig(out)
     plt.close(fig)
@@ -642,8 +645,6 @@ def fmt_int(x):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--include-quick", action="store_true",
-                    help="also merge the quick log into the main statistics (it is always reported separately)")
     ap.add_argument("--raw-dir", default=os.path.join(ROOT, "results", "raw"))
     ap.add_argument("--out-root", default=ROOT)
     ap.add_argument("--nonuniform-iters", type=int, default=3000)
@@ -878,7 +879,6 @@ def main():
 
     summary = {
         "inputs": {"groups": {g: [os.path.basename(x) for x in fl] for g, fl in groups.items()},
-                   "include_quick_in_main": args.include_quick,
                    "files": file_info, "truncated_lines_dropped": stats["truncated_lines"],
                    "stream_rows": {"main": len(main_rows), "capped": len(cap_rows), "quick": len(quick_rows)}},
         "calibration": calib,
