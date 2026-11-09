@@ -225,3 +225,4 @@ paper/*.out
 paper/*.blg
 paper/*.log
 paper/*.spl
+submission_fgcs/build_anon/

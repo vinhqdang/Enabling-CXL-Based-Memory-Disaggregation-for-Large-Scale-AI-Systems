@@ -2,9 +2,10 @@
 
 | File | Use |
 |------|-----|
-| `manuscript.pdf` | Manuscript, elsarticle double column (5p), 11 pages (limit 18 incl. figures, tables, references) |
-| `manuscript_source.zip` | Self-contained LaTeX source: one `main.tex`, `main.bbl`, `figs/*.pdf`; verified to compile from the unzipped folder |
-| `Figure_1.pdf` ... `Figure_5.pdf` | Figures as separate files, numbered in order of appearance (accuracy, penalty, timeline, slots, non-uniform) |
+| `manuscript.pdf` | Anonymised manuscript (no author names, affiliations, CRediT or repository link), elsarticle double column, 10 pages (limit 18) |
+| `title_page.pdf` / `title_page.tex` | Title page with authors, affiliations, corresponding author, CRediT and data link (upload as the separate title page) |
+| `manuscript_source.zip` | Anonymised LaTeX source: exactly one `manuscript.tex` (all inputs, numbers and the bibliography inlined) and `Figure_1.png` ... `Figure_5.png` (300 dpi); verified to compile from the unzipped folder. Rebuild with `python3 paper/make_submission.py` |
+| `Figure_1.png` ... `Figure_5.png` | Figures as separate files (300 dpi PNG), numbered in order of appearance |
 | `highlights.txt` | 5 highlights, each at most 85 characters |
 | `cover_letter.pdf` | Cover letter |
 | `title_abstract_keywords.txt` | Title, authors, abstract (248 words, limit 250), 8 keywords (6-10 required) |
