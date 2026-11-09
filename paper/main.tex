@@ -275,6 +275,15 @@ In the proof of Theorem~\ref{thm:balanced} the second term of each gain is $2c-f
 
 In the band the bound is loose: in the random instances of the test suite the excess stays well below it, and for $L\le12$ an exhaustive search over all placements finds no placement better than the balanced one (both checks are part of the test suite). Because a slot uses the same memory as a resident layer, two slots plus one more resident layer is often faster than three slots; the exact evaluator of Lemma~\ref{lem:cycle} decides this in each case (Section~\ref{sec:res-slots}).
 
+\begin{corollary}[One placement for all iteration sizes]\label{cor:robust}
+Let units be uniform in size, so that $f$ is fixed, while $c$ varies with the iteration (prefill chunks of different lengths, decode steps of different batch sizes). With $k=3$ slots and $m\ge3$, a balanced placement is optimal for every iteration simultaneously.
+\end{corollary}
+\begin{proof}
+For an iteration with $f\le c$, Theorem~\ref{thm:compute} gives $\per=Lc$, which no placement can beat. For an iteration with $f>c$, $(k-1)f=2f>2c$, so Theorem~\ref{thm:balanced} gives the lower bound $\max(Lc,mf)$.
+\end{proof}
+
+Corollary~\ref{cor:robust} matters for serving systems that mix long prefills and short decode steps: one placement serves both, so the runtime need not move weights when the mix changes. A contiguous placement has no such property; its penalty depends on $c$ and therefore on the iteration size (Figure~\ref{fig:regime}).
+
 \paragraph{Guidelines}
 For a dense model with layers of equal size the analysis gives a complete recipe. (i) If a layer's computation is at least its copy time, use two slots and no resident layers beyond what is free. (ii) Otherwise use two slots if $f\ge2c$ and three if $c<f<2c$ (or evaluate both), fill the remaining memory with resident layers, and spread them evenly. (iii) The resulting iteration time is $\max(Lc,mf)$, so reaching compute speed requires $r\ge L(1-c/f)$ resident layers in addition to the slots. Algorithm~\ref{alg:place} summarises the procedure, including the non-uniform case of Section~\ref{sec:nonuniform}.
 
