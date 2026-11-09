@@ -519,6 +519,9 @@ def fig_penalty(plt, figs, ctx_by_source, ptable):
         ax.set_xlabel("Resident units r")
         ax.set_ylabel("Period / lower bound")
         ax.text(0.02, 0.96, f"prefill T = {prefill_t(wl)}", transform=ax.transAxes, va="top", fontsize=6)
+    ytop = max(ax.get_ylim()[1] for ax in axes.flat[:len(keys)])
+    for ax in axes.flat[:len(keys)]:
+        ax.set_ylim(0.97, ytop)
     handles = [plt.Line2D([], [], color=COLORS[0], label="contiguous first"),
                plt.Line2D([], [], color=COLORS[1], label="balanced"),
                plt.Line2D([], [], color="black", linestyle="-", label="calibrated model, contention"),
