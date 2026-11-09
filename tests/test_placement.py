@@ -9,12 +9,14 @@ from placement import (
     contiguous_first,
     contiguous_uniform,
     cycle_time,
+    cycle_time_contention,
     gaps,
     is_balanced,
     local_search,
     lower_bound,
     random_placement,
     schedule,
+    schedule_contention,
 )
 
 
@@ -156,3 +158,65 @@ def test_local_search_respects_budget_and_improves_start():
     assert used <= budget
     assert period <= cycle_time(c, f, start, k) + 1e-12
     assert close(period, cycle_time(c, f, best, k))
+
+
+def test_contention_equals_base_when_rates_equal():
+    rng = random.Random(8)
+    for _ in range(200):
+        L = rng.randint(2, 30)
+        r = rng.randint(0, L - 1)
+        k = rng.randint(1, 5)
+        c = [rng.uniform(0.2, 5) for _ in range(L)]
+        f = [rng.uniform(0.2, 5) for _ in range(L)]
+        resident = random_placement(L, r, rng.randrange(10**6))
+        base = cycle_time(c, f, resident, k)
+        cont = cycle_time_contention(c, c, f, resident, k)
+        assert close(cont, base, 1e-9), (L, r, k, base, cont)
+
+
+def test_contention_sandwiched_between_base_models():
+    rng = random.Random(9)
+    for _ in range(200):
+        L = rng.randint(2, 30)
+        r = rng.randint(0, L - 1)
+        k = rng.randint(1, 5)
+        c = [rng.uniform(0.2, 5) for _ in range(L)]
+        c_conc = [x * rng.uniform(1.0, 2.5) for x in c]
+        f = [rng.uniform(0.2, 5) for _ in range(L)]
+        resident = random_placement(L, r, rng.randrange(10**6))
+        cont = cycle_time_contention(c, c_conc, f, resident, k)
+        lo = cycle_time(c, f, resident, k)
+        hi = cycle_time(c_conc, f, resident, k)
+        assert cont >= lo * (1 - 1e-9), (L, r, k, lo, cont)
+        assert cont <= hi * (1 + 1e-9), (L, r, k, cont, hi)
+
+
+def test_contention_all_resident_is_compute_sum():
+    rng = random.Random(10)
+    for _ in range(50):
+        L = rng.randint(1, 12)
+        c = [rng.uniform(0.2, 5) for _ in range(L)]
+        c_conc = [x * rng.uniform(1.0, 3.0) for x in c]
+        f = [rng.uniform(0.2, 5) for _ in range(L)]
+        assert close(cycle_time_contention(c, c_conc, f, set(range(L)), 2), sum(c))
+
+
+def test_contention_hand_example():
+    # L=2, unit 0 resident, one slot. Copy of unit 1 runs during [0, 1]; unit 0 computes at
+    # rate 1/2 for that interval (progress 0.5), then at rate 1 (ends at 1.5). Period 2.5.
+    assert close(cycle_time_contention([1.0, 1.0], [2.0, 2.0], [1.0, 1.0], {0}, 1), 2.5)
+
+
+def test_schedule_contention_intervals():
+    c = [1.0, 2.0, 1.5, 0.5]
+    c_conc = [1.2, 2.5, 1.5, 0.6]
+    f = [2.0, 1.0, 3.0, 1.0]
+    resident = {1}
+    s = schedule_contention(c, c_conc, f, resident, 2, iters=10)
+    assert [u for u, _, _ in s["compute"]] == [0, 1, 2, 3]
+    starts = [st for _, st, _ in s["compute"]]
+    assert starts[0] >= 0.0 and all(b >= a for a, b in zip(starts, starts[1:]))
+    for _, st, en in s["compute"]:
+        assert en >= st
+    assert sorted(u for u, _, _ in s["copy"]) == [0, 2, 3]
+    assert all(en >= st for _, st, en in s["copy"])
