@@ -1071,7 +1071,9 @@ def run_model(name, args, dry, workloads, rs, placements, ks):
         del wl
         bench.empty_cache()
 
-    if not over_budget():
+    if args.no_sweep:
+        pass
+    elif not over_budget():
         say(f"{name}: slot sweep {sweep_spec(dry)}")
         sweep(bench, f_alone, c_cache.get(sweep_spec(dry)), timeline)
     else:
@@ -1132,6 +1134,7 @@ def main():
     ap.add_argument("--placements", default=None)
     ap.add_argument("--head", action="store_true", help="append the LM head unit")
     ap.add_argument("--head-resident", action="store_true", help="keep the LM head resident (implies --head)")
+    ap.add_argument("--no-sweep", action="store_true", help="skip the slot sweep")
     ap.add_argument("--quick", action="store_true", help="small grid unless options are given")
     ap.add_argument("--dry", action="store_true", help="CPU control-flow check with tiny shapes")
     ap.add_argument("--budget", type=float, default=0.0,
