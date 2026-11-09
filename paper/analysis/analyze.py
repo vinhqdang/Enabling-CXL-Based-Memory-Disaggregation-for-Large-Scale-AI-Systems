@@ -441,34 +441,93 @@ def setup_matplotlib():
     return plt
 
 
+ACC_REGIME_COLORS = {"prefill, f/c > 1": "#D55E00", "prefill, f/c <= 1": "#009E73", "decode": "#CC79A7"}
+ACC_PLACEMENTS = [("contiguous_first", "o", "contiguous_first"), ("contiguous_last", "s", "contiguous_last"),
+                  ("balanced", "^", "balanced"), ("random0", "D", "random0, random1"),
+                  ("none", "x", "none (all streamed)")]
+
+
+def accuracy_regime(r):
+    if r["workload"].startswith("dec:"):
+        return "decode"
+    return "prefill, f/c > 1" if float(r["f_over_c"]) > 1.0 else "prefill, f/c <= 1"
+
+
 def fig_accuracy(plt, figs, rows):
-    pts = [r for r in rows if r["pred_cal_cont_ms"] is not None]
+    from matplotlib.lines import Line2D
+    from matplotlib.ticker import FuncFormatter, LogLocator, NullFormatter, NullLocator
+
+    marker_of = {p: (m, lab) for p, m, lab in ACC_PLACEMENTS}
+    pts = []
+    for r in rows:
+        if r.get("pred_cal_ms") is None or r.get("period_ms") is None:
+            continue
+        key = "random0" if r["placement"] == "random1" else r["placement"]
+        if key in marker_of:
+            pts.append((r, accuracy_regime(r), key))
     if not pts:
-        skip("fig_accuracy.pdf: no evaluated main record with a calibrated contention prediction")
+        skip("fig_accuracy.pdf: no evaluated main record with a calibrated prediction")
         return
-    fig, ax = plt.subplots(figsize=(3.4, 4.3))
-    wls = sorted({r["workload"] for r in pts})
-    lo = min(min(r["period_ms"], r["pred_cal_cont_ms"]) for r in pts)
-    hi = max(max(r["period_ms"], r["pred_cal_cont_ms"]) for r in pts)
-    for i, wl in enumerate(wls):
-        for p in sorted({r["placement"] for r in pts}):
-            sel = [r for r in pts if r["workload"] == wl and r["placement"] == p]
-            if sel:
-                filled = MARKERS.get(p, "o") not in ("x", "+")
-                ax.scatter([r["pred_cal_cont_ms"] for r in sel], [r["period_ms"] for r in sel], s=18,
-                           marker=MARKERS.get(p, "o"), color=COLORS[i % len(COLORS)],
-                           edgecolor="black" if filled else None, linewidth=0.3,
-                           label=f"{wl}, {p}", zorder=3)
-    ax.plot([lo * 0.9, hi * 1.1], [lo * 0.9, hi * 1.1], color="black", linewidth=0.6, linestyle="--")
-    ax.set_xscale("log")
-    ax.set_yscale("log")
-    ax.set_xlim(lo * 0.9, hi * 1.1)
-    ax.set_ylim(lo * 0.9, hi * 1.1)
-    ax.set_xlabel("Calibrated predicted period, contention model (ms)")
-    ax.set_ylabel("Measured period (ms)")
-    handles, labels = ax.get_legend_handles_labels()
-    fig.legend(handles, labels, loc="lower center", ncol=2, frameon=False, fontsize=5.5)
-    fig.tight_layout(rect=[0, 0.36, 1, 1])
+    fig = plt.figure(figsize=(7.0, 2.6))
+    ax_a = fig.add_axes([0.085, 0.19, 0.31, 0.72])
+    ax_b = fig.add_axes([0.53, 0.19, 0.22, 0.72])
+
+    lo = min(min(r["period_ms"], r["pred_cal_ms"]) for r, _, _ in pts)
+    hi = max(max(r["period_ms"], r["pred_cal_ms"]) for r, _, _ in pts)
+    for reg, col in ACC_REGIME_COLORS.items():
+        for key, (m, _) in marker_of.items():
+            sel = [r for r, g, p in pts if g == reg and p == key]
+            if not sel:
+                continue
+            ax_a.scatter([r["pred_cal_ms"] for r in sel], [r["period_ms"] for r in sel], s=10, marker=m,
+                         color=col, alpha=0.8, linewidths=0.8 if m == "x" else 0, zorder=3)
+    ax_a.plot([lo * 0.9, hi * 1.1], [lo * 0.9, hi * 1.1], color="black", linewidth=0.6, linestyle="--",
+              zorder=2)
+    ax_a.set_xscale("log")
+    ax_a.set_yscale("log")
+    ax_a.set_xlim(lo * 0.9, hi * 1.1)
+    ax_a.set_ylim(lo * 0.9, hi * 1.1)
+    for axis in (ax_a.xaxis, ax_a.yaxis):
+        axis.set_major_locator(LogLocator(base=10, subs=(1.0, 2.0, 5.0)))
+        axis.set_major_formatter(FuncFormatter(lambda v, _: f"{v:g}"))
+        axis.set_minor_locator(NullLocator())
+        axis.set_minor_formatter(NullFormatter())
+    ax_a.set_xlabel("Predicted period, calibrated (ms)")
+    ax_a.set_ylabel("Measured period (ms)")
+    ax_a.text(0.02, 0.98, "(a)", transform=ax_a.transAxes, va="top", ha="left", weight="bold")
+
+    edges = [-6 + 0.5 * i for i in range(25)]
+    mae = {}
+    for reg, col in ACC_REGIME_COLORS.items():
+        errs = [100.0 * (r["period_ms"] / r["pred_cal_ms"] - 1.0) for r, g, _ in pts if g == reg]
+        if not errs:
+            continue
+        inside = [e for e in errs if -6 <= e <= 6]
+        if len(inside) < len(errs):
+            note(f"fig_accuracy.pdf: {len(errs) - len(inside)} {reg} errors outside +-6 % not in histogram")
+        mae[reg] = sum(abs(e) for e in errs) / len(errs)
+        ax_b.hist(inside, bins=edges, histtype="step", color=col, linewidth=1.1)
+    ax_b.axvline(0.0, ymax=0.6, color="black", linewidth=0.6, linestyle="--")
+    ax_b.set_xlim(-6, 6)
+    ax_b.set_xlabel("Relative error, measured / predicted - 1 (%)")
+    ax_b.set_yscale("log")
+    ax_b.set_ylim(0.7, 10000)
+    ax_b.set_ylabel("Configurations (log scale)")
+    ax_b.text(0.02, 0.98, "(b)", transform=ax_b.transAxes, va="top", ha="left", weight="bold")
+    short = {"prefill, f/c > 1": "prefill f/c > 1", "prefill, f/c <= 1": "prefill f/c <= 1", "decode": "decode"}
+    ax_b.text(0.03, 0.87, "mean absolute error", transform=ax_b.transAxes, va="top", ha="left", fontsize=6)
+    for i, (reg, col) in enumerate(ACC_REGIME_COLORS.items()):
+        if reg in mae:
+            ax_b.text(0.03, 0.79 - 0.08 * i, f"{short[reg]}: {mae[reg]:.2f} %", transform=ax_b.transAxes,
+                      va="top", ha="left", color=col, fontsize=6)
+
+    handles = [Line2D([], [], ls="none", marker="o", markersize=4, color=col, label=reg)
+               for reg, col in ACC_REGIME_COLORS.items()]
+    handles += [Line2D([], [], ls="none", marker=m, markersize=4, color="black", markerfacecolor="none"
+                       if m == "x" else "black", label=lab) for _, m, lab in ACC_PLACEMENTS]
+    fig.legend(handles=handles, labels=[h.get_label() for h in handles], loc="center left",
+               bbox_to_anchor=(0.79, 0.52), frameon=False, fontsize=6, handletextpad=0.4,
+               labelspacing=0.6)
     out = os.path.join(figs, "fig_accuracy.pdf")
     fig.savefig(out)
     plt.close(fig)
