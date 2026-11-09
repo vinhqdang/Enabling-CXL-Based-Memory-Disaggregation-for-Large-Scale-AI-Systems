@@ -101,7 +101,6 @@ def build_context(path, recs):
                 ctx["bytes"].append((r["bytes"], r["f_ms"], r.get("sm_clock_mean"), r.get("power_mean")))
         elif kind == "compute":
             ctx["c"][(r["model"], r["workload"])][r["unit_index"]].append(r["c_ms"])
-            ctx["stream"]  # no-op, keeps structure obvious
             ctx.setdefault("clock_power", []).append((r["workload"], r.get("sm_clock_mean"), r.get("power_mean")))
         elif kind == "compute_conc":
             ctx["c_conc"][(r["model"], r["workload"])][r["unit_index"]].append(r["c_conc_ms"])
@@ -293,7 +292,7 @@ def fig_accuracy(plt, rows):
     if not pts:
         skip("fig_accuracy.pdf: no stream record has a contention prediction")
         return
-    fig, ax = plt.subplots(figsize=(3.4, 3.0))
+    fig, ax = plt.subplots(figsize=(3.4, 4.3))
     wls = sorted({r["workload"] for r in pts})
     lo = min(min(r["period_ms"], r["pred_cont_ms"]) for r in pts)
     hi = max(max(r["period_ms"], r["pred_cont_ms"]) for r in pts)
@@ -301,9 +300,11 @@ def fig_accuracy(plt, rows):
         for p in sorted({r["placement"] for r in pts}):
             sel = [r for r in pts if r["workload"] == wl and r["placement"] == p]
             if sel:
+                filled = MARKERS.get(p, "o") not in ("x", "+")
                 ax.scatter([r["pred_cont_ms"] for r in sel], [r["period_ms"] for r in sel],
                            s=18, marker=MARKERS.get(p, "o"), color=COLORS[i % len(COLORS)],
-                           edgecolor="black", linewidth=0.3, label=f"{wl}, {p}", zorder=3)
+                           edgecolor="black" if filled else None, linewidth=0.3,
+                           label=f"{wl}, {p}", zorder=3)
     ax.plot([lo * 0.9, hi * 1.1], [lo * 0.9, hi * 1.1], color="black", linewidth=0.6, linestyle="--")
     ax.set_xscale("log")
     ax.set_yscale("log")
@@ -311,8 +312,9 @@ def fig_accuracy(plt, rows):
     ax.set_ylim(lo * 0.9, hi * 1.1)
     ax.set_xlabel("Predicted period, contention model (ms)")
     ax.set_ylabel("Measured period (ms)")
-    ax.legend(frameon=False, loc="upper left", ncol=1)
-    fig.tight_layout()
+    handles, labels = ax.get_legend_handles_labels()
+    fig.legend(handles, labels, loc="lower center", ncol=2, frameon=False, fontsize=5.5)
+    fig.tight_layout(rect=[0, 0.36, 1, 1])
     fig.savefig(os.path.join(FIGS, "fig_accuracy.pdf"))
     plt.close(fig)
     print("wrote", os.path.join(FIGS, "fig_accuracy.pdf"), f"({len(pts)} points)")
@@ -357,7 +359,7 @@ def fig_penalty(plt, rows, grid, ctx_by_source):
     if not wls:
         skip("fig_penalty.pdf: no prefill workload with contiguous_first and balanced grid records")
         return
-    fig, axes = plt.subplots(len(wls), 1, figsize=(3.4, 1.9 * len(wls) + 0.4), squeeze=False)
+    fig, axes = plt.subplots(len(wls), 1, figsize=(3.4, 1.9 * len(wls) + 1.1), squeeze=False)
     for ax, wl in zip(axes[:, 0], wls):
         ent = [g for g in grid if g["workload"] == wl]
         ks = sorted({g["k"] for g in ent})
@@ -372,12 +374,6 @@ def fig_penalty(plt, rows, grid, ctx_by_source):
                         linestyle="-" if k == ks[-1] else ":", label=None)
                 if cont[0] is not None:
                     ax.plot(xs, base, color=col, linewidth=0.6, linestyle="--", alpha=0.6)
-            for g in ent:
-                if placement not in g:
-                    continue
-                for k in ks:
-                    pass
-                sel = [g[placement] for _ in [0]]
             meas = [(g["r"], g["k"], g[placement]["measured_ms"] / g[placement]["lb_ms"])
                     for g in ent if placement in g]
             for r_, k_, y in meas:
@@ -393,8 +389,8 @@ def fig_penalty(plt, rows, grid, ctx_by_source):
                plt.Line2D([], [], color="black", linestyle="--", label="model, base"),
                plt.Line2D([], [], color="black", marker="o", linestyle="", label="measured, k=min"),
                plt.Line2D([], [], color="black", marker="s", linestyle="", label="measured, k=max")]
-    axes[0, 0].legend(handles=handles, frameon=False, fontsize=5.5, loc="upper right", ncol=2)
-    fig.tight_layout()
+    fig.legend(handles=handles, frameon=False, fontsize=5.5, loc="lower center", ncol=3)
+    fig.tight_layout(rect=[0, 0.1, 1, 1])
     fig.savefig(os.path.join(FIGS, "fig_penalty.pdf"))
     plt.close(fig)
     print("wrote", os.path.join(FIGS, "fig_penalty.pdf"), f"({len(wls)} panels)")
@@ -422,7 +418,7 @@ def fig_timeline(plt, grid, rows):
     recs = {r["placement"]: r for r in rows if r["source"] == chosen["source"]
             and r["workload"] == chosen["workload"] and r["r"] == chosen["r"]
             and r["k"] == 3 and r["exp"] == "grid"}
-    fig, axes = plt.subplots(2, 1, figsize=(3.4, 3.2), sharex=True)
+    fig, axes = plt.subplots(2, 1, figsize=(3.4, 3.7), sharex=True)
     xmin, xmax = 0.0, 0.0
     for ax, p in zip(axes, ("contiguous_first", "balanced")):
         rec = recs[p]
@@ -446,8 +442,8 @@ def fig_timeline(plt, grid, rows):
     handles = [plt.Rectangle((0, 0), 1, 1, color=COLORS[0], label="resident unit compute"),
                plt.Rectangle((0, 0), 1, 1, color=COLORS[1], label="streamed unit compute"),
                plt.Rectangle((0, 0), 1, 1, color="#999999", label="host-to-GPU copy")]
-    axes[0].legend(handles=handles, frameon=False, fontsize=5.5, loc="upper right", ncol=1)
-    fig.tight_layout()
+    fig.legend(handles=handles, frameon=False, fontsize=5.5, loc="lower center", ncol=3)
+    fig.tight_layout(rect=[0, 0.1, 1, 1])
     fig.savefig(os.path.join(FIGS, "fig_timeline.pdf"))
     plt.close(fig)
     print("wrote", os.path.join(FIGS, "fig_timeline.pdf"))
@@ -547,7 +543,7 @@ def main():
                 clock_power[wl]["sm"].append(sm)
             if pw is not None:
                 clock_power[wl]["pw"].append(pw)
-        if not any(r.get("kind") == "stream" for r in ctx["stream"]) and not ctx["stream"]:
+        if not ctx["stream"]:
             note(f"{ctx['source']}: no stream records (kinds seen: {dict(ctx['kinds'])})")
         for r in ctx["stream"]:
             row = analyze_stream(ctx, r, stats)
@@ -651,32 +647,29 @@ def main():
 
     # numbers
     macros = [
-        ("nAccMape", fmt(acc_cont["mape_pct"], 1)),
-        ("nAccMapeBase", fmt(acc_base_sub["mape_pct"], 1)),
-        ("nAccMapeBaseAll", fmt(acc_base_all["mape_pct"], 1)),
-        ("nAccMax", fmt(acc_cont["max_abs_err_pct"], 1)),
-        ("nAccMaxBase", fmt(acc_base_sub["max_abs_err_pct"], 1)),
-        ("nAccN", str(acc_cont["n"])),
-        ("nAccNAll", str(len(all_rows))),
-        ("nAccRankPct", "n/a" if rank["contention_agree_pct"] is None
+        ("AccMape", fmt(acc_cont["mape_pct"], 1)),
+        ("AccMapeBase", fmt(acc_base_sub["mape_pct"], 1)),
+        ("AccMapeBaseAll", fmt(acc_base_all["mape_pct"], 1)),
+        ("AccMax", fmt(acc_cont["max_abs_err_pct"], 1)),
+        ("AccMaxBase", fmt(acc_base_sub["max_abs_err_pct"], 1)),
+        ("AccN", str(acc_cont["n"])),
+        ("AccNAll", str(len(all_rows))),
+        ("AccRankPct", "n/a" if rank["contention_agree_pct"] is None
          else str(int(round(rank["contention_agree_pct"])))),
-        ("nAccRankBasePct", "n/a" if rank["base_agree_pct_paired_pairs"] is None
+        ("AccRankBasePct", "n/a" if rank["base_agree_pct_paired_pairs"] is None
          else str(int(round(rank["base_agree_pct_paired_pairs"])))),
-        ("nAccRankPairs", str(rank["pairs_over_threshold"])),
-        ("nHwBw", fmt(bandwidth["mean_GBps"], 1)),
+        ("AccRankPairs", str(rank["pairs_over_threshold"])),
+        ("HwBw", fmt(bandwidth["mean_GBps"], 1)),
     ]
     if max_info:
         macros += [
-            ("nMeasPenaltyMax", f"{max_info['ratio']:.2f}"),
-            ("nMeasPenaltyMaxR", str(max_info["r"])),
-            ("nMeasPenaltyMaxK", str(max_info["k"])),
-            ("nMeasPenaltyMaxWorkload", max_info["workload"].replace(":", " ")),
+            ("MeasPenaltyMax", f"{max_info['ratio']:.2f}"),
+            ("MeasPenaltyMaxR", str(max_info["r"])),
+            ("MeasPenaltyMaxK", str(max_info["k"])),
+            ("MeasPenaltyMaxWorkload", max_info["workload"].replace(":", " ")),
         ]
     else:
-        macros.append(("nMeasPenaltyMax", "n/a"))
-    macros = [(n.replace("n", "", 1) if False else n, v) for n, v in macros]
-    # Macro names use the same prefix throughout the paper: \nAcc..., \nMeas..., \nHw...
-    macros = [(n[1:] if n.startswith("n") and n[1:2].isupper() else n, v) for n, v in macros]
+        macros.append(("MeasPenaltyMax", "n/a"))
     write_numbers(macros)
 
     # figures
