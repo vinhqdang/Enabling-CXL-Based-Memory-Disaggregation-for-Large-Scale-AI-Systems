@@ -5,8 +5,10 @@ Some transformer units are resident in GPU memory. The remaining units are
 streamed from page-locked host memory through a ring of k GPU slots: a copy
 stream fills slot g % k with streamed unit S[g % m] while the compute stream
 runs the units in order. The script measures per-unit copy time f_u, per-unit
-compute time c_u, the all-resident iteration period, and the steady-state
-period for placements, slot counts and workloads.
+compute time c_u (alone and with a concurrent copy loop), the all-resident
+iteration period, and the steady-state period for placements, slot counts and
+workloads. GPU clocks are locked (nvidia-smi -lgc) and sampled in the background
+so that every record carries the clock, power, temperature and throttle state.
 
 Single-file, standard library + torch only. One model per process is
 recommended: each model gets one pinned host slab, released between models.
@@ -14,13 +16,14 @@ recommended: each model gets one pinned host slab, released between models.
 Examples (on a GPU VM):
   colab run --gpu T4 --timeout 600 runtime/stream_bench.py --quick
   colab run --gpu T4 --timeout 600 runtime/stream_bench.py --models llama3.2-3b \
-      --workloads pre:2048 --budget 480
+      --workloads pre:768 --budget 480
 
 CPU control-flow check (no CUDA needed):
   python3 runtime/stream_bench.py --dry
 """
 
 import argparse
+import atexit
 import gc
 import json
 import math
@@ -51,12 +54,14 @@ DRY_MAX_L = 6
 DRY_CAP = {"T": 128, "B": 4, "ctx": 64}
 
 REF_L = 28
-DEFAULT_WORKLOADS = "pre:512,pre:1024,pre:2048,pre:3072,pre:4096,dec:1:512,dec:16:512,dec:64:512"
-DEFAULT_RS = "0,7,14,21"
-DEFAULT_PLACEMENTS = "contiguous_first,contiguous_last,balanced,random0,random1"
+DEFAULT_WORKLOADS = ("pre:256,pre:512,pre:768,pre:1024,pre:1536,pre:2048,"
+                     "dec:16:512,dec:64:512")
+DEFAULT_RS = "0,4,7,10,14,18,21,24"
+DEFAULT_PLACEMENTS = "contiguous_first,contiguous_last,balanced,random0"
 DEFAULT_KS = "2,3"
 QUICK_DEFAULTS = dict(workloads="pre:1024,pre:4096,dec:16:512", rs="0,14", ks="3")
-SWEEP_WL = "pre:2048"
+SWEEP_WL = "pre:768"
+SWEEP_R_REF = 14
 SWEEP_KS = [1, 2, 3, 4, 6]
 SWEEP_PLACEMENTS = ["balanced", "contiguous_first"]
 KNOWN_PLACEMENTS = {"contiguous_first", "contiguous_last", "balanced", "random0", "random1"}
@@ -65,6 +70,9 @@ PRE_ITERS, PRE_WARM = 12, 4
 DEC_ITERS, DEC_WARM = 40, 10
 WARM_ITERS = 2            # untimed pass before every timed run
 RESET_EVERY = 16          # reset the activation to its saved input every 16 repeats
+WARM_SECONDS = 10.0       # resident-compute warm-up before each workload
+LOCK_CAP_MHZ = 570        # auto clock lock: highest supported graphics clock <= this
+SAMPLE_MS = 200
 
 FP16 = torch.float16
 ALIGN = 256               # alignment of fields inside a unit
@@ -77,6 +85,9 @@ BUDGET = 0.0
 RECORDS = []
 NOTES = []
 STAGE = ["startup"]
+CLOCKS = {"mode": None, "locked": False, "cmds": []}
+SAMPLES = []              # (time, stage, sm_clock, power, temp, throttle_bits)
+SAMPLES_LOCK = threading.Lock()
 
 
 # ----------------------------------------------------------------- logging
@@ -129,6 +140,146 @@ def meminfo():
     return info
 
 
+# ----------------------------------------------------------------- GPU clocks and sampling
+
+def run_smi(args_list):
+    try:
+        p = subprocess.run(["nvidia-smi"] + args_list, capture_output=True, text=True, timeout=60)
+        return p.returncode, p.stdout.strip(), p.stderr.strip()
+    except (OSError, subprocess.SubprocessError) as exc:
+        return -1, "", f"{type(exc).__name__}: {exc}"
+
+
+def _record_cmd(args_list, rc, out, err):
+    CLOCKS["cmds"].append(dict(cmd="nvidia-smi " + " ".join(args_list), rc=rc,
+                               out=out[:400], err=err[:400]))
+
+
+def setup_clocks(mode, dry):
+    CLOCKS["mode"] = mode
+    if dry or mode == "none":
+        CLOCKS["reason"] = "dry run" if dry else "disabled"
+        return
+    q = ["--query-supported-clocks=graphics", "--format=csv,noheader,nounits"]
+    rc, out, err = run_smi(q)
+    _record_cmd(q, rc, out, err)
+    if rc != 0:
+        CLOCKS["reason"] = "clock query failed"
+        return
+    supported = []
+    for line in out.splitlines():
+        try:
+            supported.append(int(float(line.strip())))
+        except ValueError:
+            pass
+    if mode == "auto":
+        cands = [c for c in supported if c <= LOCK_CAP_MHZ]
+        if not cands:
+            CLOCKS["reason"] = f"no supported graphics clock <= {LOCK_CAP_MHZ} MHz"
+            return
+        target = max(cands)
+    else:
+        try:
+            target = int(float(mode))
+        except ValueError:
+            sys.exit(f"--lock-clocks must be none, auto or a MHz value, got {mode}")
+    CLOCKS["target_mhz"] = target
+    CLOCKS["supported_max_mhz"] = max(supported) if supported else None
+    lock = ["-lgc", f"{target},{target}"]
+    rc, out, err = run_smi(lock)
+    _record_cmd(lock, rc, out, err)
+    CLOCKS["locked"] = rc == 0
+    if rc != 0:
+        CLOCKS["reason"] = "lock failed; running unlocked"
+    else:
+        atexit.register(reset_clocks)
+
+
+def reset_clocks():
+    if not CLOCKS.get("locked") or CLOCKS.get("reset_done"):
+        return
+    rc, out, err = run_smi(["-rgc"])
+    _record_cmd(["-rgc"], rc, out, err)
+    CLOCKS["reset_done"] = True
+    CLOCKS["reset_rc"] = rc
+
+
+def _parse_sample_line(line):
+    parts = [p.strip() for p in line.split(",")]
+    if len(parts) < 4:
+        return None
+
+    def num(s):
+        try:
+            return float(s)
+        except ValueError:
+            return None
+
+    bits = 0
+    try:
+        bits = int(parts[3], 16) if parts[3].lower().startswith("0x") else int(parts[3])
+    except ValueError:
+        bits = 0
+    return num(parts[0]), num(parts[1]), num(parts[2]), bits
+
+
+def start_sampler(dry):
+    if dry:
+        return None
+    cmd = ["nvidia-smi", "--query-gpu=clocks.sm,power.draw,temperature.gpu,clocks_throttle_reasons.active",
+           "--format=csv,noheader,nounits", "-lms", str(SAMPLE_MS)]
+    try:
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
+    except OSError as exc:
+        NOTES.append(f"sampler unavailable ({type(exc).__name__}); clock/power stats omitted")
+        return None
+
+    def reader():
+        for line in proc.stdout:
+            parsed = _parse_sample_line(line)
+            if parsed is None:
+                continue
+            clk, pwr, temp, bits = parsed
+            with SAMPLES_LOCK:
+                SAMPLES.append((time.time(), STAGE[0], clk, pwr, temp, bits))
+
+    threading.Thread(target=reader, daemon=True).start()
+    return proc
+
+
+def stop_sampler(proc):
+    if proc is not None and proc.poll() is None:
+        proc.terminate()
+
+
+class Window:
+    """Context manager that brackets a measurement block for the sampler."""
+
+    def __enter__(self):
+        self.t0 = time.time()
+        return self
+
+    def __exit__(self, *exc):
+        self.t1 = time.time()
+        return False
+
+    def stats(self):
+        with SAMPLES_LOCK:
+            rows = [r for r in SAMPLES if self.t0 <= r[0] <= self.t1]
+        clk = [r[2] for r in rows if r[2] is not None]
+        pwr = [r[3] for r in rows if r[3] is not None]
+        tmp = [r[4] for r in rows if r[4] is not None]
+        masks = sorted({hex(r[5]) for r in rows if r[5]})
+        return dict(
+            sm_clock_mean=rnd(statistics.mean(clk), 1) if clk else None,
+            sm_clock_min=rnd(min(clk), 1) if clk else None,
+            power_mean=rnd(statistics.mean(pwr), 2) if pwr else None,
+            temp_max=rnd(max(tmp), 1) if tmp else None,
+            throttle_masks=masks,
+            n_samples=len(rows),
+        )
+
+
 # ----------------------------------------------------------------- dry-run stand-ins
 
 class DryStream:
@@ -145,6 +296,9 @@ class DryEvent:
 
     def record(self, stream=None):
         self.t = time.perf_counter()
+
+    def synchronize(self):
+        pass
 
     def elapsed_time(self, other):
         return (other.t - self.t) * 1000.0
@@ -449,13 +603,13 @@ class Bench:
                     st = {"x": wl["x0"]}
                 self.compute(u, W, st, wl)
             b.record(self.comp)
-        self.sync()
+        self.comp.synchronize()
         return a.elapsed_time(b) / inner
 
     def time_compute_unit(self, u, W, wl, n_rep=9, warm=2):
         with self.sctx(self.comp):
             self.compute(u, W, {"x": wl["x0"]}, wl)
-        self.sync()
+        self.comp.synchronize()
         self._timed_compute(u, W, wl, 1)          # first sizing pass (discarded)
         est = self._timed_compute(u, W, wl, 1)    # second sizing pass is used
         inner = 1 if est >= 20.0 else min(self.max_inner, max(1, math.ceil(20.0 / max(est, 1e-4))))
@@ -471,7 +625,7 @@ class Bench:
                 a.record(self.cpy)
                 slot[:nb].copy_(self.host[u], non_blocking=True)
                 b.record(self.cpy)
-            self.sync()
+            self.cpy.synchronize()
             samples.append(a.elapsed_time(b))
         return statistics.median(samples[warm:]), samples
 
@@ -509,8 +663,44 @@ class Bench:
             ovs.append(ov)
         return statistics.median(samples[warm:]), statistics.median(ovs[warm:]), samples
 
+    def warm_resident(self, wl, Wv, seconds):
+        """Resident-compute loop for a fixed wall time, to reach a steady thermal/power state."""
+        t_end = time.time() + seconds
+        passes = 0
+        while time.time() < t_end:
+            st = {"x": wl["x0"]}
+            with self.sctx(self.comp):
+                for i in range(self.L):
+                    self.compute(i, Wv[i], st, wl)
+            self.comp.synchronize()
+            passes += 1
+        return passes
+
+    def start_pump(self, src, dst):
+        """Back-to-back copies src -> dst on the copy stream until stopped."""
+        stop = threading.Event()
+        nb = src.numel()
+
+        def run():
+            with self.sctx(self.cpy):
+                while not stop.is_set():
+                    for _ in range(4):
+                        dst[:nb].copy_(src, non_blocking=True)
+                    ev = self.event()
+                    ev.record(self.cpy)
+                    ev.synchronize()
+
+        th = threading.Thread(target=run, daemon=True)
+        th.start()
+        return th, stop
+
+    @staticmethod
+    def stop_pump(th, stop):
+        stop.set()
+        th.join(timeout=120)
+
     # executor
-    def _issue_copy(self, g, S, k, slots, comp_done, copy_done, total):
+    def _issue_copy(self, g, S, k, slots, comp_done, copy_done, total, tl=None):
         if g >= total:
             return
         m = len(S)
@@ -520,13 +710,24 @@ class Bench:
         with self.sctx(self.cpy):
             if g >= k:
                 self.cpy.wait_event(comp_done[g - k])
+            cs = self.event(True) if tl is not None else None
+            if cs is not None:
+                cs.record(self.cpy)
             slot[:nb].copy_(self.host[u], non_blocking=True)
             ev = self.event()
             ev.record(self.cpy)
             copy_done[g] = ev
+            if cs is not None:
+                ce = self.event(True)
+                ce.record(self.cpy)
+                tl.append(("copy", u, cs, ce, g))
 
-    def _pass(self, wl, S, k, res_set, Wres, slots, sviews, n_iters):
-        """One pass over n_iters iterations; returns iteration-boundary events and enqueue times."""
+    def _pass(self, wl, S, k, res_set, Wres, slots, sviews, n_iters, tl=None):
+        """One pass over n_iters iterations.
+
+        Returns iteration-boundary events, host enqueue times, and (if tl is a
+        list) the per-unit events of the last iteration.
+        """
         N = self.N
         m = len(S)
         total = n_iters * m
@@ -535,26 +736,41 @@ class Bench:
         self.sync()
         t0.record(self.comp)
         for g in range(min(k, total)):
-            self._issue_copy(g, S, k, slots, comp_done, copy_done, total)
+            self._issue_copy(g, S, k, slots, comp_done, copy_done, total, tl)
         ends = [t0]
         enq = []
         g = 0
-        for _ in range(n_iters):
+        for it in range(n_iters):
+            rec_now = tl is not None and it == n_iters - 1
             st = {"x": wl["x0"]}
             t_enq = time.perf_counter()
             for u in range(N):
                 if u in res_set:
                     with self.sctx(self.comp):
+                        s = self.event(True) if rec_now else None
+                        if s is not None:
+                            s.record(self.comp)
                         self.compute(u, Wres[u], st, wl)
+                        if s is not None:
+                            e = self.event(True)
+                            e.record(self.comp)
+                            tl.append(("compute", u, s, e))
                 else:
                     W = sviews[g % k][self.kind(u)]
                     with self.sctx(self.comp):
                         self.comp.wait_event(copy_done[g])
+                        s = self.event(True) if rec_now else None
+                        if s is not None:
+                            s.record(self.comp)
                         self.compute(u, W, st, wl)
+                        if s is not None:
+                            e = self.event(True)
+                            e.record(self.comp)
+                            tl.append(("compute", u, s, e))
                         ev = self.event()
                         ev.record(self.comp)
                         comp_done[g] = ev
-                    self._issue_copy(g + k, S, k, slots, comp_done, copy_done, total)
+                    self._issue_copy(g + k, S, k, slots, comp_done, copy_done, total, tl)
                     g += 1
                     for old in [x for x in comp_done if x < g - 2 * k]:
                         del comp_done[old]
@@ -565,9 +781,9 @@ class Bench:
             e.record(self.comp)
             ends.append(e)
         self.sync()
-        return ends, enq
+        return ends, enq, tl
 
-    def run_stream(self, resident, k, wl, n_iters, warmup, gpu_res=None):
+    def run_stream(self, resident, k, wl, n_iters, warmup, gpu_res=None, timeline=False):
         res = sorted(set(resident))
         res_set = set(res)
         S = [u for u in range(self.N) if u not in res_set]
@@ -583,7 +799,20 @@ class Bench:
         self.sync()
 
         self._pass(wl, S, k, res_set, Wres, slots, sviews, WARM_ITERS)   # untimed warm run
-        ends, enq = self._pass(wl, S, k, res_set, Wres, slots, sviews, n_iters)
+        ends, enq, _ = self._pass(wl, S, k, res_set, Wres, slots, sviews, n_iters)
+
+        tl_out = None
+        if timeline:
+            # extra timed run of 2 iterations; only the second (steady) iteration is recorded
+            tl_ends, _, tl_events = self._pass(wl, S, k, res_set, Wres, slots, sviews, 2, tl=[])
+            base = tl_ends[1]                      # start event of the recorded (second) iteration
+            tl_out = dict(compute=[], copy=[])
+            for ent in tl_events:
+                kind_, u, s, e = ent[:4]
+                if kind_ == "compute":
+                    tl_out["compute"].append([u, rnd(base.elapsed_time(s)), rnd(base.elapsed_time(e))])
+                elif m <= ent[4] < 2 * m:          # transfers that feed the recorded iteration
+                    tl_out["copy"].append([u, rnd(base.elapsed_time(s)), rnd(base.elapsed_time(e))])
 
         durs = [ends[i].elapsed_time(ends[i + 1]) for i in range(n_iters)]
         post = durs[warmup:] if len(durs) > warmup else durs
@@ -600,6 +829,7 @@ class Bench:
             m=m,
             streamed=S,
             slot_bytes=max_b,
+            timeline=tl_out,
         )
         del slots, sviews, Wres, ends
         if owned:
@@ -617,20 +847,25 @@ def stream_fields(out, lb):
         host_enqueue_ms=rnd(out["host_enqueue_ms"]),
         durations_ms=[rnd(x) for x in out["durations"]], slot_bytes=out["slot_bytes"],
     )
+    if out.get("timeline") is not None:
+        d["timeline_compute"] = out["timeline"]["compute"]   # [unit, start_ms, end_ms]
+        d["timeline_copy"] = out["timeline"]["copy"]         # [unit, start_ms, end_ms]
     if lb is not None and lb > 0:
         d["lb_ms"] = rnd(lb)
         d["period_over_lb"] = rnd(out["period"] / lb)
     return d
 
 
-def stream_run(bench, wl, res, k, placement, r, exp, f_alone, c_map):
+def stream_run(bench, wl, res, k, placement, r, exp, f_alone, c_map, timeline):
     N = bench.N
     res = sorted(res)
     res_set = set(res)
     S = [u for u in range(N) if u not in res_set]
     m = len(S)
     set_stage(f"{bench.name} {wl['name']} {placement} r={r} k={k} m={m}")
-    out = bench.run_stream(res, k, wl, wl["n_iters"], wl["warmup"])
+    w = Window()
+    with w:
+        out = bench.run_stream(res, k, wl, wl["n_iters"], wl["warmup"], timeline=timeline)
     lb = None
     if c_map is not None and f_alone is not None:
         lb = max(sum(c_map[u] for u in range(N)), sum(f_alone[u] for u in S))
@@ -638,11 +873,12 @@ def stream_run(bench, wl, res, k, placement, r, exp, f_alone, c_map):
                r=r, k=out["k"], k_req=k, resident=res, streamed=S, m=m,
                n_iters=wl["n_iters"], warmup=wl["warmup"])
     rec.update(stream_fields(out, lb))
+    rec.update(w.stats())
     emit(rec)
     return out
 
 
-def grid(bench, wl, rs, placements, ks, f_alone, c_map):
+def grid(bench, wl, rs, placements, ks, f_alone, c_map, timeline):
     N, L = bench.N, bench.L
     seen = set()
     for r_ref in rs:
@@ -664,17 +900,17 @@ def grid(bench, wl, rs, placements, ks, f_alone, c_map):
                 if over_budget():
                     NOTES.append(f"budget reached before {bench.name} {wl['name']} {pl} r={r} k={k}")
                     return
-                stream_run(bench, wl, res, k, pl, len(lay), "grid", f_alone, c_map)
+                stream_run(bench, wl, res, k, pl, len(lay), "grid", f_alone, c_map, timeline)
 
 
 def sweep_spec(dry):
     return cap_spec(SWEEP_WL) if dry else SWEEP_WL
 
 
-def sweep(bench, f_alone, c_map):
+def sweep(bench, f_alone, c_map, timeline):
     L = bench.L
     wl = bench.make_wl(sweep_spec(bench.dry))
-    r = int(round(L / 4))
+    r = scale_r(SWEEP_R_REF, L)
     seen = set()
     for pl in SWEEP_PLACEMENTS:
         lay = layer_set(pl, L, r)
@@ -689,7 +925,7 @@ def sweep(bench, f_alone, c_map):
             if over_budget():
                 NOTES.append("budget reached inside slot sweep")
                 return
-            stream_run(bench, wl, res, k, pl, len(lay), "sweep", f_alone, c_map)
+            stream_run(bench, wl, res, k, pl, len(lay), "sweep", f_alone, c_map, timeline)
     del wl
     bench.empty_cache()
 
@@ -743,14 +979,18 @@ def run_model(name, args, dry, workloads, rs, placements, ks):
               probe=bench.attn_probe))
     max_b = max(bench.ubytes(u) for u in range(N))
     slot = torch.empty(max_b, dtype=torch.uint8, device=bench.dev)
+    timeline = args.timeline
 
     f_alone = {}
     for u in range(N):
         set_stage(f"{name}: h2d alone {bench.uname(u)}")
-        med, samples = bench.time_h2d_alone(u, slot)
+        w = Window()
+        with w:
+            med, samples = bench.time_h2d_alone(u, slot)
         f_alone[u] = med
         emit(dict(kind="h2d", model=name, unit=bench.uname(u), unit_index=u,
-                  bytes=bench.ubytes(u), f_ms=rnd(med), durations_ms=[rnd(x) for x in samples]))
+                  bytes=bench.ubytes(u), f_ms=rnd(med), durations_ms=[rnd(x) for x in samples],
+                  **w.stats()))
 
     c_cache = {}
     for spec in workloads:
@@ -763,44 +1003,77 @@ def run_model(name, args, dry, workloads, rs, placements, ks):
         gpu_all = bench.load_units(range(N))
         Wv = {u: bench.views(u, gpu_all[u]) for u in range(N)}
 
+        set_stage(f"{name} {spec}: warm-up")
+        warm_s = 0.0 if dry else WARM_SECONDS
+        w = Window()
+        with w:
+            passes = bench.warm_resident(wl, Wv, warm_s)
+        emit(dict(kind="warmup", model=name, workload=spec, seconds=warm_s, passes=passes,
+                  **w.stats()))
+
         c_map = {}
         for u in range(N):
             set_stage(f"{name} {spec}: compute {bench.uname(u)}")
-            med, inner, samples = bench.time_compute_unit(u, Wv[u], wl)
+            w = Window()
+            with w:
+                med, inner, samples = bench.time_compute_unit(u, Wv[u], wl)
             c_map[u] = med
             emit(dict(kind="compute", model=name, workload=spec, unit=bench.uname(u),
-                      unit_index=u, c_ms=rnd(med), inner=inner, durations_ms=[rnd(x) for x in samples]))
+                      unit_index=u, c_ms=rnd(med), inner=inner, durations_ms=[rnd(x) for x in samples],
+                      **w.stats()))
         c_cache[spec] = c_map
+
+        # compute with a continuous copy loop on the copy stream
+        set_stage(f"{name} {spec}: compute under copy load")
+        pump = None if dry else bench.start_pump(bench.host[0], slot)
+        try:
+            for u in range(N):
+                set_stage(f"{name} {spec}: compute_conc {bench.uname(u)}")
+                w = Window()
+                with w:
+                    med, inner, samples = bench.time_compute_unit(u, Wv[u], wl)
+                emit(dict(kind="compute_conc", model=name, workload=spec, unit=bench.uname(u),
+                          unit_index=u, c_conc_ms=rnd(med), c_ms=rnd(c_map[u]), inner=inner,
+                          durations_ms=[rnd(x) for x in samples], **w.stats()))
+        finally:
+            if pump is not None:
+                Bench.stop_pump(*pump)
 
         c_layer = max(c_map[0], 1e-6)
         for u in range(N):
             set_stage(f"{name} {spec}: copy-under-compute {bench.uname(u)}")
             n_comp = min(4000, max(1, math.ceil(1.5 * f_alone[u] / c_layer)))
-            fc, ov, samples = bench.time_h2d_concurrent(u, slot, Wv, wl, n_comp)
+            w = Window()
+            with w:
+                fc, ov, samples = bench.time_h2d_concurrent(u, slot, Wv, wl, n_comp)
             emit(dict(kind="h2d_concurrent", model=name, workload=spec, unit=bench.uname(u),
                       unit_index=u, f_alone_ms=rnd(f_alone[u]), f_conc_ms=rnd(fc),
                       overlap_frac=rnd(ov, 3), n_comp=n_comp,
-                      durations_ms=[rnd(x) for x in samples]))
+                      durations_ms=[rnd(x) for x in samples], **w.stats()))
 
         set_stage(f"{name} {spec}: all-resident period")
-        allres = bench.run_stream(list(range(N)), 2, wl, wl["n_iters"], wl["warmup"], gpu_res=gpu_all)
+        w = Window()
+        with w:
+            allres = bench.run_stream(list(range(N)), 2, wl, wl["n_iters"], wl["warmup"], gpu_res=gpu_all,
+                                      timeline=timeline)
         lb_all = sum(c_map.values())
         rec = dict(exp="allres", model=name, kind="stream", workload=spec, placement="all_resident",
                    r=L, k=0, k_req=0, resident=list(range(N)), streamed=[], m=0,
                    n_iters=wl["n_iters"], warmup=wl["warmup"])
         rec.update(stream_fields(allres, lb_all))
+        rec.update(w.stats())
         emit(rec)
         del Wv, gpu_all
         bench.empty_cache()
 
         if not over_budget():
-            grid(bench, wl, rs, placements, ks, f_alone, c_map)
+            grid(bench, wl, rs, placements, ks, f_alone, c_map, timeline)
         del wl
         bench.empty_cache()
 
     if not over_budget():
         say(f"{name}: slot sweep {sweep_spec(dry)}")
-        sweep(bench, f_alone, c_cache.get(sweep_spec(dry)))
+        sweep(bench, f_alone, c_cache.get(sweep_spec(dry)), timeline)
     else:
         NOTES.append(f"budget reached; slot sweep for {name} skipped")
 
@@ -821,13 +1094,8 @@ def device_info(dry):
     p = torch.cuda.get_device_properties(0)
     info.update(name=torch.cuda.get_device_name(0), cuda=torch.version.cuda,
                 total_mem_bytes=p.total_memory, capability=f"{p.major}.{p.minor}")
-    try:
-        smi = subprocess.run(
-            ["nvidia-smi", "--query-gpu=pcie.link.gen.max,pcie.link.width.max", "--format=csv,noheader"],
-            capture_output=True, text=True, timeout=60)
-        info["pcie_max"] = smi.stdout.strip()
-    except (OSError, subprocess.SubprocessError) as exc:
-        info["pcie_max"] = f"unavailable ({type(exc).__name__})"
+    rc, out, _ = run_smi(["--query-gpu=pcie.link.gen.max,pcie.link.width.max", "--format=csv,noheader"])
+    info["pcie_max"] = out if rc == 0 else "unavailable"
     return info
 
 
@@ -868,6 +1136,10 @@ def main():
     ap.add_argument("--dry", action="store_true", help="CPU control-flow check with tiny shapes")
     ap.add_argument("--budget", type=float, default=0.0,
                     help="seconds after which no new measurement starts (0 = unlimited)")
+    ap.add_argument("--lock-clocks", default="auto",
+                    help="none, auto (highest supported graphics clock <= 570 MHz) or a MHz value")
+    ap.add_argument("--timeline", action=argparse.BooleanOptionalAction, default=True,
+                    help="record per-unit compute and copy event times in stream records (default on)")
     args = ap.parse_args()
 
     if args.quick:
@@ -906,16 +1178,25 @@ def main():
                "released between them. One model per run is recommended for clean host memory.")
         NOTES.append(msg)
         print(msg, flush=True)
-    info = device_info(dry)
-    emit(dict(kind="device", **info))
-    say(f"models={models} workloads={workloads} rs={rs} ks={ks} placements={placements} "
-        f"head={args.head or args.head_resident} head_resident={args.head_resident} dry={dry}")
 
+    sampler = None
     models_out = {}
-    for name in models:
-        models_out[name] = run_model(name, args, dry, workloads, rs, placements, ks)
+    try:
+        setup_clocks(args.lock_clocks, dry)
+        sampler = start_sampler(dry)
+        info = device_info(dry)
+        info["clocks"] = dict(CLOCKS)
+        emit(dict(kind="device", **info))
+        say(f"models={models} workloads={workloads} rs={rs} ks={ks} placements={placements} "
+            f"head={args.head or args.head_resident} head_resident={args.head_resident} "
+            f"timeline={args.timeline} clocks={CLOCKS.get('target_mhz', 'unlocked')} dry={dry}")
+        for name in models:
+            models_out[name] = run_model(name, args, dry, workloads, rs, placements, ks)
+    finally:
+        stop_sampler(sampler)
+        reset_clocks()
 
-    result = dict(device=info, models=models_out, records=RECORDS, notes=NOTES,
+    result = dict(device=info, clocks=CLOCKS, models=models_out, records=RECORDS, notes=NOTES,
                   budget_s=BUDGET, elapsed_s=round(elapsed(), 1))
     print("JSON_BEGIN", flush=True)
     print(json.dumps(result), flush=True)
