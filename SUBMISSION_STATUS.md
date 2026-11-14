@@ -36,3 +36,4 @@ Manuscript: "Streaming LLM Weights from CXL Memory: Regimes, Placement and Pipel
 |------|-------|---------|
 | 2026-11-09 | Future Generation Computer Systems (Elsevier) | New manuscript "Where Should Resident Layers Go? Optimal Placement for Weight Streaming in Offloaded LLM Inference" (Dang, Le, Dinh): max-plus model with proofs plus 605 measured configurations on a Tesla T4. Package in `submission_fgcs/`. Submitted by the authors on 2026-11-09 (anonymised manuscript, 14 pages double column, single-file LaTeX source with 12 PNG figures, separate title page). Awaiting editorial decision. |
 | 2026-11-14 | FGCS-D-26-06197 (Future Generation Computer Systems) | Rejected without review (EiC Michela Taufer): outside the scope of the journal; no reconsideration. |
+| 2026-11-14 | IEEE Access | Package prepared (ieeeaccess template, 3 authors, not anonymised) in `submission_ieee/` (build: `python3 paper/make_ieee.py`). Not yet submitted. |
